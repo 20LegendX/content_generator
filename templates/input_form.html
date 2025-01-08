@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Article Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Article Generator</h1>
+        <form action="{{ url_for('generate') }}" method="post">
+            <div class="form-group">
+                <label for="topic">Main Topic/Subject</label>
+                <textarea id="topic" name="topic" required
+                    placeholder="Describe the main subject of your article. Be specific about what you want to cover."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="keywords">SEO Keywords</label>
+                <input type="text" id="keywords" name="keywords" required
+                    placeholder="Important terms for SEO (separate with commas)">
+            </div>
+
+            <div class="form-group">
+                <label for="context">Background Context</label>
+                <textarea id="context" name="context" required
+                    placeholder="Provide relevant background information, historical context, or specific angles you want the article to explore."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="supporting_data">Supporting Data & Facts</label>
+                <textarea id="supporting_data" name="supporting_data" required
+                    placeholder="Include any statistics, quotes, research findings, or specific data points you want incorporated into the article."></textarea>
+            </div>
+
+            <button type="submit">Generate Article</button>
+        </form>
+    </div>
+</body>
+</html>
