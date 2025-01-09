@@ -21,6 +21,9 @@ import DownloadIcon from '@mui/icons-material/Download';
 import ArticleIcon from '@mui/icons-material/Article';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+const API_BASE_URL = window.location.hostname === 'localhost'
+  ? 'http://127.0.0.1:5000'
+  : `http://13.60.61.227`; // Your EC2 IP
 
 const getTheme = (mode) => createTheme({
   palette: {
@@ -73,17 +76,21 @@ function App() {
         .url('Invalid image URL')
         .nullable(), // Allow empty or valid URLs
     }),
+
+    // Then update your onSubmit function:
     onSubmit: async (values) => {
-      setLoading(true); // Show loading indicator
-      setErrorMessage(null); // Clear previous errors
-      setGeneratedContent(null); // Clear previous results
+      setLoading(true);
+      setErrorMessage(null);
+      setGeneratedContent(null);
 
       try {
-        const response = await fetch('http://127.0.0.1:5000/api/generate', {
+        const response = await fetch(`${API_BASE_URL}/api/generate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify(values),
         });
 
@@ -92,13 +99,13 @@ function App() {
         }
 
         const data = await response.json();
-        setGeneratedContent(data); // Store the generated content
+        setGeneratedContent(data);
       } catch (error) {
         setErrorMessage(error.message || 'Something went wrong. Please try again.');
       } finally {
-        setLoading(false); // Hide loading indicator
+        setLoading(false);
       }
-    },
+    }
   });
 
   const handleImageChange = (e) => {
@@ -114,7 +121,7 @@ function App() {
 
   const downloadArticle = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/download_article', {
+      const response = await fetch(`${API_BASE_URL}/api/download_article`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,13 +133,13 @@ function App() {
         throw new Error('Failed to download article.');
       }
 
-      const blob = await response.blob(); // Convert response to a blob
-      const url = window.URL.createObjectURL(blob); // Create a temporary download URL
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${generatedContent.headline.replace(/\s+/g, '_')}.html`; // Use headline as the filename
+      a.download = `${generatedContent.headline.replace(/\s+/g, '_')}.html`;
       a.click();
-      window.URL.revokeObjectURL(url); // Clean up the URL
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       setErrorMessage('Failed to download article. Please try again.');
     }

@@ -17,9 +17,23 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__, static_folder="frontend/build")
-CORS(app)  # Enable CORS
+# Update your CORS configuration
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://localhost:3000",
+            "http://127.0.0.1:5000",
+            "http://13.60.61.227",  # Your EC2 IP
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Accept"],
+        "supports_credentials": True
+    }
+})
+
 
 # Serve React static files
+# Catch-all route for React app LAST
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
@@ -28,11 +42,21 @@ def serve(path):
     else:
         return send_from_directory(app.static_folder, "index.html")
 
+
 # Initialize OpenAI client
 client = OpenAI(api_key=api_key)
 
-@app.route('/api/generate', methods=['POST'])
+
+@app.route('/api/generate', methods=['POST', 'OPTIONS'])
 def generate_api():
+    # Add CORS headers for OPTIONS requests
+    if request.method == "OPTIONS":
+        response = jsonify({})
+        response.headers.add('Access-Control-Allow-Origin', request.origin or '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        return response, 200
+
     try:
         # Parse JSON data from React
         data = request.get_json()
@@ -67,6 +91,7 @@ def generate_api():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/')
 def index():
     """Render the simple input form"""
@@ -87,28 +112,6 @@ def validate_image_url(url):
     except:
         # If validation fails, still return True if URL looks valid
         return url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
-
-
-@app.route('/generate', methods=['POST'])
-def generate():
-    try:
-        article_data = {
-            'topic': request.form['topic'],
-            'keywords': request.form['keywords'],
-            'context': request.form['context'],
-            'supporting_data': request.form['supporting_data'],
-            'featured_image_url': request.form.get('image_url', ''),
-            'publisher_name': request.form.get('publisher_name', ''),
-            'publisher_url': request.form.get('publisher_url', '')
-        }
-
-        prompt = create_prompt(article_data)
-        return render_template('preview_prompt.html',
-                               prompt=prompt,
-                               article_data=article_data)
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 
 def create_prompt(user_input):
@@ -279,6 +282,7 @@ def format_article_content(gpt_response):
         print(f"Error formatting article content: {str(e)}")
         return None
 
+
 @app.route('/api/generate_article', methods=['POST'])
 def generate_article_api():
     try:
@@ -306,6 +310,7 @@ def generate_article_api():
 
     except Exception as e:
         return jsonify({'error': f"Failed to generate article: {str(e)}"}), 500
+
 
 @app.route('/api/download_article', methods=['POST'])
 def download_article_api():
