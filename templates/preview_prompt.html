@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Preview Prompt</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Review Generated Prompt</h1>
+
+        <form action="{{ url_for('generate_article') }}" method="post">
+            <div class="form-group">
+                <label for="prompt">Generated Prompt:</label>
+                <textarea id="prompt" name="prompt" rows="15" style="width: 100%">{{ prompt }}</textarea>
+            </div>
+
+            <!-- Add this hidden input to pass the image URL -->
+            <input type="hidden" name="image_url" value="{{ article_data.featured_image_url }}">
+            <input type="hidden" name="publisher_name" value="{{ article_data.publisher_name }}">
+            <input type="hidden" name="publisher_url" value="{{ article_data.publisher_url }}">
+            <div class="button-group">
+                <button type="submit">Generate Article</button>
+                <button type="button" onclick="history.back()">Go Back and Edit</button>
+            </div>
+        </form>
+
+        <!-- Optionally show image preview here too -->
+        {% if article_data.featured_image_url %}
+        <div class="image-preview mt-3">
+            <h3>Featured Image Preview:</h3>
+            <img src="{{ article_data.featured_image_url }}"
+                 alt="Featured image preview"
+                 style="max-width: 300px; max-height: 200px; object-fit: contain;">
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

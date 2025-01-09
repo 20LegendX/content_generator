@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <!-- Google Analytics (with consent management) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZXDJNBML2H"></script>
+        <!-- Cookie Consent Script from GetTerms.io -->
+    <script type="text/javascript" src="https://app.getterms.io/cookie-consent/embed/7e6f5658-3c4e-4aed-ae82-2ebaf564853c/en-au"></script>
+
+    <meta charset="UTF-8">
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+
+          // Initialize Google Analytics
+          gtag('js', new Date());
+
+          // Check if consent was given for Google Analytics
+          if (!window['ga-disable-G-ZXDJNBML2H']) {
+              gtag('config', 'G-ZXDJNBML2H');
+          }
+        </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/static/images/ss_logo.png">
+    <title>{{ short_title }}</title>
+    <meta name="title" content="{{ short_title }}">
+    <meta name="description" content="{{ meta_description }}">
+    <meta name="keywords" content="{{ keywords }}">
+    <meta name="author" content="{{ author }}">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="{{ og_title }}">
+    <meta property="og:description" content="{{ og_description }}">
+    <meta property="og:image" content="{{ featured_image_url }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:title" content="{{ twitter_title }}">
+    <meta property="twitter:description" content="{{ twitter_description }}">
+    <meta property="twitter:image" content="{{ featured_image_url }}">
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "{{ schema_type }}",
+        "headline": "{{ headline }}",
+        "description": "{{ meta_description }}",
+        "image": "{{ featured_image_url }}",
+        "author": {
+            "@type": "Person",
+            "name": "{{ author }}"
+        },
+        "datePublished": "{{ publish_date }}",
+        "publisher": {
+            "@type": "Organization",
+            "name": "{{ publisher_name }}",
+            "url": "{{ publisher_url }}",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "{{ publisher_url }}/logo.png"
+            }
+        }
+    }
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+</head>
+
+
+
+
+
+<style>
+    body {
+        background-image: url('/static/images/background.png');
+        background-repeat: repeat;
+        background-position: top left;
+        background-attachment: scroll;
+        font-family: 'Poppins', sans-serif;
+        color: white;
+    }
+
+    footer {
+        padding: 20px 0;
+    }
+
+    footer h5 {
+        text-align: center;
+        margin-bottom: 15px;
+        margin-left: 20px;
+        font-size: 16px;
+        text-transform: uppercase;
+        color: #00b4d8;
+    }
+
+    footer ul {
+        padding-left: 0;
+        list-style-type: none;
+    }
+
+    footer ul li {
+        padding: 5px 0;
+        box-sizing: border-box;
+        text-align: center;
+    }
+
+    footer ul li a {
+        text-decoration: none;
+        color: #ffffff;
+        display: block;
+        transition: color 0.3s ease;
+    }
+
+    footer ul li a:hover {
+        color: #2563eb;
+    }
+
+    footer ul.leagues-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    footer ul.leagues-list li {
+        flex: 1 0 20%;
+        min-width: 130px;
+    }
+
+    .align-items-center {
+        align-items: center;
+    }
+
+    .d-flex {
+        display: flex;
+    }
+    .ui-autocomplete {
+        max-height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background-color: #333;
+        border: 1px solid #555;
+        color: white;
+        width: auto !important;
+        max-width: 500px !important;
+        z-index: 1000;
+    }
+
+    .ui-autocomplete .ui-menu-item {
+        padding: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ui-autocomplete .ui-menu-item:hover {
+        background-color: #444;
+    }
+
+    .navbar {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        padding-top: .5rem;
+        padding-bottom: .5rem;
+        background-color: black;
+        margin-bottom: 20px;
+        justify-content: flex-start;
+    }
+
+    @media (min-width: 992px) {
+        .navbar-expand-lg {
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+        }
+    }
+
+    .navbar-brand {
+        display: flex;
+        padding-top: .3125rem;
+        padding-bottom: .3125rem;
+        margin-right: 1rem;
+        font-size: 1.25rem;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .navbar .search-form {
+        display: flex;
+        margin: 0;
+    }
+
+    .search-form {
+        display: flex;
+        flex-grow: 1;
+        margin-left: 5px;
+        width: auto;
+    }
+
+    .navbar .search-form .form-control {
+        height: 60px;
+    }
+
+    .search-form .form-control {
+        width: 60%;
+        max-width: 500px;
+    }
+
+    #player_name {
+        font-size: 1rem;
+        padding: 1rem;
+        border-radius: 30px;
+        border: 2px solid #ffffff;
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+
+    .form-control {
+        display: block;
+        font-weight: 400;
+        line-height: 1.5;
+        appearance: none;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+
+    /* Input placeholders */
+    .form-control::placeholder {
+        color: #95a5a6; /* Light grey for placeholders */
+        opacity: 1; /* Ensure the placeholder is fully visible */
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.1); /* Keeps the background consistent on focus */
+        color: #ffffff; /* Ensure text color remains white on focus */
+        border-color: #ffffff; /* Maintain the white border if needed */
+        outline: none; /* Remove default focus outline */
+        box-shadow: none; /* Remove default focus shadow if there is any */
+    }
+
+    .my-lg-0 {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    .container {
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .main-content {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    .main-content .column {
+        flex: 1;
+        max-width: 200px;
+        margin: 0 20px;
+    }
+
+    .main-content .article {
+        flex: 3;
+        max-width: 800px;
+        margin: 0 20px;
+        background-color: #070819;
+        color: #E5E7EB;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Headings */
+    .article h1, .article h2, .article h3 {
+        color: #ffffff;
+        text-align: center;
+        margin-bottom: 20px;
+        font-family: 'Poppins', sans-serif;
+    }
+
+.article h2, .article h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+    /* Paragraphs */
+    .article p {
+        line-height: 1.7;
+        margin-bottom: 1.5em;
+    }
+
+    /* Blockquote Styling */
+    .article blockquote {
+        border-left: 5px solid #00b4d8;
+        background-color: #1f2937;
+        padding: 15px 20px;
+        margin: 20px 0;
+        font-style: italic;
+        color: #A0AEC0;
+        position: relative;
+    }
+
+    .article blockquote::before {
+        content: open-quote;
+        font-size: 3rem;
+        color: #00b4d8;
+        position: absolute;
+        left: -15px;
+        top: -5px;
+    }
+
+    .article blockquote p {
+        margin: 0;
+        padding: 0;
+    }
+
+
+
+    /* Update image styles in the article */
+    .featured-image {
+        margin: 20px auto;
+        max-width: 800px;  /* Match article max-width */
+        width: 100%;
+        text-align: center;
+    }
+
+    .featured-image img {
+        max-width: 100%;
+        max-height: 400px;  /* Limit maximum height */
+        width: auto;
+        height: auto;
+        object-fit: contain;  /* Maintain aspect ratio */
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .featured-image {
+            margin: 15px auto;
+        }
+
+        .featured-image img {
+            max-height: 300px;  /* Smaller height on mobile */
+        }
+    }
+
+    /* Optional: Add a subtle zoom effect on hover */
+    .featured-image img:hover {
+        transform: scale(1.02);
+        transition: transform 0.3s ease;
+    }
+
+    /* Links */
+    .article a {
+        color: #00b4d8;
+        text-decoration: underline;
+    }
+
+    .article a:hover {
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+    /* Unordered List */
+    .article ul {
+        list-style-type: disc;
+        padding-left: 20px;
+        margin-bottom: 1.5em;
+    }
+
+    .article ul li {
+        margin-bottom: 0.5em;
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-content .column {
+            display: none;
+        }
+
+        .main-content .article {
+            max-width: 100%;
+            margin: 0 10px;
+            padding: 0 15px;
+        }
+
+        body {
+            font-size: 14px;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+        }
+
+        h2, h3 {
+            font-size: 1rem;
+        }
+
+        p, .article div {
+            font-size: 0.875rem;
+        }
+
+        .search-form .form-control {
+            width: 80%;
+        }
+    }
+
+
+.navbar {
+    background-color: black;
+    margin-bottom: 20px;
+}
+/* New styles for desktop sections */
+.navbar-sections {
+    display: flex;
+    align-items: flex-start;
+    margin-left: 20px;
+}
+
+.navbar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 15px;
+    position: relative;
+}
+
+.navbar-section:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 70%;
+    width: 1px;
+    background-color: #444;
+}
+
+.section-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.prediction-label {
+    color: #1FF8FA; /* Light blue color */
+}
+
+.scouting-label {
+    color: #ef7a15; /* Orange color */
+}
+
+    .mobile-icons .compare-players-link {
+            color: #ef7a15;
+    }
+
+    .mobile-icons .match-predictions-link {
+            color: #1FF8FA;
+    }
+.scouting-links {
+    display: flex;
+}
+
+.section-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.section-icons .nav-link {
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.scouting-links .nav-link {
+    margin-left: 10px;
+}
+
+/* Prediction icon styles (both desktop and mobile) */
+.prediction-icons .nav-link,
+.match-predictions-link {
+    color: #1FF8FA; /* Light blue color */
+}
+
+.prediction-icons .nav-link:hover,
+.match-predictions-link:hover {
+    background-color: rgba(31, 248, 250, 0.1);
+}
+
+/* Scouting icon styles (both desktop and mobile) */
+.scouting-icons .nav-link,
+.compare-players-link {
+    color: #ef7a15; /* Orange color */
+}
+
+.scouting-icons .nav-link:hover,
+.compare-players-link:hover {
+    background-color: rgba(239, 122, 21, 0.1);
+}
+
+
+.section-icons .nav-link svg {
+    width: 24px;
+    height: 24px;
+}
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+    flex-shrink: 0; /* Prevent the brand from shrinking */
+}
+
+.navbar-brand svg {
+    width: 54px;
+    height: 48px;
+}
+
+
+
+    .navbar .search-form .form-control {
+        height: 60px;  /* Adjust the height as needed */
+    }
+
+
+
+    .search-form {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        margin-left: 5px;
+        width: auto;
+        max-width: 300px; /* Limit the maximum width */
+    }
+
+
+    .search-form .form-control {
+        width: 100%;
+        min-width: 0; /* Allow the input to shrink below its default size */
+    }
+
+    #player_name {
+        font-size: 0.8rem; /* Bigger text inside the input */
+        padding: 1rem; /* More padding for a larger input */
+        border-radius: 30px; /* Rounded edges */
+        border: 2px solid #ffffff; /* White border */
+        background: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
+        color: #ffffff; /* White text color */
+
+    }
+
+
+    figure {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    figcaption {
+        margin-top: 8px;
+        font-size: 0.9rem; /* Slightly smaller text */
+        font-style: italic;
+        color: #a0aec0; /* Soft gray color for a subtle look */
+        padding: 5px 15px;
+        background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+        border-radius: 5px; /* Rounded corners */
+        width: fit-content; /* Keeps width to the text content */
+    }
+
+    /* Custom CSS for reducing size on mobile */
+    @media (max-width: 768px) {
+
+
+
+        #player_name {
+            font-size: 16px;  /* Ensures no zoom on mobile */
+            padding: 8px 12px;
+        }
+
+        .navbar-brand svg {
+            width: 34px;
+            height: 32px;  /* Adjust height proportionally */
+        }
+
+        .navbar-brand {
+            margin-right: 2px; /* Reduce margin between logo and search form on mobile */
+        }
+
+        .search-form {
+            max-width: none; /* Allow full width on mobile */
+        }
+
+        .navbar .search-form .form-control {
+            height: 40px; /* Adjust the height as needed */
+        }
+
+        #player_name {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .compare-players-link,
+        .match-predictions-link {
+            margin-left: 0px;
+        }
+
+
+        .compare-players-link svg,
+        .match-predictions-link svg {
+            width: 24px;
+            height: 24px;
+        }
+
+            /* Hide ScatterScout link on mobile */
+        .scatterscout-link,
+        .advanced-search-link {
+            display: none;
+        }
+        .navbar {
+            padding: 2px 4px; /* Reduce padding on mobile */
+        }
+
+        .mobile-icons {
+            display: flex;
+            align-items: center;
+        }
+
+        .mobile-icons .nav-link {
+            padding: 5px; /* Reduce padding */
+            margin-left: 5px; /* Reduce left margin */
+        }
+        .mobile-icon-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 5px;
+        }
+
+        .mobile-icon-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            margin-top: 2px;
+        }
+
+        .prediction-label {
+            color: #1FF8FA; /* Light blue color */
+        }
+
+        .scouting-label {
+            color: #ef7a15; /* Orange color */
+        }
+        .mobile-icons .nav-link {
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .mobile-icons svg {
+            width: 20px;
+            height: 20px;
+        }
+
+    }
+
+    /* For very small screens */
+    @media (max-width: 360px) {
+        .mobile-icon-label {
+            font-size: 8px;
+        }
+
+        .mobile-icons svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .mobile-icon-group {
+            margin-left: 10px;
+        }
+
+        .article {
+            padding: 15px; /* Reduce padding on mobile */
+        }
+
+        .article img {
+            margin: 10px auto; /* Reduce margin on mobile */
+        }
+    }
+
+        .predictions-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .predictions-nav .nav-link {
+            padding: 10px 15px;  /* Reduce padding */
+            margin: 5px 5px;      /* Reduce margin */
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+
+
+        .nav-link:hover {
+            background-color: #2a2b3e;
+        }
+
+        .nav-link.active {
+            background-color: #00b4d8;
+        }
+
+.lineups {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap; /* Ensures images stack vertically on smaller screens */
+    gap: 20px; /* Adds space between the figures */
+    margin: 20px 0;
+}
+
+.lineups figure {
+    flex: 1 1 300px; /* Ensures a responsive layout with a minimum width of 300px per figure */
+    text-align: center;
+    max-width: 45%; /* Prevents figures from growing too large */
+}
+
+.lineups img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px; /* Adds a slight rounding to the images */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Adds a subtle shadow effect */
+}
+
+.lineups figcaption {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #a0aec0; /* Soft grey colour */
+    padding: 5px 15px;
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    border-radius: 5px; /* Rounded corners */
+}
+.actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.download-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.download-btn:hover {
+    background-color: #45a049;
+}
+
+
+</style>
+
+<body>
+
+
+    <!-- Bootstrap Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container d-flex align-items-center">
+            <a class="navbar-brand" href="/">
+                <!-- SVG Logo Start -->
+                <svg width="60" height="54" viewBox="0 0 645 551" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_215_5538)">
+                    <path d="M215.989 0C120.535 0 43.6924 76.2907 43.6924 171.059C43.6924 265.827 120.535 342.123 215.989 342.123H235.965L371.394 208.875H279.041H258.404C237.301 208.875 220.313 192.009 220.313 171.059C220.313 150.108 237.301 133.242 258.404 133.242H512.429L646.144 0.0116181H638.607V0H215.989Z" fill="url(#paint0_linear_215_5538)"/>
+                    <path d="M445.271 209.085L310.059 342.123H373.783H394.42C415.522 342.123 432.51 358.989 432.51 379.94C432.51 400.891 415.522 417.757 394.42 417.757H133.727L0 550.999H436.834C532.288 550.999 609.131 474.708 609.131 379.94C609.131 287.982 536.775 213.425 445.271 209.085Z" fill="url(#paint1_linear_215_5538)"/>
+                    </g>
+                    <defs>
+                        <linearGradient id="paint0_linear_215_5538" x1="363.709" y1="0" x2="363.709" y2="342.123" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#1FF8FA"/>
+                            <stop offset="1" stop-color="#026BDA"/>
+                        </linearGradient>
+                        <linearGradient id="paint1_linear_215_5538" x1="308.814" y1="209.085" x2="308.814" y2="550.999" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#FBB630"/>
+                            <stop offset="1" stop-color="#E86E25"/>
+                        </linearGradient>
+                        <clipPath id="clip0_215_5538">
+                            <rect width="645" height="551" fill="white"/>
+                        </clipPath>
+                    </defs>
+                </svg>
+                <!-- SVG Logo End -->
+            </a>
+            <form id="player-form" method="POST" class="search-form form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2 search-input" type="search" placeholder="Search players..." aria-label="Search" id="player_name" name="player_name" required autocomplete="off">
+                <input type="hidden" id="player_id" name="id">
+            </form>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav mr-auto"></ul>
+            </div>
+
+        <!-- Desktop-only sections -->
+        <div class="navbar-sections d-none d-lg-flex">
+            <!-- Prediction Section -->
+            <div class="navbar-section prediction-section">
+                <span class="section-label prediction-label">Prediction</span>
+                <div class="section-icons prediction-icons">
+                    <a href="/" class="nav-link" title="Match Predictions">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 21H3V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 9L13 15L9 11L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Scouting Section -->
+            <div class="navbar-section scouting-section">
+                <span class="section-label scouting-label">Scouting</span>
+                <div class="section-icons scouting-icons">
+                    <a href="/scatterscout" class="nav-link" title="ScatterScout Tool">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="5" cy="12" r="2" fill="currentColor"/>
+                            <circle cx="12" cy="5" r="2" fill="currentColor"/>
+                            <circle cx="19" cy="19" r="2" fill="currentColor"/>
+                            <circle cx="12" cy="19" r="2" fill="currentColor"/>
+                            <circle cx="19" cy="12" r="2" fill="currentColor"/>
+                            <path d="M2 2L22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </a>
+                    <a href="/compare-players" class="nav-link" title="Compare Players">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 3H21V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 20L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 16V21H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M15 15L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 4L9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="/advanced-search" class="nav-link" title="Advanced Search">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M11 8V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 11H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile-only icons -->
+        <div class="mobile-icons d-lg-none">
+            <div class="mobile-icon-group">
+                <span class="mobile-icon-label prediction-label">Predict</span>
+                <a href="/" class="nav-link match-predictions-link" title="Match Predictions">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21H3V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 9L13 15L9 11L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+            <div class="mobile-icon-group">
+                <span class="mobile-icon-label scouting-label">Compare</span>
+                <a href="/compare-players" class="nav-link compare-players-link" title="Compare Players">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 3H21V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M4 20L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 16V21H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 15L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M4 4L9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="column left-column">
+            <!-- Promotional material placeholder -->
+        </div>
+        <div class="article">
+            <header>
+                <h1>{{ headline }}</h1>
+            </header>
+            <!-- Featured Image -->
+            {% if featured_image_url %}
+            <!-- Debug output -->
+            <!-- <p>Debug: Image URL is: {{ featured_image_url }}</p> -->
+            <div class="featured-image">
+                <img src="{{ featured_image_url }}"
+                     alt="{{ featured_image_alt|default('Featured image') }}"
+                     class="img-fluid">
+            </div>
+            {% endif %}
+
+            <section>
+                <article>
+                    {{ article_content|safe }}
+                </article>
+            </section>
+
+            <!-- Footer -->
+            <footer>
+                <a href="/player/{{player_slug}}">View {{player_name}}'s Scoutingstats Profile</a>
+                <p>Category: {{article_category}}</p>
+            </footer>
+        </div>
+        <div class="column right-column">
+            <!-- Promotional material placeholder -->
+        </div>
+    </div>
+
+    <!-- Add this after your article content -->
+<!-- Update the download form in report_template.html -->
+<div class="actions">
+    <form action="{{ url_for('download_article') }}" method="post">
+        <input type="hidden" name="article_content" value="{{ article_content }}">
+        <input type="hidden" name="headline" value="{{ headline }}">
+        <input type="hidden" name="featured_image_url" value="{{ featured_image_url }}">
+        <input type="hidden" name="featured_image_alt" value="{{ featured_image_alt }}">
+        <input type="hidden" name="article_category" value="{{ article_category }}">
+        <input type="hidden" name="meta_description" value="{{ meta_description }}">
+        <input type="hidden" name="keywords" value="{{ keywords }}">
+        <input type="hidden" name="author" value="{{ author }}">
+        <input type="hidden" name="publish_date" value="{{ publish_date }}">
+        <button type="submit" class="download-btn">Download Article</button>
+    </form>
+</div>
+
+<footer class="text-white text-center" style="background-color: #0b0c1f;">
+    <div class="container p-4">
+        <div class="row justify-content-center">
+            <!-- Advanced Scouting Tools Section -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                <h5 class="text-uppercase">Advanced Scouting Tools</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="list-inline-item"><a href="/scatterscout" id="scatter-scout-link" target="_blank">Scatterscout</a></li>
+                    <li class="list-inline-item"><a href="/advanced-search" id="advanced-search-link" target="_blank">Advanced Search Engine</a></li>
+                    <li class="list-inline-item"><a href="/compare-players" target="_blank">Player Comparison</a></li>
+                </ul>
+            </div>
+            <!-- Leagues Section -->
+            <div class="col-lg-6 col-md-6 mb-4 mb-md-0">
+                <h5 class="text-uppercase">Leagues</h5>
+                <ul class="list-unstyled d-flex flex-wrap justify-content-center mb-0 leagues-list">
+                    <li class="list-inline-item"><a href="/leagues/premier-league.html" target="_blank">Premier League</a></li>
+                    <li class="list-inline-item"><a href="/leagues/la-liga.html" target="_blank">La Liga</a></li>
+                    <li class="list-inline-item"><a href="/leagues/bundesliga.html" target="_blank">Bundesliga</a></li>
+                    <li class="list-inline-item"><a href="/leagues/ligue-1.html" target="_blank">Ligue 1</a></li>
+                    <li class="list-inline-item"><a href="/leagues/serie-a.html" target="_blank">Serie A</a></li>
+                    <li class="list-inline-item"><a href="/leagues/eredivisie.html" target="_blank">Eredivisie</a></li>
+                    <li class="list-inline-item"><a href="/leagues/primeira-liga.html" target="_blank">Primeira Liga</a></li>
+                    <li class="list-inline-item"><a href="/leagues/pro-league-a.html" target="_blank">Pro League A</a></li>
+                    <li class="list-inline-item"><a href="/leagues/s%C3%BCper-lig.html" target="_blank">Süper Lig</a></li>
+                    <li class="list-inline-item"><a href="/leagues/championship.html" target="_blank">Championship</a></li>
+                    <li class="list-inline-item"><a href="/leagues/la-liga-2.html" target="_blank">La Liga 2</a></li>
+                    <li class="list-inline-item"><a href="/leagues/2.-bundesliga.html" target="_blank">2. Bundesliga</a></li>
+                    <li class="list-inline-item"><a href="/leagues/premiership.html" target="_blank">Premiership</a></li>
+                    <li class="list-inline-item"><a href="/leagues/j1-league.html" target="_blank">J1 League</a></li>
+                    <li class="list-inline-item"><a href="/leagues/s%C3%A9rie-a.html" target="_blank">Série A</a></li>
+                    <!-- Add more leagues as needed -->
+                </ul>
+            </div>
+            <!-- Privacy Policy Section -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                <ul class="list-unstyled mb-0">
+                    <li>
+                        <p>&copy; 2024 ScoutingStats.AI. All rights reserved.</p>
+                        <a href="/privacy-policy" target="_blank" class="text-white">Privacy Policy</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+                <!-- Responsible Gambling Message -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <p class="text-white">
+                        <strong>Responsible Gambling:</strong> Please gamble responsibly. Visit <a href="https://www.begambleaware.org" target="_blank" class="text-white">BeGambleAware.org</a> for more information. Betting can be addictive, please bet responsibly. Only for those over 18 years old.
+                    </p>
+                </div>
+            </div>
+    </div>
+</footer>
+
+<!-- Correct order of script tags -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
+
+
+
+<script type="text/javascript">
+
+    var currentPlayerInfo = { id: null, position: null, age: null };
+    $(document).ready(function() {
+           $("#player_name").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: '/autocomplete',
+                        data: {'q': request.term},
+                        success: function (data) {
+                            console.log("Autocomplete data:", data);
+                            response($.map(data, function (item) {
+                                return {
+                                    name: item.name,
+                                    label: item.label,
+                                    value: item.value,
+                                    public_id: item.public_id,
+                                    league: item.league,
+                                    image_path: item.image_path
+
+                                };
+                            }));
+                        }
+                    });
+                },
+
+                minLength: 2,
+                select: function (event, ui) {
+                    currentPlayerInfo.id = ui.item.value;
+                    currentPlayerInfo.position = ui.item.position;
+                    var selectedPlayerId = ui.item.value;
+                    var playerSlug = slugify(ui.item.name, ui.item.public_id);
+
+                    window.open(`/player/${playerSlug}/`, '_blank');
+                    event.preventDefault();
+
+                }
+            }).autocomplete("instance")._renderItem = function (ul, item) {
+                // Custom rendering of items with image
+                var $li = $("<li style='display: flex; align-items: center;'>");
+                $("<img>").attr("src", item.image_path)
+                    .css({
+                        "margin-right": "10px",
+                        "width": "50px",  // Adjusted width
+                        "height": "50px",  // Adjusted height
+                        "object-fit": "contain", // Optional: adds a border for better visual separation
+                        "border-radius": "50px"
+                    })
+                    .appendTo($li);
+                $("<span>").text(item.label).appendTo($li);
+                return $li.appendTo(ul);
+            };
+        });
+
+
+
+        function slugify(name, publicId) {
+            // Normalize the string to decompose accented characters
+            var slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Convert to lowercase and replace spaces and underscores with hyphens
+            slug = slug.toLowerCase().replace(/[\s_]+/g, '-');
+            // Remove all non-alphanumeric characters except hyphens
+            slug = slug.replace(/[^a-z0-9\-]+/g, '');
+            // Replace multiple hyphens with a single hyphen
+            slug = slug.replace(/\-{2,}/g, '-');
+            // Append the publicId for uniqueness
+            slug = `${slug}-${publicId}`;
+            return slug;
+        }
+    </script>
+</body>
+</html>

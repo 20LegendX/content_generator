@@ -1,39 +1,185 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Article Generator</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Article Generator</h1>
-        <form action="{{ url_for('generate') }}" method="post">
-            <div class="form-group">
-                <label for="topic">Main Topic/Subject</label>
-                <textarea id="topic" name="topic" required
-                    placeholder="Describe the main subject of your article. Be specific about what you want to cover."></textarea>
-            </div>
+import React, { useState } from 'react';
 
-            <div class="form-group">
-                <label for="keywords">SEO Keywords</label>
-                <input type="text" id="keywords" name="keywords" required
-                    placeholder="Important terms for SEO (separate with commas)">
-            </div>
+function ArticleGeneratorForm() {
+  // Manage form fields using React state
+  const [formData, setFormData] = useState({
+    publisher_name: '',
+    publisher_url: '',
+    topic: '',
+    keywords: '',
+    context: '',
+    supporting_data: '',
+    image_url: '',
+  });
+  
+  const [imageError, setImageError] = useState(false);
 
-            <div class="form-group">
-                <label for="context">Background Context</label>
-                <textarea id="context" name="context" required
-                    placeholder="Provide relevant background information, historical context, or specific angles you want the article to explore."></textarea>
-            </div>
+  // Handler for form field changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-            <div class="form-group">
-                <label for="supporting_data">Supporting Data & Facts</label>
-                <textarea id="supporting_data" name="supporting_data" required
-                    placeholder="Include any statistics, quotes, research findings, or specific data points you want incorporated into the article."></textarea>
-            </div>
+  // Handler for image preview
+  const handleImagePreview = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setImageError(false);
+  };
 
-            <button type="submit">Generate Article</button>
-        </form>
+  // Check if image can load
+  const handleImageLoad = () => setImageError(false);
+  const handleImageError = () => setImageError(true);
+
+  // Handler for form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // Example using fetch:
+    fetch('/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      // handle success - perhaps display the generated article or redirect
+      console.log('Article generated:', data);
+    })
+    .catch((error) => {
+      // handle error
+      console.error('Error generating article:', error);
+    });
+  };
+
+  return (
+    <div className="container">
+      <h1>Article Generator</h1>
+      <form onSubmit={handleSubmit}>
+        {/* Publisher Name */}
+        <div className="form-group">
+          <label htmlFor="publisher_name">Website/Publisher Name</label>
+          <input
+            type="text"
+            id="publisher_name"
+            name="publisher_name"
+            value={formData.publisher_name}
+            onChange={handleChange}
+            required
+            placeholder="Your website or company name"
+          />
+        </div>
+
+        {/* Publisher URL */}
+        <div className="form-group">
+          <label htmlFor="publisher_url">Website URL</label>
+          <input
+            type="url"
+            id="publisher_url"
+            name="publisher_url"
+            value={formData.publisher_url}
+            onChange={handleChange}
+            required
+            placeholder="https://your-website.com"
+          />
+        </div>
+
+        {/* Main Topic/Subject */}
+        <div className="form-group">
+          <label htmlFor="topic">Main Topic/Subject</label>
+          <textarea
+            id="topic"
+            name="topic"
+            value={formData.topic}
+            onChange={handleChange}
+            required
+            placeholder="Describe the main subject of your article..."
+          />
+        </div>
+
+        {/* SEO Keywords */}
+        <div className="form-group">
+          <label htmlFor="keywords">SEO Keywords</label>
+          <input
+            type="text"
+            id="keywords"
+            name="keywords"
+            value={formData.keywords}
+            onChange={handleChange}
+            required
+            placeholder="Important terms for SEO (separate with commas)"
+          />
+        </div>
+
+        {/* Background Context */}
+        <div className="form-group">
+          <label htmlFor="context">Background Context</label>
+          <textarea
+            id="context"
+            name="context"
+            value={formData.context}
+            onChange={handleChange}
+            required
+            placeholder="Provide relevant background information..."
+          />
+        </div>
+
+        {/* Supporting Data & Facts */}
+        <div className="form-group">
+          <label htmlFor="supporting_data">Supporting Data & Facts</label>
+          <textarea
+            id="supporting_data"
+            name="supporting_data"
+            value={formData.supporting_data}
+            onChange={handleChange}
+            required
+            placeholder="Include any statistics, quotes, or research findings..."
+          />
+        </div>
+
+        {/* Image URL */}
+        <div className="form-group">
+          <label htmlFor="image_url">Featured Image URL:</label>
+          <input
+            type="url"
+            id="image_url"
+            name="image_url"
+            value={formData.image_url}
+            onChange={handleImagePreview}
+            placeholder="https://your-website.com/path/to/image.jpg"
+          />
+
+          {/* Image Preview */}
+          {formData.image_url && (
+            <div id="imagePreview" style={{ marginTop: '10px' }}>
+              {!imageError && (
+                <img
+                  id="previewImg"
+                  src={formData.image_url}
+                  alt="Preview"
+                  style={{ maxWidth: '300px', maxHeight: '200px', objectFit: 'contain' }}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                />
+              )}
+              {imageError && (
+                <div
+                  id="previewError"
+                  style={{ color: 'red', marginTop: '10px' }}
+                >
+                  Invalid image URL or the image could not be loaded.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <button type="submit">Generate Article</button>
+      </form>
     </div>
-</body>
-</html>
+  );
+}
+
+export default ArticleGeneratorForm;
