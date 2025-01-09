@@ -7,7 +7,14 @@ from datetime import datetime
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
 import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Access your API key
+api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__, static_folder="frontend/build")
 CORS(app)  # Enable CORS
@@ -22,9 +29,7 @@ def serve(path):
         return send_from_directory(app.static_folder, "index.html")
 
 # Initialize OpenAI client
-client = OpenAI(
-    api_key='sk-proj-yJX8Vj0ZnszFmnGyGp9qT3BlbkFJjBeBlZQL2mm1cJG36GxG'
-)
+client = OpenAI(api_key=api_key)
 
 @app.route('/api/generate', methods=['POST'])
 def generate_api():
