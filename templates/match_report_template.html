@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ headline }}</title>
+
+    <!-- Meta tags -->
+    <meta name="description" content="{{ meta_description }}">
+    <meta name="keywords" content="{{ keywords }}">
+    <meta name="author" content="{{ author }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ og_title }}">
+    <meta property="og:description" content="{{ og_description }}">
+    <meta property="og:image" content="{{ featured_image_url }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:title" content="{{ twitter_title }}">
+    <meta property="twitter:description" content="{{ twitter_description }}">
+    <meta property="twitter:image" content="{{ featured_image_url }}">
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SportsEvent",
+        "name": "{{ home_team }} vs {{ away_team }}",
+        "description": "{{ meta_description }}",
+        "startDate": "{{ match_date }}",
+        "location": {
+            "@type": "Place",
+            "name": "{{ venue }}"
+        },
+        "homeTeam": {
+            "@type": "SportsTeam",
+            "name": "{{ home_team }}"
+        },
+        "awayTeam": {
+            "@type": "SportsTeam",
+            "name": "{{ away_team }}"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "{{ publisher_name }}",
+            "url": "{{ publisher_url }}"
+        }
+    }
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Base styles */
+        body {
+            background-color: #f4f6f8;
+            color: #2d3748;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .container {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+        }
+
+        /* Match header styles */
+        .match-header {
+            background: linear-gradient(135deg, #1a365d 0%, #2d4373 100%);
+            color: white;
+            padding: 3rem 1rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 12px 12px 0 0;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .team-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .match-details {
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            margin-top: 1rem;
+        }
+
+        /* Stats container styles */
+        .stats-container {
+            max-width: 800px;
+            margin: 3rem auto;
+            background: linear-gradient(to bottom, #ffffff, #f8fafc);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0;
+            position: relative;
+            height: 44px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        /* Stagger the animations */
+        .stat-row:nth-child(1) { animation-delay: 0.1s; }
+        .stat-row:nth-child(2) { animation-delay: 0.2s; }
+        .stat-row:nth-child(3) { animation-delay: 0.3s; }
+        .stat-row:nth-child(4) { animation-delay: 0.4s; }
+        .stat-row:nth-child(5) { animation-delay: 0.5s; }
+        .stat-row:nth-child(6) { animation-delay: 0.6s; }
+        .stat-row:nth-child(7) { animation-delay: 0.7s; }
+        .stat-row:nth-child(8) { animation-delay: 0.8s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-label {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-weight: 600;
+            color: #4a5568;
+            z-index: 1;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            top: -24px;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .stat-bars {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            background: #f1f5f9;
+        }
+
+        .home-bar {
+            background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 600;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0 12px;
+            min-width: 45px;
+            font-size: 0.95rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .away-bar {
+            background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 600;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0 12px;
+            min-width: 45px;
+            font-size: 0.95rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Shine effect */
+        .home-bar::after,
+        .away-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            to {
+                left: 200%;
+            }
+        }
+
+        /* Hover effects */
+        .stat-row:hover .home-bar,
+        .stat-row:hover .away-bar {
+            filter: brightness(1.1);
+            transform: scale(1.01);
+        }
+
+        /* Section title enhancement */
+        .match-section h2 {
+            text-align: center;
+            color: #1e293b;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .match-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #ef4444);
+            border-radius: 2px;
+        }
+
+        /* Media queries */
+        @media (max-width: 640px) {
+            .stats-container {
+                padding: 1.5rem;
+                margin: 2rem auto;
+            }
+
+            .stat-row {
+                margin: 1.5rem 0;
+                height: 36px;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+                top: -20px;
+            }
+
+            .home-bar, .away-bar {
+                font-size: 0.85rem;
+                padding: 0 8px;
+                min-width: 35px;
+            }
+        }
+
+        /* Content sections */
+        .match-section {
+            margin-bottom: 3rem;
+        }
+
+        .match-section h2 {
+            color: #2d3748;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .match-section h2:after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: #4299e1;
+            margin: 1rem auto;
+            border-radius: 2px;
+        }
+
+        /* Featured image */
+        .featured-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Match content */
+        .match-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            line-height: 1.8;
+        }
+
+        .match-content p {
+            margin-bottom: 1.5rem;
+            color: #4a5568;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid #e2e8f0;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            color: #718096;
+        }
+
+        footer a {
+            color: #4299e1;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+
+        .lineups-section {
+          margin: 3rem 0;
+          padding: 2rem;
+          background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+          border-radius: 12px;
+          box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+
+        .lineups-container {
+          display: flex;
+          justify-content: space-between;
+          gap: 3rem;
+          margin-top: 2rem;
+        }
+
+        .lineup {
+          flex: 1;
+          padding: 2rem;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+          position: relative;
+        }
+
+        .lineup::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          border-radius: 12px 12px 0 0;
+        }
+
+        .home-lineup::before {
+          background: linear-gradient(90deg, #3182ce 0%, #4299e1 100%);
+        }
+
+        .away-lineup::before {
+          background: linear-gradient(90deg, #e53e3e 0%, #f56565 100%);
+        }
+
+        .lineup h3 {
+          text-align: center;
+          color: #2d3748;
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 2px solid #edf2f7;
+        }
+
+        .lineup-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .lineup-player {
+          display: flex;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          margin: 0.5rem 0;
+          background: #f7fafc;
+          border-radius: 8px;
+          transition: transform 0.2s ease;
+        }
+
+        .lineup-player:hover {
+          transform: translateX(5px);
+          background: #edf2f7;
+        }
+
+        .player-number {
+          background: #2d3748;
+          color: white;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          margin-right: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .player-name {
+          font-size: 1rem;
+          color: #4a5568;
+          font-weight: 500;
+        }
+
+        /* Add pitch background effect */
+        .lineup::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background:
+            linear-gradient(rgba(255,255,255,0.97), rgba(255,255,255,0.97)),
+            repeating-linear-gradient(
+              0deg,
+              #f0f0f0,
+              #f0f0f0 5px,
+              transparent 5px,
+              transparent 50px
+            );
+          z-index: -1;
+          border-radius: 12px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <article class="match-report">
+            <header class="match-header">
+                <h1>{{ headline }}</h1>
+
+                <div class="score-display">
+                    <span class="team-name">{{ home_team }}</span>
+                    <span class="score">{{ home_score }} - {{ away_score }}</span>
+                    <span class="team-name">{{ away_team }}</span>
+                </div>
+
+                <div class="match-details">
+                    <span>{{ competition }}</span> |
+                    <span>{{ venue }}</span> |
+                    <span>{{ match_date }}</span>
+                </div>
+
+                {% if featured_image_url %}
+                <img src="{{ featured_image_url }}"
+                     alt="{{ featured_image_alt }}"
+                     class="featured-image">
+                {% endif %}
+            </header>
+
+                        <!-- Add this after the match header section -->
+            {% if home_lineup or away_lineup %}
+            <section class="lineups-section">
+              <h2>Starting Lineups</h2>
+              <div class="lineups-container">
+                <div class="lineup home-lineup">
+                  <h3>{{ home_team }}</h3>
+                  <ul class="lineup-list">
+                    {% for player in home_lineup.split('\n') %}
+                      {% if player.strip() %}
+                        {% set player_info = player.strip() %}
+                        {% set number = player_info[1:player_info.find(')')] %}
+                        {% set name = player_info[player_info.find(')')+1:].strip() %}
+                        <li class="lineup-player">
+                          <span class="player-number">{{ number }}</span>
+                          <span class="player-name">{{ name }}</span>
+                        </li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                </div>
+                <div class="lineup away-lineup">
+                  <h3>{{ away_team }}</h3>
+                  <ul class="lineup-list">
+                    {% for player in away_lineup.split('\n') %}
+                      {% if player.strip() %}
+                        {% set player_info = player.strip() %}
+                        {% set number = player_info[1:player_info.find(')')] %}
+                        {% set name = player_info[player_info.find(')')+1:].strip() %}
+                        <li class="lineup-player">
+                          <span class="player-number">{{ number }}</span>
+                          <span class="player-name">{{ name }}</span>
+                        </li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </section>
+            {% endif %}
+
+
+        <!-- Add in body where you want the stats to appear -->
+        <section class="match-section">
+            <h2>Match Statistics</h2>
+            <div class="stats-container">
+                <!-- Add xG as the first stat -->
+                <div class="stat-row">
+                    <div class="stat-label">Expected Goals (xG)</div>
+                    <div class="stat-bars">
+                        {% set total_xg = match_stats.xg.home + match_stats.xg.away %}
+                        {% if total_xg > 0 %}
+                            {% set home_xg_percent = (match_stats.xg.home / total_xg * 100)|round %}
+                            {% set away_xg_percent = (match_stats.xg.away / total_xg * 100)|round %}
+                        {% else %}
+                            {% set home_xg_percent = 50 %}
+                            {% set away_xg_percent = 50 %}
+                        {% endif %}
+                        <div class="home-bar" style="width: {{ home_xg_percent }}%">
+                            {{ match_stats.xg.home }}
+                        </div>
+                        <div class="away-bar" style="width: {{ away_xg_percent }}%">
+                            {{ match_stats.xg.away }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Possession -->
+                <div class="stat-row">
+                    <div class="stat-label">Possession</div>
+                    <div class="stat-bars">
+                        <div class="home-bar" style="width: {{ match_stats.possession.home }}%">
+                            {{ match_stats.possession.home }}%
+                        </div>
+                        <div class="away-bar" style="width: {{ match_stats.possession.away }}%">
+                            {{ match_stats.possession.away }}%
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Shots -->
+                <div class="stat-row">
+                    <div class="stat-label">Shots</div>
+                    <div class="stat-bars">
+                        {% set total = match_stats.shots.home + match_stats.shots.away %}
+                        {% if total > 0 %}
+                            {% set home_shots_percent = (match_stats.shots.home / total * 100)|round %}
+                            {% set away_shots_percent = (match_stats.shots.away / total * 100)|round %}
+                        {% else %}
+                            {% set home_shots_percent = 50 %}
+                            {% set away_shots_percent = 50 %}
+                        {% endif %}
+                        <div class="home-bar" style="width: {{ home_shots_percent }}%">
+                            {{ match_stats.shots.home }}
+                        </div>
+                        <div class="away-bar" style="width: {{ away_shots_percent }}%">
+                            {{ match_stats.shots.away }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add more stats in the same pattern -->
+                {% for stat, values in match_stats.items() %}
+                    {% if stat not in ['possession', 'shots', 'xg'] %}  <!-- Added 'xg' to excluded stats -->
+                        <div class="stat-row">
+                            <div class="stat-label">{{ stat|replace('_', ' ')|title }}</div>
+                            <div class="stat-bars">
+                                {% set total = values.home + values.away %}
+                                {% if total > 0 %}
+                                    {% set home_percent = (values.home / total * 100)|round %}
+                                    {% set away_percent = (values.away / total * 100)|round %}
+                                {% else %}
+                                    {% set home_percent = 50 %}
+                                    {% set away_percent = 50 %}
+                                {% endif %}
+                                <div class="home-bar" style="width: {{ home_percent }}%">
+                                    {{ values.home }}
+                                </div>
+                                <div class="away-bar" style="width: {{ away_percent }}%">
+                                    {{ values.away }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+            <div class="match-content">
+                {{ article_content|safe }}
+            </div>
+        </article>
+
+        <footer class="text-center mt-4 mb-4">
+            <p>Published by {{ publisher_name }}</p>
+            <p><a href="{{ publisher_url }}">Visit {{ publisher_name }}</a></p>
+            <p>Published on {{ publish_date }}</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
