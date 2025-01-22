@@ -4,11 +4,14 @@ import json
 import io
 import requests
 from datetime import datetime
+from functools import wraps
+import logging
+import os
+import socket
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-import os
 
 # Load environment variables from .env file
 load_dotenv()
@@ -16,15 +19,31 @@ load_dotenv()
 # Access your API key
 api_key = os.getenv("OPENAI_API_KEY")
 
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+def find_free_port(start_port=5001, max_port=5010):
+    """Find a free port to use"""
+    for port in range(start_port, max_port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(('', port))
+                return port
+            except OSError:
+                continue
+    raise RuntimeError('No free ports found')
+
 app = Flask(__name__, static_folder="frontend/build")
-# Update your CORS configuration
 CORS(app, resources={
-    r"/api/*": {
+    r"/api/*": {  # This matches all API routes
         "origins": [
-            "http://localhost:3000",  # React development server
-            "http://127.0.0.1:3000",  # Alternative React development URL
-            "http://127.0.0.1:5000",  # Flask development
-            "http://13.60.61.227",  # Your EC2 IP
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5000",
+            "http://127.0.0.1:5001",  # Added your new port
+            "http://localhost:5001",   # Added your new port
+            "http://13.60.61.227"
         ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Accept", "Authorization"],
@@ -32,17 +51,39 @@ CORS(app, resources={
     }
 })
 
+# Add this before your routes
+@app.after_request 
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5001')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
-# Serve React static files
-# Catch-all route for React app LAST
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
+def check_auth():
+    """Check if request has valid auth"""
+    # Check for token in headers
+    auth_header = request.headers.get('Authorization')
+    # Check for token in URL parameters or hash
+    token = request.args.get('access_token')
+    hash_token = '#access_token=' in request.url
+    
+    return auth_header or token or hash_token
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
 def serve(path):
-    if path != "" and os.path.exists(app.static_folder + "/" + path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
         return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(app.static_folder, "index.html")
+        return send_from_directory(app.static_folder, 'index.html')
 
+# Protected API routes
+@app.route('/api/*')
+def protected_routes():
+    if not check_auth():
+        return jsonify({'error': 'Unauthorized'}), 401
+    return jsonify({'status': 'ok'})
 
 # Initialize OpenAI client
 client = OpenAI(api_key=api_key)
@@ -74,7 +115,6 @@ def validate_template_vars(template_vars, template_name):
 
 @app.route('/api/generate', methods=['POST', 'OPTIONS'])
 def generate_api():
-    # Add CORS headers for OPTIONS requests
     if request.method == "OPTIONS":
         response = jsonify({})
         response.headers.add('Access-Control-Allow-Origin', request.origin or '*')
@@ -88,7 +128,6 @@ def generate_api():
         if not data:
             return jsonify({'error': 'No data provided in the request.'}), 400
 
-        # Update template validation to include both options
         template_name = data.get('template_name')
         if template_name not in [
             'match_report_template.html',
@@ -97,36 +136,26 @@ def generate_api():
             'article_template.html',
             'ss_player_scout_report_template.html'
         ]:
-            template_name = 'article_template.html'  # default fallback
+            template_name = 'article_template.html'
 
-        print("Template selected:", template_name)
-        print("Received data:", data)  # Debug log
+        # Check if this is an edit request
+        if 'edited_content' in data:
+            # Use the edited content directly
+            formatted_content = data['edited_content']
+        else:
+            # Original flow for generating new content
+            # Validate required fields
+            required_fields = ['topic', 'keywords', 'context', 'supporting_data']
+            missing_fields = [field for field in required_fields if not data.get(field)]
+            if missing_fields:
+                return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
-        # Validate required fields
-        required_fields = ['topic', 'keywords', 'context', 'supporting_data']
-        missing_fields = [field for field in required_fields if not data.get(field)]
-        if missing_fields:
-            return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
-
-        # Generate the GPT prompt
-        try:
+            # Generate and format content using GPT
             prompt = create_prompt(data)
-        except Exception as prompt_error:
-            print(f"Error creating prompt: {str(prompt_error)}")
-            return jsonify({'error': 'Failed to create prompt.'}), 500
-
-        print("Generated prompt:", prompt)  # Debug log
-
-        # Run GPT to generate the article content
-        gpt_response = run_gpt4(prompt, template_name)
-        print("GPT response received")  # Debug log
-        print(gpt_response)
-        # Format the GPT response into HTML-ready content
-        formatted_content = format_article_content(gpt_response, template_name)
-        if not formatted_content:
-            return jsonify({'error': 'Failed to format article content'}), 500
-
-        print("Formatted content:", formatted_content)  # Debug log
+            gpt_response = run_gpt4(prompt, template_name)
+            formatted_content = format_article_content(gpt_response, template_name)
+            if not formatted_content:
+                return jsonify({'error': 'Failed to format article content'}), 500
 
         # Template-specific validation
         if template_name == 'ss_player_scout_report_template':
@@ -195,10 +224,10 @@ def generate_api():
                 }
 
         try:
-            # Render the template with the generated content
+            # Render the template with either the edited or generated content
             preview_html = render_template(
                 template_name,
-                **formatted_content  # Spread all formatted content as template variables
+                **formatted_content
             )
         except Exception as template_error:
             print(f"Template rendering error: {str(template_error)}")
@@ -207,17 +236,20 @@ def generate_api():
         return jsonify({
             'preview_html': preview_html,
             'raw_content': formatted_content,
-            'template_used': template_name  # Add this for debugging
+            'template_used': template_name
         })
     except Exception as e:
-        print("Error in generate_api:", str(e))  # Debug log
+        print("Error in generate_api:", str(e))
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/')
-def index():
-    """Render the simple input form"""
-    return render_template('input_form.html')
+@app.route('/api/auth/session', methods=['GET'])
+def get_session():
+    try:
+        # This will be used to check if user is authenticated
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 def validate_image_url(url):
@@ -1000,4 +1032,4 @@ def parse_recent_form(form_text):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='127.0.0.1', port=5001, debug=True)

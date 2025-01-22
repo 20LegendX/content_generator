@@ -1,127 +1,30 @@
 import React, { useState } from 'react';
 import { TextField, Button, CircularProgress, Typography } from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
+import TemplateSelector from './TemplateSelector';
 
-// First, let's create a templates configuration object
-const TEMPLATES = {
-  standard: {
-    id: 'article_template.html',
-    name: 'Standard Article',
-    description: 'Basic article layout for general content',
-    icon: '📄',
-    category: 'General',
-    preview: '/images/templates/standard-preview.png', // Add template preview images
-  },
-  matchReport: {
-    id: 'match_report_template.html',
-    name: 'Basic Match Report',
-    description: 'Simple match coverage with core statistics',
-    icon: '⚽',
-    category: 'Sports',
-    preview: '/images/templates/match-preview.png',
-  },
-  enhancedMatch: {
-    id: 'ss_match_report_template.html',
-    name: 'Enhanced Match Report',
-    description: 'Detailed match analysis with advanced statistics',
-    icon: '🏆',
-    category: 'Sports',
-    preview: '/images/templates/enhanced-match-preview.png',
-  },
-  scoutReport: {
-    id: 'ss_player_scout_report_template.html',
-    name: 'Player Scout Report',
-    description: 'In-depth player analysis and statistics',
-    icon: '🔍',
-    category: 'Sports',
-    preview: '/images/templates/scout-preview.png',
-  }
-};
-
-// Template Selection Component
-const TemplateGallery = ({ selectedTemplate, onSelect }) => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const categories = ['All', ...new Set(Object.values(TEMPLATES).map(t => t.category))];
-
-  const filteredTemplates = selectedCategory === 'All'
-    ? Object.values(TEMPLATES)
-    : Object.values(TEMPLATES).filter(t => t.category === selectedCategory);
-
-  return (
-    <div className="space-y-4">
-      {/* Category Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {categories.map(category => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-full whitespace-nowrap ${
-              selectedCategory === category
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 hover:bg-gray-200'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      {/* Template Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map(template => (
-          <div
-            key={template.id}
-            onClick={() => onSelect(template.id)}
-            className={`
-              relative rounded-lg border-2 cursor-pointer transition-all
-              ${selectedTemplate === template.id 
-                ? 'border-blue-500 shadow-lg' 
-                : 'border-gray-200 hover:border-gray-300'
-              }
-            `}
-          >
-            {/* Preview Image */}
-            <div className="aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden">
-              <img
-                src={template.preview}
-                alt={template.name}
-                className="object-cover w-full h-full"
-              />
-            </div>
-
-            {/* Template Info */}
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">{template.icon}</span>
-                <h3 className="font-medium">{template.name}</h3>
-              </div>
-              <p className="text-sm text-gray-600">{template.description}</p>
-            </div>
-
-            {/* Selected Indicator */}
-            {selectedTemplate === template.id && (
-              <div className="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full">
-                <CheckIcon className="w-4 h-4" />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export default function ArticleForm({ formik, loading, handleImageChange, imagePreview, generatedContent }) {
+const ArticleForm = ({ 
+  formik, 
+  loading, 
+  handleImageChange, 
+  imagePreview, 
+  generatedContent,
+  templateName,
+  setTemplateName,
+  hasGeneratedContent,
+  setHasGeneratedContent 
+}) => {
+  console.log('ArticleForm rendering');
   const [lineupsOpen, setLineupsOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
 
   return (
     <div className="p-6">
       <form onSubmit={formik.handleSubmit} className="space-y-6">
-        {/* Template Selection */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Choose a Template</h2>
-          <TemplateGallery
+          <Typography variant="h6" gutterBottom>
+            Choose a Template
+          </Typography>
+          <TemplateSelector
             selectedTemplate={formik.values.template_name}
             onSelect={(templateId) => formik.setFieldValue('template_name', templateId)}
           />
@@ -129,7 +32,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
 
         {formik.values.template_name === 'ss_player_scout_report_template.html' && (
           <>
-            {/* Player Name */}
             <TextField
               fullWidth
               id="player_name"
@@ -142,7 +44,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
               className="mb-4"
             />
 
-            {/* Player Position */}
             <TextField
               fullWidth
               id="player_position"
@@ -154,7 +55,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
               placeholder="e.g., Forward, Striker, Attacking Mid, etc."
             />
 
-            {/* Age / Nationality / Foot, etc. */}
             <div className="grid grid-cols-3 gap-4 mb-6">
               <TextField
                 fullWidth
@@ -185,7 +85,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
               />
             </div>
 
-            {/* Stats Field */}
             <TextField
               fullWidth
               multiline
@@ -202,10 +101,8 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
           </>
         )}
 
-        {/* Dynamic Form Fields based on template */}
         {(formik.values.template_name === 'match_report_template.html' || formik.values.template_name === 'ss_match_report_template.html') ? (
           <>
-            {/* Match Details */}
             <div className="grid grid-cols-3 gap-4 mb-6">
               <TextField
                 fullWidth
@@ -238,7 +135,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
               />
             </div>
 
-            {/* Teams */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <TextField
                 fullWidth
@@ -262,7 +158,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
               />
             </div>
 
-            {/* Score */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <TextField
                 fullWidth
@@ -290,7 +185,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
               />
             </div>
 
-            {/* Scorers */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <TextField
                 fullWidth
@@ -325,7 +219,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                 placeholder="Example: Salah (15'), Núñez (78')"
               />
 
-              {/* Key Events */}
               <TextField
                 fullWidth
                 multiline
@@ -340,8 +233,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
 
             </div>
 
-            {/* Keep your existing collapsible sections */}
-            {/* Lineups Section */}
             <div className="mt-6">
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <button
@@ -405,7 +296,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Keep the existing helper tooltip */}
                   <div className="text-sm text-gray-500 bg-blue-50 p-3 rounded-md">
                     <div className="flex items-start">
                       <svg className="w-5 h-5 text-blue-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -422,7 +312,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
               </div>
             </div>
 
-            {/* Stats Section */}
             <div className="mt-6">
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <button
@@ -445,7 +334,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                 </button>
 
                 <div className={`${statsOpen ? 'block' : 'hidden'} p-6 bg-white`}>
-                  {/* xG */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -481,8 +369,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Keep all your existing stats fields */}
-                  {/* Possession */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -506,7 +392,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Shots */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -530,7 +415,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Shots on Target */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -554,7 +438,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Corners */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -578,7 +461,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Fouls */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -602,7 +484,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Yellow Cards */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -626,7 +507,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Red Cards */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -650,7 +530,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
                     />
                   </div>
 
-                  {/* Offsides */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <TextField
                       fullWidth
@@ -679,7 +558,6 @@ export default function ArticleForm({ formik, loading, handleImageChange, imageP
           </>
         ) : null}
 
-        {/* Standard Article Fields (always shown) */}
         <TextField
           fullWidth
           id="publisher_name"
@@ -771,7 +649,6 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
           }
         />
 
-        {/* Image URL Field (replacing Image Upload) */}
         <TextField
           fullWidth
           id="image_url"
@@ -787,7 +664,6 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
           placeholder="https://example.com/image.jpg"
         />
 
-        {/* Preview image if URL is provided */}
         {formik.values.image_url && (
           <div className="mt-2">
             <img
@@ -813,3 +689,5 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
     </div>
   );
 }
+
+export default ArticleForm;

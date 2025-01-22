@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Button,
   Typography,
@@ -8,6 +8,13 @@ import {
   AppBar,
   Toolbar,
   IconButton,
+  Grid,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useFormik } from 'formik';
@@ -20,9 +27,22 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import ArticleForm from './components/ArticleForm';
 import GeneratedContentModal from './components/GeneratedContentModal';
-// Update this constant
+import EditIcon from '@mui/icons-material/Edit';
+import EditContentModal from './components/EditContentModal';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import Auth from './components/Auth/Auth';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { upsertUser } from './utils/db';
+import LandingPage from './components/pages/LandingPage';
+import AuthCallback from './components/Auth/AuthCallback';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import Dashboard from './components/layout/Dashboard';
+import { supabase } from './lib/supabase';  // Updated import path
+
+// Update this to use port 5001
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? `http://${window.location.hostname}:5000`
+  ? `http://${window.location.hostname}:5001`  // Changed from 5000 to 5001
   : `http://${window.location.hostname}`;
 
 const getTheme = (mode) => createTheme({
@@ -237,16 +257,23 @@ const getInitialValues = (templateName) => {
   return baseValues;
 };
 
-function App() {
+function AppContent() {
+  const navigate = useNavigate();
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [generatedContent, setGeneratedContent] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
-  const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [templateName, setTemplateName] = useState('article_template.html');
-
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [hasGeneratedContent, setHasGeneratedContent] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  
+  const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
   const initialValues = useMemo(() => getInitialValues(templateName), [templateName]);
 
   const formik = useFormik({
@@ -254,31 +281,11 @@ function App() {
     validationSchema: getValidationSchema(templateName),
     enableReinitialize: true,
     onSubmit: async (values) => {
-      setLoading(true);
-      setErrorMessage(null);
-      setGeneratedContent(null);
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/generate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(values),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to generate article. Please try again.');
-        }
-
-        const data = await response.json();
-        setGeneratedContent(data);
-        setIsModalOpen(true);
-      } catch (error) {
-        setErrorMessage(error.message || 'Something went wrong. Please try again.');
-      } finally {
-        setLoading(false);
+      if (hasGeneratedContent) {
+        setShowRegenerateConfirm(true);
+        return;
       }
+      await generateContent(values);
     }
   });
 
@@ -363,14 +370,225 @@ function App() {
     }
   };
 
+  const handleContentEdit = async (editedContent) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formik.values,
+          edited_content: editedContent
+        }),
+      });
+
+      const data = await response.json();
+      setGeneratedContent(data);
+    } catch (error) {
+      console.error('Error updating preview:', error);
+    }
+  };
+
+  const generateContent = async (values) => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/generate`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate article. Please try again.');
+      }
+
+      const data = await response.json();
+      setGeneratedContent(data);
+      setHasGeneratedContent(true);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    setShowRegenerateConfirm(false);
+    await generateContent(formik.values);
+  };
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session);
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session);
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleUser = async (user) => {
+    try {
+      const userData = {
+        id: user.id,
+        email: user.email,
+        provider: user.app_metadata.provider || 'email',
+      };
+      await upsertUser(userData);
+    } catch (error) {
+      console.error('Error handling user:', error);
+      // You might want to show an error message to the user
+    }
+  };
+
+  // Show error if session check fails
+  if (authError) {
+    return (
+      <ThemeProvider theme={theme}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+          <div style={{ color: 'red', marginBottom: '1rem' }}>Error checking auth: {authError}</div>
+          <Button variant="contained" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  // Only show loading during initial auth check
+  if (authLoading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+          <CircularProgress />
+          <div style={{ marginTop: '1rem' }}>Checking authentication...</div>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  // Pass formik and other necessary props to ArticleForm
+  const renderArticleForm = () => (
+    <ArticleForm 
+      formik={formik}
+      loading={loading}
+      handleImageChange={handleImageChange}
+      imagePreview={imagePreview}
+      generatedContent={generatedContent}
+      templateName={templateName}
+      setTemplateName={setTemplateName}
+      hasGeneratedContent={hasGeneratedContent}
+      setHasGeneratedContent={setHasGeneratedContent}
+    />
+  );
+
+  // Separate the preview section into its own component
+  const PreviewSection = () => (
+    <div>
+      {generatedContent ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-8 lg:mt-0"
+        >
+          <Paper className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+            <div className="mb-4 pb-4 border-b border-gray-200">
+              <Typography variant="h6" className="text-gray-800">
+                Preview
+              </Typography>
+            </div>
+
+            <div 
+              dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
+              className="article-preview prose prose-sm max-w-none mb-6"
+            />
+
+            <div className="flex justify-end gap-4">
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<EditIcon />}
+                onClick={() => setEditModalOpen(true)}
+              >
+                Edit Content
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<DownloadIcon />}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                onClick={downloadArticle}
+              >
+                Download Article
+              </Button>
+            </div>
+          </Paper>
+        </motion.div>
+      ) : (
+        <div className="h-full flex items-center justify-center text-gray-500">
+          Generate an article to see the preview
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <ThemeProvider theme={theme}>
       <AppBar position="static" color="primary" elevation={0}>
         <Toolbar>
           <ArticleIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ flexGrow: 1, cursor: 'pointer' }}
+            onClick={() => navigate('/')}
+          >
             AI Article Generator
           </Typography>
+          
+          {session ? (
+            // Navigation for authenticated users
+            <>
+              <Button 
+                color="inherit" 
+                onClick={() => navigate('/generate')}
+                sx={{ mr: 2 }}
+              >
+                Generate Content
+              </Button>
+              <Button 
+                color="inherit"
+                onClick={() => {
+                  supabase.auth.signOut();
+                  navigate('/');
+                }}
+              >
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            // Only show sign in button for non-authenticated users
+            <Button 
+              color="inherit"
+              onClick={() => navigate('/login')}
+            >
+              Sign In
+            </Button>
+          )}
+          
           <IconButton
             color="inherit"
             onClick={() => setDarkMode(!darkMode)}
@@ -405,85 +623,54 @@ function App() {
                 boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
               }}
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Form Column */}
-                <div>
-                  <ArticleForm
-                    formik={formik}
-                    loading={loading}
-                    handleImageChange={handleImageChange}
-                    imagePreview={imagePreview}
-                  />
-                </div>
-
-                {/* Preview Column */}
-                <div>
-                  {generatedContent ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="mt-8 lg:mt-0"
-                    >
-                      <Paper className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                        <div className="mb-4 pb-4 border-b border-gray-200">
-                          <Typography variant="h6" className="text-gray-800">
-                            Preview
-                          </Typography>
-                        </div>
-
-                        <div 
-                          dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
-                          className="article-preview prose prose-sm max-w-none mb-6"
-                        />
-
-                        <div className="flex justify-end gap-4">
-                          <Button
-                            variant="contained"
-                            color="secondary"
-                            startIcon={<DownloadIcon />}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                            onClick={downloadArticle}
-                          >
-                            Download Article
-                          </Button>
-                        </div>
-                      </Paper>
-                    </motion.div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-gray-500">
-                      Generate an article to see the preview
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Routes>
+                <Route 
+                  path="/" 
+                  element={<LandingPage isAuthenticated={!!session} />} 
+                />
+                <Route 
+                  path="/generate" 
+                  element={
+                    !session ? (
+                      <Navigate to="/login" replace />
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>{renderArticleForm()}</div>
+                        <div><PreviewSection /></div>
+                      </div>
+                    )
+                  } 
+                />
+                <Route path="/login" element={<Auth />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
             </Paper>
           </motion.div>
         </Container>
       </Box>
-
-      <Box
-        component="footer"
-        sx={{
-          mt: 4,
-          py: 3,
-          textAlign: 'center',
-          backgroundColor: '#f7f9fc',
-          borderTop: '1px solid',
-          borderColor: 'grey.200'
-        }}
-      >
-        <Typography variant="body2" color="text.secondary">
-          © 2024 AI Article Generator. All rights reserved.
-        </Typography>
-      </Box>
-
-      <GeneratedContentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+      <EditContentModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
         content={generatedContent}
+        onSave={(updatedContent) => {
+          setGeneratedContent({
+            ...generatedContent,
+            raw_content: updatedContent,
+            preview_html: generatedContent.preview_html
+          });
+          setEditModalOpen(false);
+        }}
       />
     </ThemeProvider>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 
