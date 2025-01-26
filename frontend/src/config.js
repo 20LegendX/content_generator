@@ -1,11 +1,17 @@
+// Export the function
 const getApiUrl = () => {
-    // During development, read from the console output which port the Flask app is using
-    return process.env.REACT_APP_API_URL || 'http://localhost:5001';
+    return process.env.REACT_APP_API_URL || 'http://127.0.0.1:5001';
 };
 
-export const config = {
-    apiUrl: getApiUrl(),
-    // other config...
+// Export the API_BASE_URL constant
+const API_BASE_URL = getApiUrl();
+
+// Export everything we need
+export { API_BASE_URL };
+
+// Export the default config object
+const config = {
+    apiUrl: API_BASE_URL,
 };
 
 export default config;

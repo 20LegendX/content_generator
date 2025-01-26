@@ -39,6 +39,26 @@ export default function Auth() {
     console.log('Session error:', error);
   };
 
+  const debugUserCreation = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      console.log('Current user:', session.user);
+      const { data: userData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      console.log('User record:', userData);
+      
+      const { data: subData } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+      console.log('Subscription record:', subData);
+    }
+  };
+
   return (
     <Container maxWidth="sm">
       <Box
@@ -71,6 +91,10 @@ export default function Auth() {
           color="secondary"
         >
           Check Session
+        </Button>
+
+        <Button onClick={debugUserCreation}>
+          Debug User Creation
         </Button>
       </Box>
     </Container>

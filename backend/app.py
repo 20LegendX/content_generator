@@ -8,6 +8,10 @@ from functools import wraps
 import logging
 import os
 import socket
+from supabase import create_client
+from supabase.client import Client
+import stripe
+from flask import url_for
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -15,6 +19,11 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Get Supabase credentials from environment
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_KEY')  # Changed to match your .env file
+
 
 # Access your API key
 api_key = os.getenv("OPENAI_API_KEY")
@@ -34,31 +43,24 @@ def find_free_port(start_port=5001, max_port=5010):
                 continue
     raise RuntimeError('No free ports found')
 
-app = Flask(__name__, static_folder="frontend/build")
+app = Flask(__name__, 
+    static_folder="../frontend/build",
+    static_url_path='',
+    template_folder='templates'
+)
 CORS(app, resources={
-    r"/api/*": {  # This matches all API routes
-        "origins": [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5000",
-            "http://127.0.0.1:5001",  # Added your new port
-            "http://localhost:5001",   # Added your new port
-            "http://13.60.61.227"
-        ],
+    r"/*": {  # Allow CORS for all routes
+        "origins": ["http://localhost:3000",
+                    "http://127.0.0.1:3000",
+                    "http://127.0.0.1:5000",
+                    "http://127.0.0.1:5001",
+                    "http://localhost:5001",
+                    "http://13.60.61.227"],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Accept", "Authorization"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept"],
         "supports_credentials": True
     }
 })
-
-# Add this before your routes
-@app.after_request 
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5001')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
 
 def check_auth():
     """Check if request has valid auth"""
@@ -67,16 +69,33 @@ def check_auth():
     # Check for token in URL parameters or hash
     token = request.args.get('access_token')
     hash_token = '#access_token=' in request.url
-    
+
     return auth_header or token or hash_token
+
+@app.before_request
+def log_request_info():
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
+    app.logger.debug('Path: %s', request.path)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
+    """Serve React App"""
+    app.logger.debug(f'Serving path: {path}')
+    app.logger.debug(f'Static folder: {app.static_folder}')
+    app.logger.debug(f'File exists: {os.path.exists(app.static_folder + "/" + path) if path else "N/A"}')
+    
     if path != "" and os.path.exists(app.static_folder + '/' + path):
         return send_from_directory(app.static_folder, path)
-    else:
+    
+    # Always serve index.html for non-API routes
+    if not path.startswith('api/'):
+        app.logger.debug('Serving index.html')
         return send_from_directory(app.static_folder, 'index.html')
+    
+    # If we get here, it's a 404
+    return 'Not Found', 404
 
 # Protected API routes
 @app.route('/api/*')
@@ -88,6 +107,34 @@ def protected_routes():
 # Initialize OpenAI client
 client = OpenAI(api_key=api_key)
 
+# Initialize Supabase client
+supabase_client = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+
+        if not auth_header:
+            return jsonify({'message': 'No authorization header'}), 401
+
+        try:
+            token = auth_header.split(' ')[1]
+            # The user data is in the 'user' property of the response
+            user_response = supabase_client.auth.get_user(token)
+            user = user_response.user  # Get the actual user object
+
+            # Add user to request context for use in the route
+            request.user = user
+            return f(*args, **kwargs)
+        except Exception as e:
+            print(f"Error verifying token: {str(e)}")
+            return jsonify({'message': 'Invalid token'}), 401
+
+    return decorated
 
 def validate_template_vars(template_vars, template_name):
     """Validate template variables based on template type"""
@@ -113,8 +160,19 @@ def validate_template_vars(template_vars, template_name):
     return True, None
 
 
+def get_user_id_from_token(token):
+    try:
+        # Verify the JWT token
+        user = supabase_client.auth.get_user(token)
+        return user.id
+    except Exception as e:
+        logger.error(f"Error verifying token: {str(e)}")
+        return None
+
 @app.route('/api/generate', methods=['POST', 'OPTIONS'])
+@require_auth
 def generate_api():
+    # Handle OPTIONS request for CORS
     if request.method == "OPTIONS":
         response = jsonify({})
         response.headers.add('Access-Control-Allow-Origin', request.origin or '*')
@@ -123,12 +181,15 @@ def generate_api():
         return response, 200
 
     try:
-        # Parse JSON data from React
+        user_id = request.user.id
+        print(f"Generating content for user: {user_id}")
+
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided in the request.'}), 400
 
-        template_name = data.get('template_name')
+        # Validate template name
+        template_name = data.get('template_name', 'article_template.html')
         if template_name not in [
             'match_report_template.html',
             'ss_match_report_template.html',
@@ -138,108 +199,123 @@ def generate_api():
         ]:
             template_name = 'article_template.html'
 
-        # Check if this is an edit request
-        if 'edited_content' in data:
-            # Use the edited content directly
-            formatted_content = data['edited_content']
-        else:
-            # Original flow for generating new content
-            # Validate required fields
-            required_fields = ['topic', 'keywords', 'context', 'supporting_data']
-            missing_fields = [field for field in required_fields if not data.get(field)]
-            if missing_fields:
-                return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+        # Check subscription
+        try:
+            subscription_response = supabase_client.table('subscriptions')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .eq('status', 'active')\
+                .order('created_at', desc=True)\
+                .limit(1)\
+                .execute()
 
-            # Generate and format content using GPT
-            prompt = create_prompt(data)
-            gpt_response = run_gpt4(prompt, template_name)
-            formatted_content = format_article_content(gpt_response, template_name)
-            if not formatted_content:
-                return jsonify({'error': 'Failed to format article content'}), 500
-
-        # Template-specific validation
-        if template_name == 'ss_player_scout_report_template':
-            required_defaults = {
-                'headline': 'Player Scout Report',
-                'summary': 'No summary provided.',
-                'article_content': '<p>No content available.</p>',
-                'meta_description': 'A comprehensive scout report on the player.',
-                'keywords': ['Football', 'Scout Report'],
-                'featured_image_url': '/static/images/default-featured-image.jpg',
-                'featured_image_alt': 'Default featured image',
-                'publish_date': datetime.now().strftime('%Y-%m-%d'),
-                'player_name': 'Unknown Player',
-                'player_position': 'Unknown Position',
-                'player_age': 'Unknown Age',
-                'player_nationality': 'Unknown Nationality',
-                'favored_foot': 'Unknown',
-                'scout_stats': 'No stats available.'
+            user_subscription = {
+                'plan_type': 'free',
+                'articles_remaining': 3,
+                'articles_generated': 0,
+                'status': 'active'
             }
 
-            for key, default_value in required_defaults.items():
-                formatted_content.setdefault(key, default_value)
+            if subscription_response.data:
+                user_subscription = subscription_response.data[0]
 
-        if template_name in ['match_report_template.html', 'ss_match_report_template.html']:
-            # Validate the fields for these templates only
-            is_valid, error_message = validate_template_vars(formatted_content, template_name)
-            if not is_valid:
-                return jsonify({'error': error_message}), 400
+            if user_subscription['articles_remaining'] <= 0 and user_subscription['plan_type'] != 'pro':
+                return jsonify({
+                    'error': 'No articles remaining. Please upgrade to continue generating content.'
+                }), 403
 
-        # Add match_stats if they're not present
-        if template_name == 'match_report_template.html':
-            if 'match_stats' not in formatted_content:
+            # Check if this is an edit request
+            if 'edited_content' in data:
+                formatted_content = data['edited_content']
+            else:
+                # Validate required fields for new content
+                required_fields = ['topic', 'keywords', 'context', 'supporting_data']
+                missing_fields = [field for field in required_fields if not data.get(field)]
+                if missing_fields:
+                    return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+                # Generate content
+                prompt = create_prompt(data)
+                print(f"Created prompt: {prompt[:200]}...")
+
+                response = run_gpt4(prompt, template_name)
+                print(f"GPT response: {response[:200] if response else 'None'}")
+
+                if not response:
+                    return jsonify({'error': 'Failed to generate content'}), 500
+
+                formatted_content = format_article_content(response, template_name)
+                if not formatted_content:
+                    return jsonify({'error': 'Failed to format article content'}), 500
+
+            # Template-specific validation and defaults
+            if template_name == 'ss_player_scout_report_template':
+                required_defaults = {
+                    'headline': 'Player Scout Report',
+                    'summary': 'No summary provided.',
+                    'article_content': '<p>No content available.</p>',
+                    'meta_description': 'A comprehensive scout report on the player.',
+                    'keywords': ['Football', 'Scout Report'],
+                    'featured_image_url': '/static/images/default-featured-image.jpg',
+                    'featured_image_alt': 'Default featured image',
+                    'publish_date': datetime.now().strftime('%Y-%m-%d'),
+                    'player_name': 'Unknown Player',
+                    'player_position': 'Unknown Position',
+                    'player_age': 'Unknown Age',
+                    'player_nationality': 'Unknown Nationality',
+                    'favored_foot': 'Unknown',
+                    'scout_stats': 'No stats available.'
+                }
+                for key, default_value in required_defaults.items():
+                    formatted_content.setdefault(key, default_value)
+
+            if template_name in ['match_report_template.html', 'ss_match_report_template.html']:
+                is_valid, error_message = validate_template_vars(formatted_content, template_name)
+                if not is_valid:
+                    return jsonify({'error': error_message}), 400
+
+            # Add match stats if needed
+            if template_name == 'match_report_template.html' and 'match_stats' not in formatted_content:
                 formatted_content['match_stats'] = {
-                    'possession': {
-                        'home': data.get('home_possession', 50),
-                        'away': data.get('away_possession', 50)
-                    },
-                    'shots': {
-                        'home': data.get('home_shots', 0),
-                        'away': data.get('away_shots', 0)
-                    },
-                    'shots_on_target': {
-                        'home': data.get('home_shots_on_target', 0),
-                        'away': data.get('away_shots_on_target', 0)
-                    },
-                    'corners': {
-                        'home': data.get('home_corners', 0),
-                        'away': data.get('away_corners', 0)
-                    },
-                    'fouls': {
-                        'home': data.get('home_fouls', 0),
-                        'away': data.get('away_fouls', 0)
-                    },
-                    'yellow_cards': {
-                        'home': data.get('home_yellow_cards', 0),
-                        'away': data.get('away_yellow_cards', 0)
-                    },
-                    'red_cards': {
-                        'home': data.get('home_red_cards', 0),
-                        'away': data.get('away_red_cards', 0)
-                    },
-                    'offsides': {
-                        'home': data.get('home_offsides', 0),
-                        'away': data.get('away_offsides', 0)
-                    }
+                    'possession': {'home': data.get('home_possession', 50), 'away': data.get('away_possession', 50)},
+                    'shots': {'home': data.get('home_shots', 0), 'away': data.get('away_shots', 0)},
+                    'shots_on_target': {'home': data.get('home_shots_on_target', 0), 'away': data.get('away_shots_on_target', 0)},
+                    'corners': {'home': data.get('home_corners', 0), 'away': data.get('away_corners', 0)},
+                    'fouls': {'home': data.get('home_fouls', 0), 'away': data.get('away_fouls', 0)},
+                    'yellow_cards': {'home': data.get('home_yellow_cards', 0), 'away': data.get('away_yellow_cards', 0)},
+                    'red_cards': {'home': data.get('home_red_cards', 0), 'away': data.get('away_red_cards', 0)},
+                    'offsides': {'home': data.get('home_offsides', 0), 'away': data.get('away_offsides', 0)}
                 }
 
-        try:
-            # Render the template with either the edited or generated content
-            preview_html = render_template(
-                template_name,
-                **formatted_content
-            )
-        except Exception as template_error:
-            print(f"Template rendering error: {str(template_error)}")
-            return jsonify({'error': f'Template rendering failed: {str(template_error)}'}), 500
+            try:
+                # Render template
+                preview_html = render_template(template_name, **formatted_content)
+            except Exception as template_error:
+                print(f"Template rendering error: {str(template_error)}")
+                return jsonify({'error': f'Template rendering failed: {str(template_error)}'}), 500
 
-        return jsonify({
-            'preview_html': preview_html,
-            'raw_content': formatted_content,
-            'template_used': template_name
-        })
+            # Update subscription if successful
+            if user_subscription['plan_type'] != 'pro':
+                supabase_client.table('subscriptions')\
+                    .update({
+                        'articles_remaining': user_subscription['articles_remaining'] - 1,
+                        'articles_generated': user_subscription['articles_generated'] + 1
+                    })\
+                    .eq('user_id', user_id)\
+                    .execute()
+
+            return jsonify({
+                'preview_html': preview_html,
+                'raw_content': formatted_content,
+                'template_used': template_name
+            })
+
+        except Exception as e:
+            logger.error(f"Supabase error: {str(e)}")
+            return jsonify({'error': 'Error accessing subscription data'}), 500
+
     except Exception as e:
-        print("Error in generate_api:", str(e))
+        print(f"Generate API error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -396,10 +472,10 @@ def create_prompt(user_input):
 
 def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature=0.7):
     """Send prompt to GPT-4 and get structured response."""
-    print("Using model:", model)
+    print("Using model:", model)  # Debug log
+    print("Sending prompt:", prompt[:200] + "...")  # Debug first 200 chars of prompt
 
     try:
-
         if template_name == 'match_report_template.html' or template_name == 'ss_match_report_template.html':
             system_prompt = """You are an expert sports journalist. 
             Return your response in valid JSON format with match report elements:
@@ -527,11 +603,12 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature
             response_format={"type": "json_object"}
         )
 
-
-        return completion.choices[0].message.content.strip()
+        response = completion.choices[0].message.content.strip()
+        print("Got OpenAI response:", response[:200] + "...")  # Debug first 200 chars of response
+        return response
 
     except Exception as e:
-        print(f"Error details: {str(e)}")
+        print(f"OpenAI error details: {str(e)}")  # Debug log
         return None
 
 
@@ -757,7 +834,7 @@ def format_article_content(gpt_response, template_type):
             # Parse the recent form data
             recent_form_text = request.json.get('scout_stats', {}).get('Recent Form', '')
             form_summary, recent_matches = parse_recent_form(recent_form_text)
-            
+
             # Build template_vars specifically for the "Player Scout Report"
             template_vars.update({
                 'headline': response_data['template_data'].get('headline', 'Default Headline'),
@@ -997,7 +1074,7 @@ def download_article_api():
 
 def parse_recent_form(form_text):
     lines = form_text.split('\n')
-    
+
     # Parse summary line: "Total: 3 goals from 10 shots (8 on target, 1.11 xG)"
     summary = {}
     if lines and lines[1].startswith('Total:'):
@@ -1006,29 +1083,158 @@ def parse_recent_form(form_text):
         summary['shots'] = int(summary_line.split('from ')[1].split(' shots')[0])
         summary['on_target'] = int(summary_line.split('(')[1].split(' on')[0])
         summary['xg'] = float(summary_line.split(', ')[1].split(' xG')[0])
-    
+
     # Parse matches (your existing parse_recent_matches logic)
     matches = []
     for line in lines[3:]:  # Skip header and summary lines
         if line.startswith('- vs'):
             # Parse: "- vs Nottm Forest (H): 0 goals from 1 shots (1 on target, 0.03 xG)"
             match_data = {}
-            
+
             # Get opponent and venue
             team_venue = line.split('- vs ')[1].split(':')[0]
             match_data['opponent'] = team_venue.split(' (')[0]
             match_data['venue'] = 'Home' if '(H)' in team_venue else 'Away'
-            
+
             # Get stats
             stats = line.split(': ')[1]
             match_data['goals'] = int(stats.split(' goals')[0])
             match_data['shots'] = int(stats.split('from ')[1].split(' shots')[0])
             match_data['on_target'] = int(stats.split('(')[1].split(' on')[0])
             match_data['xg'] = float(stats.split(', ')[1].split(' xG')[0])
-            
+
             matches.append(match_data)
-    
+
     return summary, matches
+
+
+# Add this route handler
+@app.route('/auth/callback')
+def auth_callback():
+    return send_from_directory(app.static_folder, 'index.html')
+
+# Add this route handler (similar to auth_callback)
+@app.route('/subscription/success')
+def subscription_success():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/subscription/cancel')
+def subscription_cancel():
+    return send_from_directory(app.static_folder, 'index.html')
+
+
+# Initialize Stripe with your secret key
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+
+
+def handle_preflight():
+    response = jsonify({})
+    response.headers.add('Access-Control-Allow-Origin', request.origin or 'http://127.0.0.1:5001')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept')
+    response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+
+@app.route('/api/create-checkout-session', methods=['POST', 'OPTIONS'])
+def create_checkout_session():
+    if request.method == "OPTIONS":
+        return handle_preflight()
+
+    try:
+        # Get origin from request headers
+        frontend_url = request.origin or 'http://127.0.0.1:5001'
+        
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({'message': 'No authorization header'}), 401
+
+        token = auth_header.split(' ')[1]
+        user_response = supabase_client.auth.get_user(token)
+        user = user_response.user
+
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price': os.getenv('STRIPE_PRICE_ID'),
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=f'{frontend_url}/subscription/success',  # Uses request origin
+            cancel_url=f'{frontend_url}/subscription/cancel',    # Uses request origin
+            client_reference_id=user.id,
+            customer_email=user.email,
+            metadata={
+                'user_id': user.id,
+            }
+        )
+        
+        return jsonify({'url': checkout_session.url})
+        
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/webhook', methods=['POST'])
+def webhook():
+    event = None
+    payload = request.data
+    sig_header = request.headers['STRIPE_SIGNATURE']
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, os.getenv('STRIPE_WEBHOOK_SECRET')
+        )
+    except ValueError as e:
+        logger.error(f"Invalid payload: {str(e)}")
+        return jsonify({'error': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid signature: {str(e)}")
+        return jsonify({'error': 'Invalid signature'}), 400
+
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        
+        # Add debug logging
+        logger.debug(f"Received checkout.session.completed event: {session}")
+        
+        # Safely get user_id from metadata, with fallback for testing
+        user_id = session.get('metadata', {}).get('user_id')
+        if not user_id:
+            logger.warning("No user_id in metadata, this might be a test event")
+            return jsonify({'status': 'success', 'note': 'Test event ignored'}), 200
+        
+        try:
+            # Get subscription ID safely
+            subscription_id = session.get('subscription')
+            customer_id = session.get('customer')
+            
+            if not subscription_id or not customer_id:
+                logger.warning("Missing subscription or customer ID")
+                return jsonify({'status': 'success', 'note': 'Missing required IDs'}), 200
+
+            supabase_client.table('subscriptions')\
+                .update({
+                    'plan_type': 'pro',
+                    'status': 'active',
+                    'articles_remaining': 50,
+                    'monthly_limit': 50,
+                    'billing_cycle_start': datetime.now().date().isoformat(),
+                    'stripe_subscription_id': subscription_id,
+                    'stripe_customer_id': customer_id
+                })\
+                .eq('user_id', user_id)\
+                .execute()
+                
+            logger.info(f"Successfully updated subscription for user {user_id}")
+            
+        except Exception as e:
+            logger.error(f"Error updating subscription: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+
+    return jsonify({'status': 'success'})
 
 
 if __name__ == '__main__':

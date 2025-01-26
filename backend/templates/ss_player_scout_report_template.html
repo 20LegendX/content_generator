@@ -1,44 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <!-- Google Analytics (with consent management) -->
+    <!-- Google Analytics (with consent management) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZXDJNBML2H"></script>
-        <!-- Cookie Consent Script from GetTerms.io -->
+    <!-- Cookie Consent Script from GetTerms.io -->
     <script type="text/javascript" src="https://app.getterms.io/cookie-consent/embed/7e6f5658-3c4e-4aed-ae82-2ebaf564853c/en-au"></script>
 
-    <meta charset="UTF-8">
-        <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
+    <meta charset="UTF-8" />
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
 
-          // Initialize Google Analytics
-          gtag('js', new Date());
+      // Initialize Google Analytics
+      gtag('js', new Date());
 
-          // Check if consent was given for Google Analytics
-          if (!window['ga-disable-G-ZXDJNBML2H']) {
-              gtag('config', 'G-ZXDJNBML2H');
-          }
-        </script>
+      // Check if consent was given for Google Analytics
+      if (!window['ga-disable-G-ZXDJNBML2H']) {
+          gtag('config', 'G-ZXDJNBML2H');
+      }
+    </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="/static/images/ss_logo.png">
+
+    <!-- Title and Meta -->
     <title>{{ og_title }} | ScoutingStats</title>
+    <meta name="title" content="{{ og_title }}">
     <meta name="description" content="{{ og_description }}">
     <meta name="keywords" content="{{ keywords }}">
+    <meta name="robots" content="index, follow">
 
     <!-- Open Graph tags -->
     <meta property="og:title" content="{{ og_title }}">
     <meta property="og:description" content="{{ og_description }}">
     <meta property="og:image" content="{{ featured_image_url }}">
-    <!--<meta property="og:url" content="/articles/why-rasmus-hojlund-could-become-ruben-amorims-next-viktor-gyokeres.html">-->
+    <meta property="og:type" content="article">
 
+    <!-- JSON-LD Schema.org Markup -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Article",
       "headline": "{{ headline }}",
-      "datePublished": "2024-12-20",
-      "dateModified": "2024-12-20",
+      "datePublished": "{{ publish_date }}",
+      "dateModified": "{{ publish_date }}",
       "image": {
         "@type": "ImageObject",
         "url": "{{ featured_image_url }}",
@@ -55,20 +60,16 @@
       },
       "description": "{{ og_description }}",
       "keywords": "{{ keywords }}",
-
-      "articleSection": "match report"
+      "articleSection": "player scout report"
     }
     </script>
 
-    <meta property="og:type" content="article">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-
-</head>
-
-
-<style>
-
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+        /* Reuse the same style block from your ss_match_report_template.html for consistency */
 
     body {
         background-color: #0b0c1f;
@@ -869,19 +870,6 @@
             }
         }
 
-        .stat-label {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            font-weight: 600;
-            color: #ffffff;
-            z-index: 1;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.1em;
-            top: -24px;
-            text-shadow: 0 1px 2px rgb(0, 0, 0);
-        }
 
         .stat-bars {
             display: flex;
@@ -1068,122 +1056,6 @@
 
 
 
-        .lineups-section {
-            margin: 2rem 0;
-            padding: 1rem;
-            background: linear-gradient(to bottom, #000000, #005b67);
-            border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-        }
-
-        .lineups-container {
-            display: flex;
-            justify-content: space-between;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-            flex-direction: row; /* Default for desktop */
-        }
-
-        .lineup {
-            flex: 1;
-            padding: 1.5rem;
-            background: #131b2c;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-            position: relative;
-            min-width: 0; /* Prevents flex items from overflowing */
-        }
-
-        .lineup::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            border-radius: 12px 12px 0 0;
-        }
-
-        .home-lineup::before {
-            background: linear-gradient(90deg, #11c7dd 0%, #00f2ff 100%);
-        }
-
-        .away-lineup::before {
-            background: linear-gradient(90deg, #dc8f2a 0%, #ff8c00 100%);
-        }
-
-        .lineup h3 {
-            text-align: center;
-            color: #f3f2f2;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #edf2f7;
-        }
-
-        .lineup-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .lineup-player {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            margin: 0.5rem 0;
-            background: #000000;
-            border-radius: 8px;
-            transition: transform 0.2s ease;
-        }
-
-        .lineup-player:hover {
-            transform: translateX(5px);
-            background: #1b2d49;
-        }
-
-        .player-number {
-            background: #2d3748;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            margin-right: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .player-name {
-            font-size: 1rem;
-            color: #f3f2f2;
-            font-weight: 500;
-        }
-
-        /* Add pitch background effect */
-        .lineup::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                linear-gradient(rgba(255,255,255,0.97), rgba(255,255,255,0.97)),
-                repeating-linear-gradient(
-                    0deg,
-                    #f0f0f0,
-                    #f0f0f0 5px,
-                    transparent 5px,
-                    transparent 50px
-                );
-            z-index: -1;
-            border-radius: 12px;
-        }
-
         .featured-image {
             max-width: 100%;
             height: auto;
@@ -1208,52 +1080,7 @@
         }
         /* Add responsive styles for mobile */
         @media (max-width: 768px) {
-            .lineups-container {
-                flex-direction: column; /* Stack vertically on mobile */
-                gap: 1rem;
-            }
 
-            .lineup {
-                padding: 1rem;
-            }
-
-            .lineup h3 {
-                font-size: 1.2rem;
-                margin-bottom: 1rem;
-            }
-
-            .lineup-player {
-                padding: 0.5rem;
-                margin: 0.25rem 0;
-            }
-
-            .player-number {
-                width: 24px;
-                height: 24px;
-                font-size: 0.8rem;
-                margin-right: 0.5rem;
-            }
-
-            .player-name {
-                font-size: 0.9rem;
-            }
-
-            /* Adjust match header for mobile */
-            .match-header {
-                padding: 1.5rem 0.5rem;
-            }
-
-            .score-display {
-                font-size: 2rem;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .team-name {
-                font-size: 1.2rem;
-                text-align: center;
-                width: 100%;
-            }
 
             /* Adjust stats container for mobile */
             .stats-container {
@@ -1279,43 +1106,440 @@
                 padding: 0.5rem;
             }
 
-            .match-content {
-                padding: 0 0.5rem;
+        }
+
+
+        /* Additional "scout report" sections if needed */
+        .scout-report-section h2 {
+          color: #ffffff;
+          font-size: 1.8rem;
+          font-weight: 600;
+          margin-bottom: 1.5rem;
+          text-align: center;
+          position: relative;
+        }
+        .scout-report-section h2:after {
+          content: '';
+          display: block;
+          width: 60px;
+          height: 4px;
+          background: #ff8c00;
+          margin: 1rem auto;
+          border-radius: 2px;
+        }
+
+         section {
+          margin-bottom: 2rem;
+          padding: 1rem;
+          border-radius: 8px;
+          background-color: #101623;
+        }
+
+        h2 {
+          color: #ffffff;
+          border-bottom: 2px solid #aaa;
+          padding-bottom: 0.5rem;
+          margin-bottom: 1rem;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        table th, table td {
+          text-align: left;
+          padding: 0.5rem;
+          border: 1px solid #10def8;
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+        }
+
+        ul li {
+          margin: 0.5rem 0;
+        }
+
+        /* Add after your existing .scout-report-section styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .stat-card {
+            background: #101623;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: #1b2d49;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .rankings-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: #101623;
+            border-radius: 8px;
+        }
+
+        .ranking-card {
+            background: rgba(16, 222, 248, 0.03);  /* Very subtle background */
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .ranking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #10def8;
+            padding: 0.3rem 0.8rem;
+            background: rgba(16, 222, 248, 0.1);
+            border-radius: 6px;
+        }
+
+        .ranking-visual {
+            margin: 1.5rem 0;
+        }
+
+        .percentile-bar-container {
+            height: 4px;  /* Thinner bar */
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-bottom: 0.25rem;
+        }
+
+        .percentile-bar {
+            height: 100%;
+            background: #10def8;
+            border-radius: 2px;
+        }
+
+        .percentile-marker {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translate(50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            border: 2px solid #10def8;
+            border-radius: 50%;
+        }
+
+        .percentile-labels {
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .ranking-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rank-info, .percentile-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rank-label, .percentile-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 0.3rem;
+        }
+
+        .rank-value, .percentile-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .rankings-container {
+                padding: 0.75rem;
+            }
+            
+            .ranking-card {
+                padding: 0.75rem;
             }
         }
 
-        /* Additional mobile optimizations for very small screens */
-        @media (max-width: 360px) {
-            .score-display {
-                font-size: 1.5rem;
-            }
+        .player-overview-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 1.5rem;
+        }
 
-            .team-name {
-                font-size: 1rem;
-            }
+        /* Common styles for both sections */
+        .info-list,
+        .performance-list {
+            background: #101623;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-            .lineup h3 {
-                font-size: 1rem;
-            }
+        .info-row,
+        .performance-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(16, 222, 248, 0.05);
+        }
 
-            .player-name {
-                font-size: 0.8rem;
-            }
+        .info-row:last-child,
+        .performance-row:last-child {
+            border-bottom: none;
+        }
 
-            .match-details {
-                font-size: 0.8rem;
+        .info-row:hover,
+        .performance-row:hover {
+            background: rgba(16, 222, 248, 0.05);
+        }
+
+        .info-label,
+        .performance-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .info-value,
+        .performance-value {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Section Headers */
+        .general-info h2,
+        .current-performance h2 {
+            color: #ffffff;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .player-overview-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
         }
 
-</style>
+        /* Simplify mobile styles */
+        @media (max-width: 768px) {
+            .scout-report-section,
+            .shooting-summary,
+            .recent-form,
+            .rankings-container {
+                padding: 1rem;
+            }
+            
+            .player-overview-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        .recent-form {
+            background: #101623;
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .form-summary {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(16, 222, 248, 0.03);
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            color: #10def8;
+            font-weight: 600;
+        }
+
+
+        .matches-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .match-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: rgba(16, 222, 248, 0.03);
+        }
+
+        .match-info {
+            width: 120px;
+        }
+
+        .opponent {
+            font-size: 0.85rem;
+            color: #ffffff;
+        }
+
+        .venue {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .match-stats {
+            display: flex;
+            gap: 2rem;
+            margin-left: auto;
+        }
+
+        .shots-visual {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .shot-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            border: 2px solid #10def8;  /* Add border for all dots */
+            background: transparent;    /* Default transparent background */
+        }
+
+        .shot-dot.goal {
+            background: #10def8;        /* Filled for goals */
+        }
+
+        .shot-dot.on-target {
+            background: rgba(16, 222, 248, 0.5);  /* Semi-filled for on-target */
+        }
+
+        /* off-target shots will show as hollow circles with just the border */
+
+        .timeline-legend {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .season-summary {
+            background: rgba(16, 222, 248, 0.03);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+        }
+
+        .season-summary h3 {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            color: #10def8;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+
+        .stat-distribution {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+        }
+
+        .stat-distribution .stat-item {
+            flex: 1;
+        }
+
+    </style>
+</head>
 
 <body>
+
 
 
     <!-- Bootstrap Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container d-flex align-items-center">
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand" href="/static">
                 <!-- SVG Logo Start -->
                 <svg width="60" height="54" viewBox="0 0 645 551" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g clip-path="url(#clip0_215_5538)">
@@ -1352,7 +1576,7 @@
             <div class="navbar-section prediction-section">
                 <span class="section-label prediction-label">Prediction</span>
                 <div class="section-icons prediction-icons">
-                    <a href="/" class="nav-link" title="Match Predictions">
+                    <a href="/static" class="nav-link" title="Match Predictions">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M21 21H3V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M21 9L13 15L9 11L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1399,7 +1623,7 @@
         <div class="mobile-icons d-lg-none">
             <div class="mobile-icon-group">
                 <span class="mobile-icon-label prediction-label">Predict</span>
-                <a href="/" class="nav-link match-predictions-link" title="Match Predictions">
+                <a href="/static" class="nav-link match-predictions-link" title="Match Predictions">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M21 21H3V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M21 9L13 15L9 11L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1421,297 +1645,310 @@
         </div>
     </nav>
 
+
+    <!-- Main Container for Scout Report -->
     <div class="container">
-        <article class="match-report">
-            <header class="match-header">
-                <h1>{{ headline }}</h1>
+      <article class="scout-report">
+        <header class="match-header">
+          <h1>{{ headline }}</h1>
+          <p class="text-muted text-center" style="margin-top: 1rem;">
+            {{ summary }}
+          </p>
 
-                <div class="score-display">
-                    <span class="team-name">{{ home_team }}</span>
-                    <span class="score">{{ home_score }} - {{ away_score }}</span>
-                    <span class="team-name">{{ away_team }}</span>
+          {% if featured_image_url %}
+            <img src="{{ featured_image_url }}"
+                 alt="{{ featured_image_alt }}"
+                 class="featured-image">
+          {% endif %}
+        </header>
+
+        <!-- Player Info Section -->
+        <section class="scout-report-section">
+          <h2>Player Overview</h2>
+          <div class="player-overview-container">
+            <!-- General Info -->
+            <section class="general-info">
+              <h2>Player Information</h2>
+              <div class="info-list">
+                <div class="info-row">
+                  <div class="info-label">Name</div>
+                  <div class="info-value">{{ player_name }}</div>
                 </div>
-
-                <div class="match-details">
-                    <span>{{ competition }}</span> |
-                    <span>{{ venue }}</span> |
-                    <span>{{ match_date }}</span>
+                <div class="info-row">
+                  <div class="info-label">Position</div>
+                  <div class="info-value">{{ player_position }}</div>
                 </div>
-
-                {% if featured_image_url %}
-                <img src="{{ featured_image_url }}"
-                     alt="{{ featured_image_alt }}"
-                     class="featured-image">
-                {% endif %}
-            </header>
-
-
-        <!-- Add in body where you want the stats to appear -->
-        <section class="match-section">
-            <h2>Match Statistics</h2>
-            <div class="stats-container">
-                <!-- Add xG as the first stat -->
-                <div class="stat-row">
-                    <div class="stat-label">Expected Goals (xG)</div>
-                    <div class="stat-bars">
-                        {% set total_xg = match_stats.xg.home + match_stats.xg.away %}
-                        {% if total_xg > 0 %}
-                            {% set home_xg_percent = (match_stats.xg.home / total_xg * 100)|round %}
-                            {% set away_xg_percent = (match_stats.xg.away / total_xg * 100)|round %}
-                        {% else %}
-                            {% set home_xg_percent = 50 %}
-                            {% set away_xg_percent = 50 %}
-                        {% endif %}
-                        <div class="home-bar" style="width: {{ home_xg_percent }}%">
-                            {{ match_stats.xg.home }}
-                        </div>
-                        <div class="away-bar" style="width: {{ away_xg_percent }}%">
-                            {{ match_stats.xg.away }}
-                        </div>
-                    </div>
+                <div class="info-row">
+                  <div class="info-label">Age</div>
+                  <div class="info-value">{{ player_age }}</div>
                 </div>
-
-                <!-- Possession -->
-                <div class="stat-row">
-                    <div class="stat-label">Possession</div>
-                    <div class="stat-bars">
-                        <div class="home-bar" style="width: {{ match_stats.possession.home }}%">
-                            {{ match_stats.possession.home }}%
-                        </div>
-                        <div class="away-bar" style="width: {{ match_stats.possession.away }}%">
-                            {{ match_stats.possession.away }}%
-                        </div>
-                    </div>
+                <div class="info-row">
+                  <div class="info-label">Nationality</div>
+                  <div class="info-value">{{ player_nationality }}</div>
                 </div>
-
-
-
-                <!-- Shots -->
-                <div class="stat-row">
-                    <div class="stat-label">Shots</div>
-                    <div class="stat-bars">
-                        {% set total = match_stats.shots.home + match_stats.shots.away %}
-                        {% if total > 0 %}
-                            {% set home_shots_percent = (match_stats.shots.home / total * 100)|round %}
-                            {% set away_shots_percent = (match_stats.shots.away / total * 100)|round %}
-                        {% else %}
-                            {% set home_shots_percent = 50 %}
-                            {% set away_shots_percent = 50 %}
-                        {% endif %}
-                        <div class="home-bar" style="width: {{ home_shots_percent }}%">
-                            {{ match_stats.shots.home }}
-                        </div>
-                        <div class="away-bar" style="width: {{ away_shots_percent }}%">
-                            {{ match_stats.shots.away }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Add more stats in the same pattern -->
-                {% for stat, values in match_stats.items() %}
-                    {% if stat not in ['possession', 'shots', 'xg'] %}  <!-- Added 'xg' to excluded stats -->
-                        <div class="stat-row">
-                            <div class="stat-label">{{ stat|replace('_', ' ')|title }}</div>
-                            <div class="stat-bars">
-                                {% set total = values.home + values.away %}
-                                {% if total > 0 %}
-                                    {% set home_percent = (values.home / total * 100)|round %}
-                                    {% set away_percent = (values.away / total * 100)|round %}
-                                {% else %}
-                                    {% set home_percent = 50 %}
-                                    {% set away_percent = 50 %}
-                                {% endif %}
-                                <div class="home-bar" style="width: {{ home_percent }}%">
-                                    {{ values.home }}
-                                </div>
-                                <div class="away-bar" style="width: {{ away_percent }}%">
-                                    {{ values.away }}
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </section>
-
-            <div class="match-content">
-                <!-- Match Report Content -->
-                <section class="match-section">
-                    <div class="match-analysis">
-                        {{ article_content|safe }}
-                    </div>
-                </section>
-            </div>
-
-
-                        <!-- Add this after the match header section -->
-            {% if home_lineup or away_lineup %}
-            <section class="lineups-section">
-              <h2>Starting Lineups</h2>
-              <div class="lineups-container">
-                <div class="lineup home-lineup">
-                  <h3>{{ home_team }}</h3>
-                  <ul class="lineup-list">
-                    {% for player in home_lineup.split('\n') %}
-                      {% if player.strip() %}
-                        {% set player_info = player.strip() %}
-                        {% set number = player_info[1:player_info.find(')')] %}
-                        {% set name = player_info[player_info.find(')')+1:].strip() %}
-                        <li class="lineup-player">
-                          <span class="player-number">{{ number }}</span>
-                          <span class="player-name">{{ name }}</span>
-                        </li>
-                      {% endif %}
-                    {% endfor %}
-                  </ul>
-                </div>
-                <div class="lineup away-lineup">
-                  <h3>{{ away_team }}</h3>
-                  <ul class="lineup-list">
-                    {% for player in away_lineup.split('\n') %}
-                      {% if player.strip() %}
-                        {% set player_info = player.strip() %}
-                        {% set number = player_info[1:player_info.find(')')] %}
-                        {% set name = player_info[player_info.find(')')+1:].strip() %}
-                        <li class="lineup-player">
-                          <span class="player-number">{{ number }}</span>
-                          <span class="player-name">{{ name }}</span>
-                        </li>
-                      {% endif %}
-                    {% endfor %}
-                  </ul>
+                <div class="info-row">
+                  <div class="info-label">Favoured Foot</div>
+                  <div class="info-value">{{ favored_foot }}</div>
                 </div>
               </div>
             </section>
-            {% endif %}
+
+            <!-- Current Season Performance -->
+            <section class="current-performance">
+              <h2>Current Season Performance</h2>
+              <div class="performance-list">
+                {% for key, value in scout_stats['Current Season Performance'].items() %}
+                <div class="performance-row">
+                  <div class="performance-label">{{ key }}</div>
+                  <div class="performance-value">{{ value|round(2) if value is number else value }}</div>
+                </div>
+                {% endfor %}
+              </div>
+            </section>
+          </div>
+        </section>
 
 
-        </article>
+        <section class="league-rankings">
+          <h2>League Rankings</h2>
+          <div class="rankings-container">
+            {% for ranking in scout_stats['League Rankings'] %}
+            <div class="ranking-card">
+              <div class="ranking-header">
+                <div class="metric-name">{{ ranking['Metric'] }}</div>
+                <div class="metric-value">{{ ranking['Value']|round(2) }}</div>
+              </div>
 
-<footer class="text-white text-center" style="background-color: #0b0c1f;">
-    <div class="container p-4">
-        <div class="row justify-content-center">
-            <!-- Advanced Scouting Tools Section -->
-            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
-                <h5 class="text-uppercase">Advanced Scouting Tools</h5>
-                <ul class="list-unstyled mb-0">
-                    <li class="list-inline-item"><a href="/scatterscout" id="scatter-scout-link" target="_blank">Scatterscout</a></li>
-                    <li class="list-inline-item"><a href="/advanced-search" id="advanced-search-link" target="_blank">Advanced Search Engine</a></li>
-                    <li class="list-inline-item"><a href="/compare-players" target="_blank">Player Comparison</a></li>
-                </ul>
+              <div class="ranking-visual">
+                <div class="percentile-bar-container">
+                  <div class="percentile-bar" style="width: {{ ranking['Percentile'] }}%">
+                    <span class="percentile-marker"></span>
+                  </div>
+                </div>
+                <div class="percentile-labels">
+                  <span class="label-start">0%</span>
+                  <span class="label-mid">50%</span>
+                  <span class="label-end">100%</span>
+                </div>
+              </div>
+
+              <div class="ranking-details">
+                <div class="rank-info">
+                  <span class="rank-label">League Rank</span>
+                  <span class="rank-value">#{{ ranking['Rank'] }}</span>
+                </div>
+                <div class="percentile-info">
+                  <span class="percentile-label">Percentile</span>
+                  <span class="percentile-value">{{ ranking['Percentile']|round(1) }}%</span>
+                </div>
+              </div>
             </div>
-            <!-- Leagues Section -->
-            <div class="col-lg-6 col-md-6 mb-4 mb-md-0">
-                <h5 class="text-uppercase">Leagues</h5>
-                <ul class="list-unstyled d-flex flex-wrap justify-content-center mb-0 leagues-list">
-                    <li class="list-inline-item"><a href="/leagues/premier-league.html" target="_blank">Premier League</a></li>
-                    <li class="list-inline-item"><a href="/leagues/la-liga.html" target="_blank">La Liga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/bundesliga.html" target="_blank">Bundesliga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/ligue-1.html" target="_blank">Ligue 1</a></li>
-                    <li class="list-inline-item"><a href="/leagues/serie-a.html" target="_blank">Serie A</a></li>
-                    <li class="list-inline-item"><a href="/leagues/eredivisie.html" target="_blank">Eredivisie</a></li>
-                    <li class="list-inline-item"><a href="/leagues/primeira-liga.html" target="_blank">Primeira Liga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/pro-league-a.html" target="_blank">Pro League A</a></li>
-                    <li class="list-inline-item"><a href="/leagues/s%C3%BCper-lig.html" target="_blank">Süper Lig</a></li>
-                    <li class="list-inline-item"><a href="/leagues/championship.html" target="_blank">Championship</a></li>
-                    <li class="list-inline-item"><a href="/leagues/la-liga-2.html" target="_blank">La Liga 2</a></li>
-                    <li class="list-inline-item"><a href="/leagues/2.-bundesliga.html" target="_blank">2. Bundesliga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/premiership.html" target="_blank">Premiership</a></li>
-                    <li class="list-inline-item"><a href="/leagues/j1-league.html" target="_blank">J1 League</a></li>
-                    <li class="list-inline-item"><a href="/leagues/s%C3%A9rie-a.html" target="_blank">Série A</a></li>
-                    <!-- Add more leagues as needed -->
-                </ul>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="shooting-analysis">
+            <h2>Shooting Analysis</h2>
+
+            <!-- Season Summary -->
+            <div class="season-summary">
+                <h3>Season Performance</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ scout_stats['Shooting Summary']['Shots'] }}</div>
+                        <div class="stat-label">Total Shots</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ (scout_stats['Shooting Summary']['Accuracy'] * 100)|round(1) }}%</div>
+                        <div class="stat-label">Shot Accuracy</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ scout_stats['Shooting Summary']['Shot Distribution']['Inside Box'] }}</div>
+                        <div class="stat-label">Inside Box</div>
+                    </div>
+                    <div class="stat-distribution">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ scout_stats['Shooting Summary']['Shot Distribution']['Right Foot'] }}</div>
+                            <div class="stat-label">Right Foot</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">{{ scout_stats['Shooting Summary']['Shot Distribution']['Left Foot'] }}</div>
+                            <div class="stat-label">Left Foot</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- Privacy Policy Section -->
-            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
-                <ul class="list-unstyled mb-0">
-                    <li>
-                        <p>&copy; 2025 ScoutingStats.AI. All rights reserved.</p>
-                        <a href="/privacy-policy" target="_blank" class="text-white">Privacy Policy</a>
-                    </li>
-                </ul>
+
+            <!-- Recent Form -->
+            <div class="recent-form">
+                <h3>Last 5 Matches</h3>
+                <div class="form-summary">
+                    <div class="summary-stat">
+                        <div class="stat-number">{{ form_summary.goals }}</div>
+                        <div class="stat-label">Goals</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="stat-number">{{ form_summary.shots }}</div>
+                        <div class="stat-label">Total Shots</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="stat-number">{{ form_summary.on_target }}</div>
+                        <div class="stat-label">On Target</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="stat-number">{{ form_summary.xg }}</div>
+                        <div class="stat-label">Expected Goals</div>
+                    </div>
+                </div>
+
+                <div class="matches-timeline">
+                    <div class="timeline-legend">
+                        <span class="legend-item">
+                            <span class="shot-dot goal"></span> Goal
+                        </span>
+                        <span class="legend-item">
+                            <span class="shot-dot on-target"></span> On Target
+                        </span>
+                        <span class="legend-item">
+                            <span class="shot-dot"></span> Off Target
+                        </span>
+                    </div>
+
+                    {% for match in recent_matches %}
+                    <div class="match-row">
+                        <div class="match-info">
+                            <div class="opponent">{{ match.opponent }}</div>
+                            <div class="venue">{{ match.venue }}</div>
+                        </div>
+                        <div class="shots-visual">
+                            {% for i in range(match.shots) %}
+                                <span class="shot-dot {{ 'goal' if i < match.goals else 'on-target' if i < match.on_target else '' }}"></span>
+                            {% endfor %}
+                        </div>
+                        <div class="match-stats">
+                            <span class="xg-value">{{ match.xg }} xG</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+
+        <!-- The AI-generated content from GPT, containing multiple sections -->
+        <section class="scout-report-section">
+          <!-- The `article_content` is our entire GPT-generated HTML. -->
+          {{ article_content|safe }}
+        </section>
+      </article>
+    </div>
+    <footer class="text-white text-center" style="background-color: #0b0c1f;">
+        <div class="container p-4">
+            <div class="row justify-content-center">
+                <!-- Advanced Scouting Tools Section -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">Advanced Scouting Tools</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="list-inline-item"><a href="/scatterscout" id="scatter-scout-link" target="_blank">Scatterscout</a></li>
+                        <li class="list-inline-item"><a href="/advanced-search" id="advanced-search-link" target="_blank">Advanced Search Engine</a></li>
+                        <li class="list-inline-item"><a href="/compare-players" target="_blank">Player Comparison</a></li>
+                    </ul>
+                </div>
+                <!-- Leagues Section -->
+                <div class="col-lg-6 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">Leagues</h5>
+                    <ul class="list-unstyled d-flex flex-wrap justify-content-center mb-0 leagues-list">
+                        <li class="list-inline-item"><a href="/leagues/premier-league.html" target="_blank">Premier League</a></li>
+                        <li class="list-inline-item"><a href="/leagues/la-liga.html" target="_blank">La Liga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/bundesliga.html" target="_blank">Bundesliga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/ligue-1.html" target="_blank">Ligue 1</a></li>
+                        <li class="list-inline-item"><a href="/leagues/serie-a.html" target="_blank">Serie A</a></li>
+                        <li class="list-inline-item"><a href="/leagues/eredivisie.html" target="_blank">Eredivisie</a></li>
+                        <li class="list-inline-item"><a href="/leagues/primeira-liga.html" target="_blank">Primeira Liga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/pro-league-a.html" target="_blank">Pro League A</a></li>
+                        <li class="list-inline-item"><a href="/leagues/s%C3%BCper-lig.html" target="_blank">Süper Lig</a></li>
+                        <li class="list-inline-item"><a href="/leagues/championship.html" target="_blank">Championship</a></li>
+                        <li class="list-inline-item"><a href="/leagues/la-liga-2.html" target="_blank">La Liga 2</a></li>
+                        <li class="list-inline-item"><a href="/leagues/2.-bundesliga.html" target="_blank">2. Bundesliga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/premiership.html" target="_blank">Premiership</a></li>
+                        <li class="list-inline-item"><a href="/leagues/j1-league.html" target="_blank">J1 League</a></li>
+                        <li class="list-inline-item"><a href="/leagues/s%C3%A9rie-a.html" target="_blank">Série A</a></li>
+                        <!-- Add more leagues as needed -->
+                    </ul>
+                </div>
+                <!-- Privacy Policy Section -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                    <ul class="list-unstyled mb-0">
+                        <li>
+                            <p>&copy; 2025 ScoutingStats.AI. All rights reserved.</p>
+                            <a href="/privacy-policy" target="_blank" class="text-white">Privacy Policy</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-</footer>
+    </footer>
+    <!-- Script tags -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
 
-<!-- Correct order of script tags -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<script src="https://d3js.org/d3.v6.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
-
-
-
-<script type="text/javascript">
-
-    var currentPlayerInfo = { id: null, position: null, age: null };
-    $(document).ready(function() {
-           $("#player_name").autocomplete({
-                source: function (request, response) {
-                    $.ajax({
-                        url: '/autocomplete',
-                        data: {'q': request.term},
-                        success: function (data) {
-                            console.log("Autocomplete data:", data);
-                            response($.map(data, function (item) {
-                                return {
-                                    name: item.name,
-                                    label: item.label,
-                                    value: item.value,
-                                    public_id: item.public_id,
-                                    league: item.league,
-                                    image_path: item.image_path
-
-                                };
-                            }));
-                        }
-                    });
-                },
-
-                minLength: 2,
-                select: function (event, ui) {
-                    currentPlayerInfo.id = ui.item.value;
-                    currentPlayerInfo.position = ui.item.position;
-                    var selectedPlayerId = ui.item.value;
-                    var playerSlug = slugify(ui.item.name, ui.item.public_id);
-
-                    window.open(`/player/${playerSlug}/`, '_blank');
-                    event.preventDefault();
-
+    <script type="text/javascript">
+      var currentPlayerInfo = { id: null, position: null, age: null };
+      $(document).ready(function() {
+        $("#player_name").autocomplete({
+          source: function (request, response) {
+            $.ajax({
+                url: '/autocomplete',
+                data: {'q': request.term},
+                success: function (data) {
+                    response($.map(data, function (item) {
+                        return {
+                            name: item.name,
+                            label: item.label,
+                            value: item.value,
+                            public_id: item.public_id,
+                            league: item.league,
+                            image_path: item.image_path
+                        };
+                    }));
                 }
-            }).autocomplete("instance")._renderItem = function (ul, item) {
-                // Custom rendering of items with image
-                var $li = $("<li style='display: flex; align-items: center;'>");
-                $("<img>").attr("src", item.image_path)
-                    .css({
-                        "margin-right": "10px",
-                        "width": "50px",  // Adjusted width
-                        "height": "50px",  // Adjusted height
-                        "object-fit": "contain", // Optional: adds a border for better visual separation
-                        "border-radius": "50px"
-                    })
-                    .appendTo($li);
-                $("<span>").text(item.label).appendTo($li);
-                return $li.appendTo(ul);
-            };
-        });
+            });
+          },
+          minLength: 2,
+          select: function (event, ui) {
+            currentPlayerInfo.id = ui.item.value;
+            currentPlayerInfo.position = ui.item.position;
+            var selectedPlayerId = ui.item.value;
+            var playerSlug = slugify(ui.item.name, ui.item.public_id);
+            window.open(`/player/${playerSlug}/`, '_blank');
+            event.preventDefault();
+          }
+        }).autocomplete("instance")._renderItem = function (ul, item) {
+          var $li = $("<li style='display: flex; align-items: center;'>");
+          $("<img>").attr("src", item.image_path)
+            .css({
+                "margin-right": "10px",
+                "width": "50px",
+                "height": "50px",
+                "object-fit": "contain",
+                "border-radius": "50px"
+            })
+            .appendTo($li);
+          $("<span>").text(item.label).appendTo($li);
+          return $li.appendTo(ul);
+        };
+      });
 
-
-
-        function slugify(name, publicId) {
-            // Normalize the string to decompose accented characters
-            var slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            // Convert to lowercase and replace spaces and underscores with hyphens
-            slug = slug.toLowerCase().replace(/[\s_]+/g, '-');
-            // Remove all non-alphanumeric characters except hyphens
-            slug = slug.replace(/[^a-z0-9\-]+/g, '');
-            // Replace multiple hyphens with a single hyphen
-            slug = slug.replace(/\-{2,}/g, '-');
-            // Append the publicId for uniqueness
-            slug = `${slug}-${publicId}`;
-            return slug;
-        }
+      function slugify(name, publicId) {
+          var slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          slug = slug.toLowerCase().replace(/[\s_]+/g, '-');
+          slug = slug.replace(/[^a-z0-9\-]+/g, '');
+          slug = slug.replace(/\-{2,}/g, '-');
+          slug = `${slug}-${publicId}`;
+          return slug;
+      }
     </script>
 </body>
 </html>

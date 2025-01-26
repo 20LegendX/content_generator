@@ -39,6 +39,13 @@ import AuthCallback from './components/Auth/AuthCallback';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Dashboard from './components/layout/Dashboard';
 import { supabase } from './lib/supabase';  // Updated import path
+import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
+import SubscriptionManager from './components/subscription/SubscriptionManager';
+import SubscriptionSuccess from './components/subscription/SubscriptionSuccess';
+import SubscriptionCancel from './components/subscription/SubscriptionCancel';
+import SubscriptionStatus from './components/subscription/SubscriptionStatus';
+import UpgradePrompt from './components/subscription/UpgradePrompt';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Update this to use port 5001
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -275,6 +282,7 @@ function AppContent() {
   
   const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
   const initialValues = useMemo(() => getInitialValues(templateName), [templateName]);
+  const { canGenerateArticle, refreshSubscription, subscription } = useSubscription();
 
   const formik = useFormik({
     initialValues,
@@ -393,26 +401,50 @@ function AppContent() {
   const generateContent = async (values) => {
     setLoading(true);
     setErrorMessage(null);
+    
+    if (!canGenerateArticle()) {
+      setErrorMessage('You have reached your article limit. Please upgrade to Pro to continue.');
+      setLoading(false);
+      return;
+    }
+
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Current session:", session); // Debug log
+      
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      console.log("Making API request with token:", session.access_token.substring(0, 10) + "..."); // Debug log first 10 chars
+
       const response = await fetch(`${API_BASE_URL}/api/generate`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'user-id': session.user.id
         },
         body: JSON.stringify(values),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate article. Please try again.');
+        const errorData = await response.json();
+        console.error("API Error:", errorData); // Debug log
+        throw new Error(errorData.error || 'Failed to generate article');
       }
 
       const data = await response.json();
       setGeneratedContent(data);
       setHasGeneratedContent(true);
+      
+      // Refresh subscription to update article count
+      await refreshSubscription();
     } catch (error) {
       setErrorMessage(error.message);
+      console.error('Generate content error:', error);
     } finally {
       setLoading(false);
     }
@@ -564,11 +596,18 @@ function AppContent() {
             <>
               <Button 
                 color="inherit" 
-                onClick={() => navigate('/generate')}
+                onClick={() => {
+                  if (subscription?.plan_type !== 'pro' && subscription?.articles_remaining === 0) {
+                    navigate('/subscription');
+                  } else {
+                    navigate('/generate');
+                  }
+                }}
                 sx={{ mr: 2 }}
               >
                 Generate Content
               </Button>
+              <SubscriptionStatus />
               <Button 
                 color="inherit"
                 onClick={() => {
@@ -626,13 +665,15 @@ function AppContent() {
               <Routes>
                 <Route 
                   path="/" 
-                  element={<LandingPage isAuthenticated={!!session} />} 
+                  element={<LandingPage />} 
                 />
                 <Route 
                   path="/generate" 
                   element={
                     !session ? (
                       <Navigate to="/login" replace />
+                    ) : subscription?.plan_type !== 'pro' && subscription?.articles_remaining === 0 ? (
+                      <UpgradePrompt />
                     ) : (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div>{renderArticleForm()}</div>
@@ -643,6 +684,16 @@ function AppContent() {
                 />
                 <Route path="/login" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route 
+                  path="/subscription" 
+                  element={
+                    <ProtectedRoute>
+                      <SubscriptionManager />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+                <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Paper>
@@ -669,7 +720,11 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <SubscriptionProvider>
+          <AppContent />
+        </SubscriptionProvider>
+      </AuthProvider>
     </Router>
   );
 }
