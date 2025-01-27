@@ -6,7 +6,7 @@ import { CircularProgress } from '@mui/material';
 // Import or define API_BASE_URL
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? `http://${window.location.hostname}:5001`
-  : `http://${window.location.hostname}`;
+  : `${window.location.protocol}//${window.location.hostname}`;
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ const AuthCallback = () => {
           if (checkError) {
             console.log('No existing subscription found, creating new one');
             
-            // Create new subscription
+            // Create new subscription with correct defaults for free tier
             const { data: newSub, error: subError } = await supabase
               .from('subscriptions')
               .insert({
@@ -66,6 +66,8 @@ const AuthCallback = () => {
                 status: 'active',
                 articles_generated: 0,
                 articles_remaining: 3,
+                monthly_limit: 3,  // Set correct limit for free tier
+                billing_cycle_start: null,  // No billing cycle for free tier
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               })

@@ -49,13 +49,16 @@ app = Flask(__name__,
     template_folder='templates'
 )
 CORS(app, resources={
-    r"/*": {  # Allow CORS for all routes
-        "origins": ["http://localhost:3000",
-                    "http://127.0.0.1:3000",
-                    "http://127.0.0.1:5000",
-                    "http://127.0.0.1:5001",
-                    "http://localhost:5001",
-                    "http://13.60.61.227"],
+    r"/*": {
+        "origins": [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5001",
+            "http://localhost:5001",
+            "http://13.61.190.211",
+            "https://pagecrafter.ai",  # Add your new domain
+            "https://www.pagecrafter.ai"  # Add www version
+        ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Accept"],
         "supports_credentials": True
@@ -1236,6 +1239,5 @@ def webhook():
 
     return jsonify({'status': 'success'})
 
-
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=False)
