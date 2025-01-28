@@ -1239,5 +1239,23 @@ def webhook():
 
     return jsonify({'status': 'success'})
 
+@app.route('/api/render-template', methods=['POST'])
+@require_auth
+def render_template_api():
+    try:
+        data = request.get_json()
+        template_name = data.get('template_name')
+        content = data.get('content')
+        
+        # Just render the template with the provided content
+        preview_html = render_template(template_name, **content)
+        
+        return jsonify({
+            'preview_html': preview_html
+        })
+    except Exception as e:
+        print(f"Template rendering error: {str(e)}")
+        return jsonify({'error': f'Template rendering failed: {str(e)}'}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=False)

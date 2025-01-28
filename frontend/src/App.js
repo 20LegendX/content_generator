@@ -704,13 +704,33 @@ function AppContent() {
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         content={generatedContent}
-        onSave={(updatedContent) => {
-          setGeneratedContent({
-            ...generatedContent,
-            raw_content: updatedContent,
-            preview_html: generatedContent.preview_html
-          });
-          setEditModalOpen(false);
+        onSave={async (updatedContent) => {
+          try {
+            // Make API call to regenerate preview
+            const response = await fetch(`${API_BASE_URL}/api/generate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                ...formik.values,
+                edited_content: updatedContent
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to update preview');
+            }
+
+            const data = await response.json();
+            setGeneratedContent(data);
+            setEditModalOpen(false);
+          } catch (error) {
+            console.error('Error updating preview:', error);
+            // Optionally show error to user
+            alert('Failed to update preview. Please try again.');
+          }
         }}
       />
     </ThemeProvider>
