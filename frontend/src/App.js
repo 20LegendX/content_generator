@@ -50,10 +50,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TEMPLATE_CONFIGS } from './templates/config';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-// Update this to use port 5001
+// Fix: Update to use the same protocol as the current page
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? `http://${window.location.hostname}:5001`  // Changed from 5000 to 5001
-  : `http://${window.location.hostname}`;
+  ? `http://${window.location.hostname}:5001`
+  : `${window.location.protocol}//${window.location.hostname}`;  // Use current protocol
 
 const getTheme = (mode) => createTheme({
   palette: {
