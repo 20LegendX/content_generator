@@ -12,6 +12,7 @@ from supabase import create_client
 from supabase.client import Client
 import stripe
 from flask import url_for
+import traceback
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -297,15 +298,14 @@ def generate_api():
                 print(f"Template rendering error: {str(template_error)}")
                 return jsonify({'error': f'Template rendering failed: {str(template_error)}'}), 500
 
-            # Update subscription if successful
-            if user_subscription['plan_type'] != 'pro':
-                supabase_client.table('subscriptions')\
-                    .update({
-                        'articles_remaining': user_subscription['articles_remaining'] - 1,
-                        'articles_generated': user_subscription['articles_generated'] + 1
-                    })\
-                    .eq('user_id', user_id)\
-                    .execute()
+            # Update subscription for all users
+            supabase_client.table('subscriptions')\
+                .update({
+                    'articles_remaining': user_subscription['articles_remaining'] - 1,
+                    'articles_generated': user_subscription['articles_generated'] + 1
+                })\
+                .eq('user_id', user_id)\
+                .execute()
 
             return jsonify({
                 'preview_html': preview_html,
@@ -832,6 +832,8 @@ def format_article_content(gpt_response, template_type):
                 'summary': response_data['template_data'].get('summary', 'Default Summary'),
                 'article_content': '\n'.join(scout_content),
                 'meta_description': response_data['meta_data'].get('meta_description', 'Default meta description.'),
+                'meta_title': response_data['template_data'].get('headline', 'Default Headline'),
+                'title': response_data['template_data'].get('headline', 'Default Headline'),
                 'featured_image_url': image_url,
                 'featured_image_alt': image_alt,
                 'player_name': request.json.get('player_name', 'Unknown Player'),
@@ -865,11 +867,17 @@ def format_article_content(gpt_response, template_type):
                 "featured_image_url": request.json.get("image_url", default_image_url),
                 "featured_image_alt": response_data['template_data'].get('featured_image_alt', default_image_alt),
                 "meta_description": response_data['meta_data'].get('meta_description', ''),
+                "meta_title": response_data['template_data'].get('headline', ''),
+                "title": response_data['template_data'].get('headline', ''),
                 "keywords": response_data['meta_data'].get('keywords', ''),
                 "publish_date": current_date,
                 "author": response_data['meta_data'].get('author', ''),
                 "publisher_name": request.json.get("publisher_name", ''),
-                "publisher_url": request.json.get("publisher_url", '')
+                "publisher_url": request.json.get("publisher_url", ''),
+                "og_title": response_data['template_data'].get('headline', ''),
+                "og_description": response_data['meta_data'].get('meta_description', ''),
+                "twitter_title": response_data['template_data'].get('headline', ''),
+                "twitter_description": response_data['meta_data'].get('meta_description', '')
             })
 
             return template_vars
@@ -1235,7 +1243,18 @@ def render_template_api():
         template_name = data.get('template_name')
         content = data.get('content')
         
-        # Use the same template_vars setup as download_article_api
+        # Add debugging
+        print(f"Debug - Template name: {template_name}")
+        print(f"Debug - Template folder path: {app.template_folder}")
+        print(f"Debug - Current working directory: {os.getcwd()}")
+        print(f"Debug - Content received: {json.dumps(content, indent=2)}")
+        
+        # Verify template exists
+        template_path = os.path.join(app.template_folder, template_name)
+        if not os.path.exists(template_path):
+            print(f"Debug - Template not found at: {template_path}")
+            return jsonify({'error': f'Template not found at {template_path}'}), 404
+            
         template_vars = {
             'headline': content.get('headline', ''),
             'article_content': content.get('article_content', ''),
@@ -1248,29 +1267,15 @@ def render_template_api():
             'publisher_name': content.get('publisher_name', ''),
             'publisher_url': content.get('publisher_url', '')
         }
-
-        # Add template-specific variables just like in download_article_api
-        if template_name == 'article_template.html':
-            template_vars.update({
-                'article_title': content.get('headline', ''),
-                'short_title': content.get('short_title', ''),
-                'article_category': content.get('article_category', ''),
-                'slug': content.get('slug', ''),
-                'og_title': content.get('og_title', ''),
-                'og_description': content.get('og_description', ''),
-                'twitter_title': content.get('twitter_title', ''),
-                'twitter_description': content.get('twitter_description', ''),
-                'schema_type': content.get('schema_type', 'Article'),
-                'focus_keyword': content.get('focus_keyword', '')
-            })
+        
+        print(f"Debug - Template vars: {json.dumps(template_vars, indent=2)}")
         
         preview_html = render_template(template_name, **template_vars)
+        return jsonify({'preview_html': preview_html})
         
-        return jsonify({
-            'preview_html': preview_html
-        })
     except Exception as e:
         print(f"Template rendering error: {str(e)}")
+        print(f"Debug - Full error: {traceback.format_exc()}")
         return jsonify({'error': f'Template rendering failed: {str(e)}'}), 500
 
 if __name__ == '__main__':

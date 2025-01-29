@@ -16,73 +16,68 @@ const LandingPage = () => {
   const renderFreePlanButton = () => {
     if (!isAuthenticated) {
       return (
-        <Button 
-          variant="outlined" 
-          color="primary" 
-          fullWidth
+        <button 
           onClick={() => navigate('/login')}
-          sx={{ mt: 2 }}
+          className="w-full mt-4 py-2 px-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white 
+                     rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 
+                     font-medium shadow-lg hover:shadow-xl border border-gray-200 dark:border-gray-700"
         >
           Get Started
-        </Button>
+        </button>
       );
     }
 
-    // If user has a subscription, show appropriate button
     if (subscription?.plan_type === 'pro') {
       return (
-        <Typography variant="body2" color="primary" sx={{ mt: 2 }}>
+        <p className="mt-4 text-gray-900 dark:text-white font-medium">
           Current Plan
-        </Typography>
+        </p>
       );
     }
 
     return (
-      <Button 
-        variant="contained" 
-        color="primary" 
-        fullWidth
+      <button 
         onClick={() => navigate('/generate')}
-        sx={{ mt: 2 }}
+        className="w-full mt-4 py-2 px-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white 
+                   rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 
+                   font-medium shadow-lg hover:shadow-xl border border-gray-200 dark:border-gray-700"
       >
         Start Generating
-      </Button>
+      </button>
     );
   };
 
   const renderProPlanButton = () => {
     if (!isAuthenticated) {
       return (
-        <Button 
-          variant="contained" 
-          color="primary" 
-          fullWidth
+        <button 
           onClick={() => navigate('/login')}
-          sx={{ mt: 2 }}
+          className="w-full py-3 px-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg 
+                   hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 
+                   font-medium shadow-lg hover:shadow-xl border border-gray-200 dark:border-gray-700"
         >
-          Get Started
-        </Button>
+          Get Pro Access
+        </button>
       );
     }
 
     if (subscription?.plan_type === 'pro') {
       return (
-        <Typography variant="body2" color="primary" sx={{ mt: 2 }}>
+        <p className="mt-4 text-gray-900 dark:text-white font-medium text-center">
           Current Plan
-        </Typography>
+        </p>
       );
     }
 
     return (
-      <Button 
-        variant="contained" 
-        color="primary" 
-        fullWidth
+      <button 
         onClick={handleUpgrade}
-        sx={{ mt: 2 }}
+        className="w-full py-3 px-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg 
+                 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 
+                 font-medium shadow-lg hover:shadow-xl border border-gray-200 dark:border-gray-700"
       >
         Upgrade to Pro
-      </Button>
+      </button>
     );
   };
 
@@ -125,98 +120,84 @@ const LandingPage = () => {
   };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ 
-        textAlign: 'center', 
-        py: 8 
-      }}>
-        <Typography variant="h2" component="h1" gutterBottom>
-          Content Generator
-        </Typography>
-        
-        <Typography variant="h5" color="text.secondary" paragraph>
-          Generate professional articles, match reports, and scout reports
-        </Typography>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="text-center">
+        <h1 className="text-4xl sm:text-5xl font-bold text-primary-600 dark:text-white mb-6">
+          PageCrafter AI
+        </h1>
+        <p className="text-xl text-gray-600 dark:text-gray-200 max-w-2xl mx-auto mb-12">
+          Generate professional articles, match reports, and scout reports instantly with AI
+        </p>
 
-        <Box sx={{ mt: 8 }}>
-          <Typography variant="h4" gutterBottom>
+        <div className="mt-16">
+          <h2 className="text-3xl font-semibold mb-8 text-primary-600 dark:text-white">
             Choose Your Plan
-          </Typography>
+          </h2>
           
-          <Grid container spacing={4} sx={{ mt: 4 }}>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h5" gutterBottom>
-                    Free Plan
-                  </Typography>
-                  <Typography variant="h4" color="primary" gutterBottom>
-                    £0
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemIcon><CheckIcon /></ListItemIcon>
-                      <ListItemText primary="5 Articles Total" secondary="One-time limit" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckIcon /></ListItemIcon>
-                      <ListItemText primary="Basic Templates" />
-                    </ListItem>
-                  </List>
-                  {renderFreePlanButton()}
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Card raised>
-                <CardContent>
-                  <Typography variant="h5" gutterBottom>
-                    Pro Plan
-                  </Typography>
-                  <Typography variant="h4" color="primary" gutterBottom>
-                    £29/mo
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemIcon><CheckIcon /></ListItemIcon>
-                      <ListItemText primary="50 Articles per Month" secondary="Resets monthly" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckIcon /></ListItemIcon>
-                      <ListItemText primary="All Premium Templates" />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon><CheckIcon /></ListItemIcon>
-                      <ListItemText primary="Priority Support" />
-                    </ListItem>
-                  </List>
-                  {renderProPlanButton()}
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
-    </Container>
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Free Plan */}
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 
+                          border border-gray-200 dark:border-gray-700
+                          hover:shadow-xl transition-shadow duration-300">
+              <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+                Free Plan
+              </h3>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+                £0
+              </p>
+              <ul className="space-y-4 mb-8 text-left text-gray-700 dark:text-gray-200">
+                <li className="flex items-center">
+                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <span>3 Articles per month</span>
+                </li>
+                <li className="flex items-center">
+                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <span>Basic templates</span>
+                </li>
+                <li className="flex items-center">
+                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <span>Standard support</span>
+                </li>
+              </ul>
+              {renderFreePlanButton()}
+            </div>
+
+            {/* Pro Plan */}
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 
+                          border-2 border-primary-600 dark:border-white
+                          hover:shadow-xl transition-shadow duration-300">
+              <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+                Pro Plan
+              </h3>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+                £19<span className="text-lg text-gray-600 dark:text-gray-200">/mo</span>
+              </p>
+              <ul className="space-y-4 mb-8 text-left text-gray-700 dark:text-gray-200">
+                <li className="flex items-center">
+                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <span>50 Articles per month</span>
+                </li>
+                <li className="flex items-center">
+                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <span>All Premium Templates</span>
+                </li>
+                <li className="flex items-center">
+                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <span>Priority Support</span>
+                </li>
+                <li className="flex items-center">
+                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <span>Advanced Features</span>
+                </li>
+              </ul>
+              {renderProPlanButton()}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
-const FeatureCard = ({ title, description }) => (
-  <Box sx={{ 
-    p: 3, 
-    border: '1px solid',
-    borderColor: 'divider',
-    borderRadius: 2,
-    textAlign: 'left'
-  }}>
-    <Typography variant="h6" gutterBottom>
-      {title}
-    </Typography>
-    <Typography variant="body2" color="text.secondary">
-      {description}
-    </Typography>
-  </Box>
-);
 
 export default LandingPage;

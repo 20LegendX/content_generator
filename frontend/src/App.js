@@ -142,7 +142,12 @@ function AppContent() {
   const [hasGeneratedContent, setHasGeneratedContent] = useState(false);
   
   const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
-  const { canGenerateArticle, refreshSubscription, subscription } = useSubscription();
+  const { 
+    subscription, 
+    canGenerateArticle, 
+    decrementArticleCount,
+    refreshSubscription
+  } = useSubscription();
 
   // Set default template name
   const DEFAULT_TEMPLATE = 'article_template.html';
@@ -349,6 +354,9 @@ function AppContent() {
       const data = await response.json();
       setGeneratedContent(data);
       setHasGeneratedContent(true);
+      
+      // Decrement the article count for both free and pro users
+      await decrementArticleCount();
       
       // Refresh subscription to update article count
       await refreshSubscription();
