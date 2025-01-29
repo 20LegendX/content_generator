@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useFormik } from 'formik';
@@ -46,6 +47,8 @@ import SubscriptionCancel from './components/subscription/SubscriptionCancel';
 import SubscriptionStatus from './components/subscription/SubscriptionStatus';
 import UpgradePrompt from './components/subscription/UpgradePrompt';
 import { AuthProvider } from './contexts/AuthContext';
+import { TEMPLATE_CONFIGS } from './templates/config';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 // Update this to use port 5001
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -96,172 +99,26 @@ const baseValues = {
 };
 
 const getValidationSchema = (templateName) => {
-  if (templateName === 'match_report_template.html' || templateName === 'ss_match_report_template.html') {
-    return baseSchema.shape({
-      home_team: Yup.string()
-        .required('Home team is required')
-        .max(50, 'Team name too long'),
-      away_team: Yup.string()
-        .required('Away team is required')
-        .max(50, 'Team name too long'),
-      home_score: Yup.number()
-        .required('Home score is required')
-        .min(0, 'Score cannot be negative')
-        .integer('Score must be a whole number'),
-      away_score: Yup.number()
-        .required('Away score is required')
-        .min(0, 'Score cannot be negative')
-        .integer('Score must be a whole number'),
-      home_scorers: Yup.string()
-        .matches(
-          /^$|^[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?(,\s*[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?)*$/,
-          'Invalid format. Example: Rashford (23\'), Bruno (67\') or leave empty'
-        )
-        .test('matches-score', 'Number of scorers should match team score', function(value) {
-          const { home_score } = this.parent;
-          if (!value) return true; // Empty value is valid
-          const scorersCount = value.split(',').length;
-          return scorersCount <= home_score;
-        }),
-      away_scorers: Yup.string()
-        .matches(
-          /^$|^[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?(,\s*[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?)*$/,
-          'Invalid format. Example: Salah (15\'), Núñez (88\') or leave empty'
-        )
-        .test('matches-score', 'Number of scorers should match team score', function(value) {
-          const { away_score } = this.parent;
-          if (!value) return true; // Empty value is valid
-          const scorersCount = value.split(',').length;
-          return scorersCount <= away_score;
-        }),
-      competition: Yup.string()
-        .required('Competition is required')
-        .max(50, 'Competition name too long'),
-      match_date: Yup.string()
-        .required('Match date is required'),
-      venue: Yup.string()
-        .required('Venue is required')
-        .max(100, 'Venue name too long'),
-      // Stats validation
-      home_possession: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .max(100, 'Cannot exceed 100%'),
-      away_possession: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .max(100, 'Cannot exceed 100%')
-        .test('total-100', 'Total possession must equal 100%', function(value) {
-          const { home_possession } = this.parent;
-          return (home_possession + value) === 100;
-        }),
-      home_shots: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .integer('Must be a whole number'),
-      away_shots: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .integer('Must be a whole number'),
-      home_shots_on_target: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .integer('Must be a whole number')
-        .max(Yup.ref('home_shots'), 'Cannot exceed total shots'),
-      away_shots_on_target: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .integer('Must be a whole number')
-        .max(Yup.ref('away_shots'), 'Cannot exceed total shots'),
-      // Add similar validation for other stats...
-      home_lineup: Yup.string()
-        .matches(
-          /^$|^(\(\d{1,2}\)\s[A-Za-zÀ-ÿ\s'-]+([\r\n])?)*$/,
-          'Invalid format. Use: (number) Player Name'
-        ),
-      away_lineup: Yup.string()
-        .matches(
-          /^$|^(\(\d{1,2}\)\s[A-Za-zÀ-ÿ\s'-]+([\r\n])?)*$/,
-          'Invalid format. Use: (number) Player Name'
-        ),
-      home_xg: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .max(10, 'Value too high')
-        .test(
-          'decimal-places',
-          'Maximum 1 decimal place',
-          value => !value || String(value).match(/^\d+(\.\d{0,1})?$/)
-        ),
-      away_xg: Yup.number()
-        .required('Required')
-        .min(0, 'Cannot be negative')
-        .max(10, 'Value too high')
-        .test(
-          'decimal-places',
-          'Maximum 1 decimal place',
-          value => !value || String(value).match(/^\d+(\.\d{0,1})?$/)
-        ),
-      key_events: Yup.string().max(1000, 'Too long'),
-    });
-  }
+  const template = TEMPLATE_CONFIGS[templateName];
+  if (!template) return null;
 
-  // SS Player Scout Report
-  if (templateName === 'ss_player_scout_report_template.html') {
-    return baseSchema.shape({
-      // The baseSchema requires publisher_name, publisher_url, context, supporting_data, image_url
-      player_name: Yup.string()
-        .required('Player name is required')
-        .max(100, 'Name is too long'),
-      player_position: Yup.string()
-        .required('Player position is required')
-        .max(100, 'Position name too long'),
-      player_age: Yup.number()
-        .typeError('Age must be a number')
-        .positive('Age cannot be negative')
-        .integer('Age must be an integer')
-        .max(50, 'Unlikely to be older than 50'),
-      player_nationality: Yup.string().max(50, 'Nationality name too long'),
-      favored_foot: Yup.string().max(50, 'Value too long'),
-      scout_stats: Yup.string().max(2000, 'Too long'),
+  const schemaFields = {};
+  const processFields = (fields) => {
+    fields.forEach(field => {
+      if (field.group) {
+        processFields(field.fields);
+      } else if (field.validation) {
+        schemaFields[field.id] = field.validation;
+      }
     });
-  }
+  };
 
-  // Default fallback
-  return baseSchema;
+  processFields(template.fields);
+  return Yup.object(schemaFields);
 };
 
 const getInitialValues = (templateName) => {
-  if (templateName === 'match_report_template.html' || templateName === 'ss_match_report_template.html') {
-    return {
-      ...baseValues,
-      home_team: '',
-      away_team: '',
-      home_score: '0',
-      away_score: '0',
-      home_scorers: '',
-      away_scorers: '',
-      home_xg: '0.0',
-      away_xg: '0.0',
-      home_lineup: '',
-      away_lineup: '',
-      key_events: '',
-      // ... other match-specific initial values
-    };
-  }
-  if (templateName === 'ss_player_scout_report_template.html') {
-    return {
-      ...baseValues,
-      player_name: '',
-      player_position: '',
-      player_age: '',
-      player_nationality: '',
-      favored_foot: '',
-      scout_stats: ''
-    };
-  }
-
-  return baseValues;
+  return TEMPLATE_CONFIGS[templateName]?.initialValues || {};
 };
 
 function AppContent() {
@@ -272,22 +129,30 @@ function AppContent() {
   const [generatedContent, setGeneratedContent] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [templateName, setTemplateName] = useState('article_template.html');
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [hasGeneratedContent, setHasGeneratedContent] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   
+  // Modify to only store generated content, not form values
+  const [previousContent, setPreviousContent] = useState(null);
+  
+  // Add the missing state variables
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [hasGeneratedContent, setHasGeneratedContent] = useState(false);
+  
   const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
-  const initialValues = useMemo(() => getInitialValues(templateName), [templateName]);
   const { canGenerateArticle, refreshSubscription, subscription } = useSubscription();
 
+  // Set default template name
+  const DEFAULT_TEMPLATE = 'article_template.html';
+  const [templateName, setTemplateName] = useState(DEFAULT_TEMPLATE);
+
+  // Initialize formik with the default template
   const formik = useFormik({
-    initialValues,
-    validationSchema: getValidationSchema(templateName),
-    enableReinitialize: true,
+    initialValues: getInitialValues(DEFAULT_TEMPLATE),
+    validationSchema: getValidationSchema(DEFAULT_TEMPLATE),
+    enableReinitialize: false,
     onSubmit: async (values) => {
       if (hasGeneratedContent) {
         setShowRegenerateConfirm(true);
@@ -296,6 +161,31 @@ function AppContent() {
       await generateContent(values);
     }
   });
+
+  // Reset form when navigating back
+  const handleBackToForm = () => {
+    setPreviousContent(generatedContent);
+    setGeneratedContent(null);
+    formik.resetForm();
+    setTemplateName(DEFAULT_TEMPLATE);
+  };
+
+  // Restore only the generated content
+  const handleRestoreContent = () => {
+    if (previousContent) {
+      setGeneratedContent(previousContent);
+    }
+  };
+
+  // Reset everything when navigating away
+  useEffect(() => {
+    return () => {
+      setGeneratedContent(null);
+      setPreviousContent(null);
+      formik.resetForm();
+      setTemplateName(DEFAULT_TEMPLATE);
+    };
+  }, []);
 
   const handleTemplateChange = (event) => {
     const newTemplate = event.target.value;
@@ -378,23 +268,43 @@ function AppContent() {
     }
   };
 
-  const handleContentEdit = async (editedContent) => {
+  const handleContentEdit = async (updatedContent) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/generate`, {
+      console.log("Debug - Making template render request with:", {
+        template_name: formik.values.template_name,
+        content: updatedContent
+      });
+
+      const response = await fetch(`${API_BASE_URL}/api/render-template`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          ...formik.values,
-          edited_content: editedContent
+          template_name: formik.values.template_name || 'article_template.html', // Add default
+          content: updatedContent
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Debug - API Error:", errorData);
+        throw new Error(errorData.error || 'Failed to update preview');
+      }
+
       const data = await response.json();
-      setGeneratedContent(data);
+      console.log("Debug - Received preview response:", data);
+      
+      setGeneratedContent({
+        ...generatedContent,
+        raw_content: updatedContent,
+        preview_html: data.preview_html
+      });
+      setEditModalOpen(false);
     } catch (error) {
       console.error('Error updating preview:', error);
+      alert('Failed to update preview. Please try again.');
     }
   };
 
@@ -511,144 +421,106 @@ function AppContent() {
     );
   }
 
-  // Pass formik and other necessary props to ArticleForm
-  const renderArticleForm = () => (
-    <ArticleForm 
-      formik={formik}
-      loading={loading}
-      handleImageChange={handleImageChange}
-      imagePreview={imagePreview}
-      generatedContent={generatedContent}
-      templateName={templateName}
-      setTemplateName={setTemplateName}
-      hasGeneratedContent={hasGeneratedContent}
-      setHasGeneratedContent={setHasGeneratedContent}
-    />
-  );
-
-  // Separate the preview section into its own component
-  const PreviewSection = () => (
-    <div>
-      {generatedContent ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mt-8 lg:mt-0"
-        >
-          <Paper className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-            <div className="mb-4 pb-4 border-b border-gray-200">
-              <Typography variant="h6" className="text-gray-800">
-                Preview
-              </Typography>
-            </div>
-
-            <div 
-              dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
-              className="article-preview prose prose-sm max-w-none mb-6"
-            />
-
-            <div className="flex justify-end gap-4">
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<EditIcon />}
-                onClick={() => setEditModalOpen(true)}
-              >
-                Edit Content
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<DownloadIcon />}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                onClick={downloadArticle}
-              >
-                Download Article
-              </Button>
-            </div>
-          </Paper>
-        </motion.div>
-      ) : (
-        <div className="h-full flex items-center justify-center text-gray-500">
-          Generate an article to see the preview
-        </div>
-      )}
-    </div>
-  );
+  // Pass the default template to ArticleForm
+  const renderArticleForm = () => {
+    return (
+      <>
+        {previousContent && (
+          <Box sx={{ mb: 4 }}>
+            <Alert 
+              severity="info"
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={handleRestoreContent}
+                >
+                  View Generated Content
+                </Button>
+              }
+            >
+              You have a previously generated article. Would you like to view it?
+            </Alert>
+          </Box>
+        )}
+        <ArticleForm
+          formik={formik}
+          loading={loading}
+          handleImageChange={handleImageChange}
+          imagePreview={imagePreview}
+          templateName={templateName}
+          setTemplateName={setTemplateName}
+          hasGeneratedContent={hasGeneratedContent}
+          setHasGeneratedContent={setHasGeneratedContent}
+          defaultTemplate={DEFAULT_TEMPLATE}
+        />
+      </>
+    );
+  };
 
   return (
     <ThemeProvider theme={theme}>
-      <AppBar position="static" color="primary" elevation={0}>
-        <Toolbar>
-          <ArticleIcon sx={{ mr: 2 }} />
-          <Typography 
-            variant="h6" 
-            component="div" 
-            sx={{ flexGrow: 1, cursor: 'pointer' }}
-            onClick={() => navigate('/')}
-          >
-            AI Article Generator
-          </Typography>
-          
-          {session ? (
-            // Navigation for authenticated users
-            <>
-              <Button 
-                color="inherit" 
-                onClick={() => {
-                  if (subscription?.plan_type !== 'pro' && subscription?.articles_remaining === 0) {
-                    navigate('/subscription');
-                  } else {
-                    navigate('/generate');
-                  }
-                }}
-                sx={{ mr: 2 }}
-              >
-                Generate Content
-              </Button>
-              <SubscriptionStatus />
+      <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
+        <AppBar position="static" color="primary" elevation={0}>
+          <Toolbar>
+            <ArticleIcon sx={{ mr: 2 }} />
+            <Typography 
+              variant="h6" 
+              component="div" 
+              sx={{ flexGrow: 1, cursor: 'pointer' }}
+              onClick={() => navigate('/')}
+            >
+              AI Article Generator
+            </Typography>
+            
+            {session ? (
+              // Navigation for authenticated users
+              <>
+                <Button 
+                  color="inherit" 
+                  onClick={() => {
+                    if (subscription?.plan_type !== 'pro' && subscription?.articles_remaining === 0) {
+                      navigate('/subscription');
+                    } else {
+                      navigate('/generate');
+                    }
+                  }}
+                  sx={{ mr: 2 }}
+                >
+                  Generate Content
+                </Button>
+                <SubscriptionStatus />
+                <Button 
+                  color="inherit"
+                  onClick={() => {
+                    supabase.auth.signOut();
+                    navigate('/');
+                  }}
+                >
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              // Only show sign in button for non-authenticated users
               <Button 
                 color="inherit"
-                onClick={() => {
-                  supabase.auth.signOut();
-                  navigate('/');
-                }}
+                onClick={() => navigate('/login')}
               >
-                Sign Out
+                Sign In
               </Button>
-            </>
-          ) : (
-            // Only show sign in button for non-authenticated users
-            <Button 
+            )}
+            
+            <IconButton
               color="inherit"
-              onClick={() => navigate('/login')}
+              onClick={() => setDarkMode(!darkMode)}
+              sx={{ ml: 1 }}
             >
-              Sign In
-            </Button>
-          )}
-          
-          <IconButton
-            color="inherit"
-            onClick={() => setDarkMode(!darkMode)}
-            sx={{ ml: 1 }}
-          >
-            {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+              {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+          </Toolbar>
+        </AppBar>
 
-      <Box
-        sx={{
-          backgroundColor: '#f4f6f8',
-          minHeight: 'calc(100vh - 64px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 3,
-        }}
-      >
-        <Container maxWidth="xl">
+        <Container maxWidth={generatedContent ? "xl" : "lg"}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -663,22 +535,93 @@ function AppContent() {
               }}
             >
               <Routes>
-                <Route 
-                  path="/" 
-                  element={<LandingPage />} 
-                />
+                <Route path="/" element={<LandingPage />} />
                 <Route 
                   path="/generate" 
                   element={
                     !session ? (
                       <Navigate to="/login" replace />
-                    ) : subscription?.plan_type !== 'pro' && subscription?.articles_remaining === 0 ? (
+                    ) : subscription?.plan_type !== 'pro' && 
+                         subscription?.articles_remaining === 0 && 
+                         !generatedContent ? (
                       <UpgradePrompt />
                     ) : (
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div>{renderArticleForm()}</div>
-                        <div><PreviewSection /></div>
-                      </div>
+                      <>
+                        {!generatedContent ? (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          >
+                            {renderArticleForm()}
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          >
+                            <Box sx={{ mb: 3 }}>
+                              {subscription?.plan_type !== 'pro' && 
+                               subscription?.articles_remaining === 0 && (
+                                <Alert 
+                                  severity="warning" 
+                                  sx={{ mb: 2 }}
+                                  action={
+                                    <Button
+                                      color="inherit"
+                                      size="small"
+                                      onClick={() => navigate('/subscription')}
+                                    >
+                                      Upgrade to Pro
+                                    </Button>
+                                  }
+                                >
+                                  This was your last free article. Upgrade to Pro to generate more articles.
+                                </Alert>
+                              )}
+                              <Button
+                                startIcon={<ArrowBackIcon />}
+                                onClick={handleBackToForm}
+                                sx={{ mb: 2 }}
+                              >
+                                Back to Form
+                              </Button>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                <Typography variant="h5">Preview</Typography>
+                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                  <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    startIcon={<EditIcon />}
+                                    onClick={() => setEditModalOpen(true)}
+                                  >
+                                    Edit Content
+                                  </Button>
+                                  <Button
+                                    variant="contained"
+                                    color="primary"
+                                    startIcon={<DownloadIcon />}
+                                    onClick={downloadArticle}
+                                  >
+                                    Download Article
+                                  </Button>
+                                </Box>
+                              </Box>
+                              <div 
+                                dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
+                                style={{ 
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                  margin: '0 auto',
+                                  backgroundColor: 'transparent !important',
+                                }}
+                                className="preview-content"
+                              />
+                            </Box>
+                          </motion.div>
+                        )}
+                      </>
                     )
                   } 
                 />
@@ -704,34 +647,7 @@ function AppContent() {
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         content={generatedContent}
-        onSave={async (updatedContent) => {
-          try {
-            // Make API call to regenerate preview
-            const response = await fetch(`${API_BASE_URL}/api/generate`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-              body: JSON.stringify({
-                ...formik.values,
-                edited_content: updatedContent
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to update preview');
-            }
-
-            const data = await response.json();
-            setGeneratedContent(data);
-            setEditModalOpen(false);
-          } catch (error) {
-            console.error('Error updating preview:', error);
-            // Optionally show error to user
-            alert('Failed to update preview. Please try again.');
-          }
-        }}
+        onSave={handleContentEdit}
       />
     </ThemeProvider>
   );

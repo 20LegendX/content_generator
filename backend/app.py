@@ -348,11 +348,10 @@ def validate_image_url(url):
 
 
 def create_prompt(user_input):
-    """Generate a refined dynamic prompt for the match report"""
-    template_name = user_input.get('template_name', '')
+    """Generate a refined dynamic prompt for the article"""
+    template_name = user_input.get('template_name', 'article_template.html')
 
     if template_name == 'article_template.html':
-        # Standard article prompt for article_template
         prompt = f"""Write a structured article about {user_input['topic']}.
 
         ### Required Structure:
@@ -381,44 +380,7 @@ def create_prompt(user_input):
         - Incorporate the provided supporting data naturally within the content
         """
 
-    elif user_input.get('template_name') == 'ss_player_scout_report_template.html':
-        # Create the SCOUTING prompt
-        scout_stats = user_input.get('scout_stats')
-        if isinstance(scout_stats, str):
-            try:
-                scout_stats = json.loads(scout_stats)
-            except json.JSONDecodeError:
-                scout_stats = {}
-        user_input['scout_stats'] = scout_stats
-
-        prompt = f"""
-        Write a professional scout report about {user_input.get('player_name', 'Unknown Player')}.
-
-        ### Provided Data:
-        - Position: {user_input.get('player_position', '')}
-        - Age: {user_input.get('player_age', '')}
-        - Nationality: {user_input.get('player_nationality', '')}
-        - Favoured Foot: {user_input.get('favored_foot', '')}
-        - Stats: {json.dumps(scout_stats, indent=2)}
-
-        ### Additional Context:
-        {user_input.get('context', '')}
-
-        Supporting Data:
-        {user_input.get('supporting_data', '')}
-
-        ### Requirements:
-        - Write the scout report as a cohesive narrative rather than multiple separate sections.
-        - Combine related points into flowing, well-structured paragraphs.
-        - Avoid excessive section breaks unless there is a major topic shift.
-        - Ensure that stats and context are naturally woven into the narrative.
-        - Produce a single, engaging piece of writing that reads naturally and is enjoyable for readers.
-        - Create an engaging headline and meta description for SEO, plus a short summary.
-        """
-
-
-    elif 'match_report_template' in template_name:
-        # Existing match report template logic
+    elif template_name == 'ss_match_report_template.html':
         prompt = f"""
         Write a professional match report for {user_input['home_team']} vs {user_input['away_team']} using ONLY the provided information.
 
@@ -465,6 +427,32 @@ def create_prompt(user_input):
            - Keep the narrative strictly to the facts provided.
 
         Now, write the match report based on this data and structure.
+        """
+
+    elif template_name == 'ss_player_scout_report_template.html':
+        prompt = f"""
+        Write a professional scout report about {user_input.get('player_name', 'Unknown Player')}.
+
+        ### Provided Data:
+        - Position: {user_input.get('player_position', '')}
+        - Age: {user_input.get('player_age', '')}
+        - Nationality: {user_input.get('player_nationality', '')}
+        - Favoured Foot: {user_input.get('favored_foot', '')}
+        - Stats: {json.dumps(user_input.get('scout_stats', {}), indent=2)}
+
+        ### Additional Context:
+        {user_input.get('context', '')}
+
+        Supporting Data:
+        {user_input.get('supporting_data', '')}
+
+        ### Requirements:
+        - Write the scout report as a cohesive narrative rather than multiple separate sections.
+        - Combine related points into flowing, well-structured paragraphs.
+        - Avoid excessive section breaks unless there is a major topic shift.
+        - Ensure that stats and context are naturally woven into the narrative.
+        - Produce a single, engaging piece of writing that reads naturally and is enjoyable for readers.
+        - Create an engaging headline and meta description for SEO, plus a short summary.
         """
 
     return prompt
@@ -1247,8 +1235,36 @@ def render_template_api():
         template_name = data.get('template_name')
         content = data.get('content')
         
-        # Just render the template with the provided content
-        preview_html = render_template(template_name, **content)
+        # Use the same template_vars setup as download_article_api
+        template_vars = {
+            'headline': content.get('headline', ''),
+            'article_content': content.get('article_content', ''),
+            'meta_description': content.get('meta_description', ''),
+            'keywords': content.get('keywords', ''),
+            'featured_image_url': content.get('featured_image_url', ''),
+            'featured_image_alt': content.get('featured_image_alt', ''),
+            'publish_date': datetime.now().strftime("%Y-%m-%d"),
+            'author': content.get('author', ''),
+            'publisher_name': content.get('publisher_name', ''),
+            'publisher_url': content.get('publisher_url', '')
+        }
+
+        # Add template-specific variables just like in download_article_api
+        if template_name == 'article_template.html':
+            template_vars.update({
+                'article_title': content.get('headline', ''),
+                'short_title': content.get('short_title', ''),
+                'article_category': content.get('article_category', ''),
+                'slug': content.get('slug', ''),
+                'og_title': content.get('og_title', ''),
+                'og_description': content.get('og_description', ''),
+                'twitter_title': content.get('twitter_title', ''),
+                'twitter_description': content.get('twitter_description', ''),
+                'schema_type': content.get('schema_type', 'Article'),
+                'focus_keyword': content.get('focus_keyword', '')
+            })
+        
+        preview_html = render_template(template_name, **template_vars)
         
         return jsonify({
             'preview_html': preview_html
