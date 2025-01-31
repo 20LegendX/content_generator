@@ -3,8 +3,6 @@ import {
   Box,
   Tabs,
   Tab,
-  Card,
-  CardContent,
   Typography,
   RadioGroup,
   FormControlLabel,
@@ -12,27 +10,22 @@ import {
   Chip,
   InputAdornment,
   TextField,
-  useTheme,
-  Grid
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { TEMPLATE_CONFIGS, getAvailableTemplates } from '../templates/config';
+import ArticleIcon from '@mui/icons-material/Article';
 
 export default function TemplateSelector({ selectedTemplate, onSelect }) {
-  const theme = useTheme();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const { session } = useAuth();
   const { subscription } = useSubscription();
   
-  // Get available templates based on user and subscription
   const availableTemplates = getAvailableTemplates(session?.user, subscription);
-
   const categories = ['All', ...new Set(Object.values(availableTemplates).map(t => t.category))];
 
-  // Filter templates based on category and search query
   const filteredTemplates = Object.values(availableTemplates).filter(template => {
     const matchesCategory = selectedCategory === 'All' || template.category === selectedCategory;
     const matchesSearch = searchQuery === '' ||
@@ -42,7 +35,6 @@ export default function TemplateSelector({ selectedTemplate, onSelect }) {
     return matchesCategory && matchesSearch;
   });
 
-  // Ensure the default template is selected when component mounts
   useEffect(() => {
     if (!selectedTemplate) {
       onSelect('article_template.html');
@@ -50,8 +42,7 @@ export default function TemplateSelector({ selectedTemplate, onSelect }) {
   }, []);
 
   return (
-    <Box sx={{ width: '100%' }}>
-      {/* Search Bar */}
+    <Box sx={{ width: '100%', mb: 3 }}>
       <TextField
         fullWidth
         variant="outlined"
@@ -68,7 +59,6 @@ export default function TemplateSelector({ selectedTemplate, onSelect }) {
         }}
       />
 
-      {/* Category Tabs */}
       <Tabs
         value={selectedCategory}
         onChange={(_, newValue) => setSelectedCategory(newValue)}
@@ -90,85 +80,56 @@ export default function TemplateSelector({ selectedTemplate, onSelect }) {
         ))}
       </Tabs>
 
-      {/* Template Cards */}
       <RadioGroup
         value={selectedTemplate || 'article_template.html'}
         onChange={(e) => onSelect(e.target.value)}
       >
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {filteredTemplates.map(template => (
             <FormControlLabel
-              value="article_template.html"
+              key={template.id}
+              value={template.id}
               control={<Radio />}
               label={
-                <Box>
-                  <Typography variant="subtitle1">Standard Article</Typography>
+                <Box sx={{ ml: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {template.icon}
+                    <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                      {template.name}
+                    </Typography>
+                  </Box>
                   <Typography variant="body2" color="text.secondary">
-                    Basic article layout for general content. Perfect for news, blogs, and editorial content.
+                    {template.description}
                   </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                    {template.tags.map(tag => (
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size="small"
+                        sx={{ textTransform: 'capitalize' }}
+                      />
+                    ))}
+                  </Box>
                 </Box>
               }
+              sx={{
+                alignItems: 'flex-start',
+                '& .MuiRadio-root': { mt: 1 },
+                py: 1,
+                px: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                width: '100%',
+                margin: 0,
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+              }}
             />
-          </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-              {filteredTemplates.map(template => (
-                <Card
-                  key={template.id}
-                  sx={{
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    border: selectedTemplate === template.id ?
-                      `2px solid ${theme.palette.primary.main}` :
-                      '2px solid transparent',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 3
-                    },
-                    position: 'relative'
-                  }}
-                  onClick={() => onSelect(template.id)}
-                >
-                  <FormControlLabel
-                    value={template.id}
-                    control={
-                      <Radio 
-                        sx={{ 
-                          position: 'absolute',
-                          right: 8,
-                          top: 8,
-                          opacity: selectedTemplate === template.id ? 1 : 0
-                        }}
-                      />
-                    }
-                    label=""
-                  />
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-                      {template.icon}
-                      <Typography variant="h6" component="div">
-                        {template.name}
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {template.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {template.tags.map(tag => (
-                        <Chip
-                          key={tag}
-                          label={tag}
-                          size="small"
-                          sx={{ textTransform: 'capitalize' }}
-                        />
-                      ))}
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          </Grid>
-        </Grid>
+          ))}
+        </Box>
       </RadioGroup>
     </Box>
   );

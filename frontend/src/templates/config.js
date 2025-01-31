@@ -7,6 +7,14 @@ import * as Yup from 'yup';
 // Add your user ID here (you can get it from Supabase dashboard)
 const ADMIN_USER_ID = '12433647-22de-4af6-b457-2fedf3084770';
 
+export const ARTICLE_TYPES = {
+  GENERAL: 'general',
+  TECH: 'tech',
+  TRAVEL: 'travel',
+  SPORTS: 'sports',
+  BUSINESS: 'business'
+};
+
 export const TEMPLATE_CONFIGS = {
   'article_template.html': {
     id: 'article_template.html',
@@ -19,6 +27,7 @@ export const TEMPLATE_CONFIGS = {
       type: 'all' // Available to everyone
     },
     initialValues: {
+      article_type: 'general',
       publisher_name: '',
       publisher_url: '',
       topic: '',
@@ -29,18 +38,34 @@ export const TEMPLATE_CONFIGS = {
     },
     fields: [
       {
+        id: 'article_type',
+        type: 'select',
+        label: 'Article Type',
+        required: true,
+        options: [
+          { value: 'general', label: 'General' },
+          { value: 'tech', label: 'Technology' },
+          { value: 'travel', label: 'Travel' },
+          { value: 'sports', label: 'Sports' },
+          { value: 'business', label: 'Business' }
+        ],
+        validation: Yup.string().required('Article type is required')
+      },
+      {
         id: 'publisher_name',
         type: 'text',
         label: 'Publisher Name',
         required: true,
-        validation: Yup.string().required('Publisher name is required')
+        validation: Yup.string().required('Publisher name is required'),
+        helperText: 'Name of the publishing organization - will be used in meta tags'
       },
       {
         id: 'publisher_url',
         type: 'text',
         label: 'Publisher URL',
         required: true,
-        validation: Yup.string().url('Invalid URL').required('Publisher URL is required')
+        validation: Yup.string().url('Invalid URL').required('Publisher URL is required'),
+        helperText: 'Website URL where the article will be published - will be used in meta tags'
       },
       {
         id: 'topic',
@@ -48,7 +73,7 @@ export const TEMPLATE_CONFIGS = {
         label: 'Topic',
         required: true,
         validation: Yup.string().required('Topic is required'),
-        helperText: 'Enter the main topic of your article'
+        helperText: 'The main subject of your article - this will guide the AI in focusing the content and maintaining relevance throughout'
       },
       {
         id: 'keywords',
@@ -56,7 +81,7 @@ export const TEMPLATE_CONFIGS = {
         label: 'Keywords',
         required: true,
         validation: Yup.string().max(150, 'Keywords must be 150 characters or less').required('Keywords are required'),
-        helperText: 'Comma-separated keywords'
+        helperText: 'Comma-separated terms that the AI will naturally incorporate into the article to improve relevance and SEO - also used in meta tags'
       },
       {
         id: 'context',
@@ -65,7 +90,7 @@ export const TEMPLATE_CONFIGS = {
         rows: 4,
         required: true,
         validation: Yup.string().required('Context is required'),
-        helperText: 'Provide additional context for the article'
+        helperText: 'Background information that helps the AI understand the topic better. Include relevant history, current situation, and specific angles you want covered. The more context you provide, the less generic your article will be'
       },
       {
         id: 'supporting_data',
@@ -74,7 +99,16 @@ export const TEMPLATE_CONFIGS = {
         rows: 4,
         required: true,
         validation: Yup.string().required('Supporting data is required'),
-        helperText: 'Enter any supporting data or information'
+        helperText: `Include specific facts, figures, and quotes that should appear in the article. The AI will:
+• Weave these naturally into the narrative
+• Use them to support key points
+• Maintain factual accuracy
+• Create a more authoritative article`,
+        placeholder: `Example:
+• Market size: $5.2B in 2023
+• Growth rate: 12.3% YoY
+• Key player quote: "Innovation drives our industry forward"
+• Recent study: 67% of users prefer...`
       },
       {
         id: 'image_url',
@@ -82,7 +116,7 @@ export const TEMPLATE_CONFIGS = {
         label: 'Featured Image URL',
         required: false,
         validation: Yup.string().url('Invalid image URL').nullable(),
-        helperText: 'Enter the URL of the featured image (optional)',
+        helperText: 'URL of the main image',
         placeholder: 'https://example.com/image.jpg'
       }
     ]

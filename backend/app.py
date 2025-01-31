@@ -33,6 +33,14 @@ api_key = os.getenv("OPENAI_API_KEY")
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
+
+# Suppress excessive debug logs from specific libraries
+logging.getLogger('hpack').setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+
+
 def find_free_port(start_port=5001, max_port=5010):
     """Find a free port to use"""
     for port in range(start_port, max_port):
@@ -348,42 +356,125 @@ def validate_image_url(url):
 
 
 def create_prompt(user_input):
-    """Generate a refined dynamic prompt for the article"""
+    """Generate a refined dynamic prompt for the article while preventing invented content."""
     template_name = user_input.get('template_name', 'article_template.html')
+    article_type = user_input.get('article_type', 'general')
+
+    # Define natural writing style personas
+    style_guides = {
+        'tech': """Write this article like an experienced tech journalist. 
+                   Make complex concepts feel effortless to understand, 
+                   like explaining to a smart but non-expert friend. 
+                   Keep the tone confident yet engaging, avoiding dry or robotic phrasing.""",
+
+        'travel': """Write this article like a seasoned travel writer, 
+                     painting vivid pictures of places, smells, and sounds. 
+                     Blend practical insights with immersive storytelling, 
+                     making the reader feel like they're right there with you.""",
+
+        'sports': """Write this article like a passionate football journalist 
+                     who **lives and breathes** the game. 
+                     Capture the excitement, the drama, the tactical nuances. 
+                     Avoid dry reporting—bring the action to life with energy and personality.""",
+
+        'business': """Write this article like a respected business analyst, 
+                       breaking down complex ideas into clear, insightful takeaways. 
+                       Keep the tone authoritative yet engaging, avoiding corporate jargon.""",
+
+        'general': """Write this article like an experienced feature writer, 
+                      crafting engaging, informative content with a natural, 
+                      flowing rhythm that keeps the reader hooked."""
+    }
+
+    style_guide = style_guides.get(article_type, style_guides['general'])
+
+    # **Strictly prevent fabricated events**
+    factual_constraint = """
+    IMPORTANT: You must NOT invent or fabricate real-world events. 
+    - If an event is real, stick to the known facts.  
+    - If details are missing, **do NOT assume or make up additional information**.  
+    - Always write with journalistic integrity—accuracy over speculation.
+    """
+
+    natural_tone_guidelines = """
+    To make this article sound **natural, engaging, and human-like**, follow these principles:
+
+    ✅ **Keep it grounded.**  
+       - No sweeping statements like **"pursuit of greatness"**, **"delicate balance"**, or **"profound implications for the industry."**  
+       - Instead, **focus on specific details and real-world context.**  
+
+    ✅ **Skip the filler drama.**  
+       - ❌ "The situation remains uncertain, and only time will tell what happens next."  
+       - ✅ Instead, explain **why it matters** and **what’s actually happening.**  
+
+    ✅ **Talk like an expert, not a corporate press release.**  
+       - ❌ "This breakthrough presents an exciting opportunity for businesses worldwide."  
+       - ✅ Instead, **explain the impact in clear, real-world terms.**  
+
+    ✅ **Use concrete insights instead of broad emotional phrases.**  
+       - ❌ "This marks a turning point in the industry."  
+       - ✅ "This shift means smaller businesses will need to rethink their supply chains to stay competitive."  
+
+    ✅ **Keep it punchy and specific.**  
+       - ❌ "The rise of AI in healthcare is fascinating."  
+       - ✅ "AI is already detecting diseases earlier than doctors in some cases—like Google’s retinal scan technology for diabetes-related blindness."  
+
+    ✅ **Write like a person, not a bot.**  
+       - Use **contractions** (“it’s” instead of “it is”).  
+       - Vary sentence length—**mix short, punchy lines with longer ones.**  
+       - **Avoid generic transitions** like "moreover" or "in addition"—use natural ones like "That said" or "Even so."  
+
+    **REMEMBER:**  
+    - This is **journalism and analysis**, not an AI-generated motivational essay.  
+    - Avoid words like **"destiny,"** **"revolutionizing,"** **"game-changer,"** or **"unparalleled innovation."**  
+    """
 
     if template_name == 'article_template.html':
         prompt = f"""Write a structured article about {user_input['topic']}.
 
+        {style_guide}
+        
+        {factual_constraint}
+        
+        {natural_tone_guidelines}
+
         ### Required Structure:
-        1. **Title**: A concise, engaging title for the article.
-        2. **Headline**: A one-sentence summary of the article.
+        1. **Title**: Create an engaging, attention-grabbing title
+        2. **Headline**: Write a compelling one-sentence summary
         3. **Meta Information**:
-           - Meta Description: A brief SEO-friendly description (up to 150 characters)
-           - Keywords: Use these terms: {user_input.get('keywords', '')}
-           - Article Category: The primary category for this content
+           - Meta Description: A natural, SEO-friendly description (max 150 characters)
+           - Keywords: Naturally incorporate these terms: {user_input.get('keywords', '')}
+           - Article Category: {article_type.capitalize()}
            - Featured Image Alt Text: A descriptive text for the featured image
 
-        4. **Article Content**: Create a well-structured article with appropriate sections.
-        Each section should be properly formatted with HTML paragraph tags (<p>).
-
-        Use the following context and data for reference:
+        4. **Article Content:**  
+           Write a well-structured article that flows naturally between sections.  
+           Avoid AI-like rigid section breaks—**blend ideas smoothly**.
+        
+        Use this context and data to inform your writing:
         Context:
         {user_input.get('context', 'No context provided.')}
 
         Supporting Data:
         {user_input.get('supporting_data', 'No supporting data provided.')}
 
-        ### Writing Style:
-        - Use professional UK English
-        - Maintain a sophisticated, analytical tone
-        - Balance narrative flow with data insights
-        - Incorporate the provided supporting data naturally within the content
+        ### **Writing Guidelines:**
+        - **Write in a natural, engaging tone**—avoid robotic phrasing.
+        - **Use contractions** ("it's" instead of "it is") and **mix sentence lengths**.
+        - **Avoid formulaic transitions**—use conversational flow.
+        - **Integrate stats naturally** rather than dumping them in a list.
+        - **Format content using HTML `<p>` paragraph tags.**
+        - **Do NOT fabricate real-world events.**
         """
 
     elif template_name == 'ss_match_report_template.html':
         prompt = f"""
         Write a professional match report for {user_input['home_team']} vs {user_input['away_team']} using ONLY the provided information.
-
+        {style_guide}
+        
+        {factual_constraint}
+        
+        {natural_tone_guidelines}
         ### Data Provided
         **Score**: {user_input['home_team']} {user_input['home_score']} - {user_input['away_score']} {user_input['away_team']}
         **Competition**: {user_input['competition']}
@@ -425,6 +516,10 @@ def create_prompt(user_input):
            - Write in concise, professional UK English.
            - Avoid repetitive statements and speculative phrases.
            - Keep the narrative strictly to the facts provided.
+           - Write in a natural, conversational tone while maintaining professionalism.
+           - Vary sentence structure and length for better readability.
+           - Use transitional phrases to connect ideas smoothly.
+           - Incorporate data and facts naturally into the narrative.
 
         Now, write the match report based on this data and structure.
         """
@@ -432,7 +527,11 @@ def create_prompt(user_input):
     elif template_name == 'ss_player_scout_report_template.html':
         prompt = f"""
         Write a professional scout report about {user_input.get('player_name', 'Unknown Player')}.
-
+        {style_guide}
+        
+        {factual_constraint}
+        
+        {natural_tone_guidelines}
         ### Provided Data:
         - Position: {user_input.get('player_position', '')}
         - Age: {user_input.get('player_age', '')}
@@ -447,6 +546,10 @@ def create_prompt(user_input):
         {user_input.get('supporting_data', '')}
 
         ### Requirements:
+        - Write in a natural, conversational tone while maintaining professionalism.
+        - Vary sentence structure and length for better readability.
+        - Use transitional phrases to connect ideas smoothly.
+        - Incorporate data and facts naturally into the narrative.
         - Write the scout report as a cohesive narrative rather than multiple separate sections.
         - Combine related points into flowing, well-structured paragraphs.
         - Avoid excessive section breaks unless there is a major topic shift.
@@ -461,10 +564,12 @@ def create_prompt(user_input):
 
 
 
-def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature=0.7):
+def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature=0.55, top_p=0.85):
     """Send prompt to GPT-4 and get structured response."""
     print("Using model:", model)  # Debug log
-    print("Sending prompt:", prompt[:200] + "...")  # Debug first 200 chars of prompt
+    print("Sending prompt:", prompt[:500] + "...")  # Debug first 200 chars of prompt
+
+
 
     try:
         if template_name == 'match_report_template.html' or template_name == 'ss_match_report_template.html':
@@ -539,12 +644,22 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature
             """
 
         else:
-            system_prompt = """You are an expert SEO content writer. 
+            system_prompt = """You are a skilled journalist known for your **engaging, human-like writing style**.
+            Write this article with a **natural, conversational tone**—avoiding robotic, predictable phrases. 
             Return your response in valid JSON format with enhanced SEO elements:
+            
+                **Must-Have Writing Style:**
+            - **Tell a story**, don’t just list facts.
+            - **Use contractions** (e.g., “he’s” instead of “he is”).
+            - **Ditch robotic phrases** like “presents an opportunity” or “remains uncertain.”
+            - **Mix sentence structures**—short, impactful sentences should balance longer ones.
+            - **Use strong verbs**—no weak passive phrases like “Tel is considered a top talent.” 
+            - Instead, say: **"Tel is turning heads across Europe."**
+            
             {
                 "template_data": {
-                    "headline": string,  // SEO-optimized title
-                    "short_title": string,  // Shorter version for meta title
+                    "headline": string,  // Engaging article title
+                    "short_title": string,  // One-sentence summary
                     "featured_image_alt": string,  // SEO-optimized alt text for the featured image
                     "article_category": string,
                     "slug": string  // URL-friendly version of title
@@ -591,6 +706,7 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature
             ],
             max_tokens=max_tokens,
             temperature=temperature,
+            top_p=top_p,
             response_format={"type": "json_object"}
         )
 

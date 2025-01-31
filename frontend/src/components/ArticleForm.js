@@ -21,7 +21,8 @@ const ArticleForm = ({
   
   // Get template config only once based on the selected template
   const templateConfig = TEMPLATE_CONFIGS[formik.values.template_name || 'article_template.html'];
-
+  console.log('Form values:', formik.values);
+  console.log('Form errors:', formik.errors);
   // Single render of fields
   const renderFields = (fields) => {
     return fields.map(field => {
@@ -78,10 +79,29 @@ const ArticleForm = ({
           onSelect={(templateId) => formik.setFieldValue('template_name', templateId)}
         />
         
-        {/* Only render fields once */}
+        {/* Article Type field - always present */}
+        <DynamicFormField 
+          key="article_type"
+          field={{
+            id: 'article_type',
+            type: 'select',
+            label: 'Article Type',
+            required: true,
+            options: [
+              { value: 'general', label: 'General' },
+              { value: 'tech', label: 'Technology' },
+              { value: 'travel', label: 'Travel' },
+              { value: 'sports', label: 'Sports' },
+              { value: 'business', label: 'Business' }
+            ]
+          }}
+          formik={formik}
+        />
+        
+        {/* Template-specific fields */}
         {templateConfig && (
           <div className="space-y-4">
-            {renderFields(templateConfig.fields)}
+            {renderFields(templateConfig.fields.filter(field => field.id !== 'article_type'))}
           </div>
         )}
 

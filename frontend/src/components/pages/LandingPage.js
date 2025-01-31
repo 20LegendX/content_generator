@@ -5,6 +5,10 @@ import CheckIcon from '@mui/icons-material/Check';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { supabase } from '../../lib/supabase';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
+import ClockIcon from '@mui/icons-material/AccessTime';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -120,42 +124,128 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-primary-600 dark:text-white mb-6">
-          PageCrafter AI
-        </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-200 max-w-2xl mx-auto mb-12">
-          Generate professional articles, match reports, and scout reports instantly with AI
-        </p>
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50">
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center">
+          <h1 className="text-6xl sm:text-7xl font-black tracking-tight text-transparent bg-clip-text 
+                       bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 mb-8
+                       leading-[1.2] pb-2" >
+            PageCrafter AI
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8 font-medium">
+            Create SEO-optimized web content in minutes, not hours
+          </p>
+          <p className="text-lg text-gray-500 max-w-3xl mx-auto mb-12">
+            Transform your ideas into professionally crafted, search-engine ready articles with minimal input. Perfect for content creators, marketers, and businesses.
+          </p>
+          
+          {/* CTA Buttons */}
+          <div className="flex justify-center gap-4 mb-20">
+            <Button
+              onClick={() => navigate('/generate')}
+              className="px-8 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 
+                       transition-all duration-200 text-lg font-medium"
+            >
+              Try For Free
+            </Button>
+            <Button
+              onClick={() => navigate('/login')}
+              className="px-8 py-3 text-blue-600 border-2 border-blue-600 rounded-lg 
+                       hover:bg-blue-50 transition-all duration-200 text-lg font-medium"
+            >
+              See How It Works
+            </Button>
+          </div>
+        </div>
 
-        <div className="mt-16">
-          <h2 className="text-3xl font-semibold mb-8 text-primary-600 dark:text-white">
+        {/* Features Section - directly after hero */}
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
+          <div className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <ArticleIcon className="h-6 w-6 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Instant Content Generation</h3>
+            <p className="text-gray-600">Generate complete, SEO-optimized articles in minutes with just a few key details.</p>
+          </div>
+
+          <div className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <EditIcon className="h-6 w-6 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Full Editorial Control</h3>
+            <p className="text-gray-600">Edit and refine your generated content directly on the platform before downloading.</p>
+          </div>
+
+          <div className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <SearchIcon className="h-6 w-6 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">SEO Optimized</h3>
+            <p className="text-gray-600">Every article is structured for maximum search engine visibility and ranking potential.</p>
+          </div>
+        </div>
+
+        {/* Value Metrics Section */}
+        <div className="text-center mb-20">
+          <h3 className="text-2xl font-bold text-gray-800 mb-12">Why Choose PageCrafter AI?</h3>
+          <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-lg">
+              <div className="text-blue-600 mb-4">
+                <ClockIcon className="h-8 w-8 mx-auto" />
+              </div>
+              <h4 className="text-xl font-bold text-gray-800 mb-2">5 Minute Setup</h4>
+              <p className="text-gray-600">From idea to complete article in under 5 minutes. No writing experience needed.</p>
+            </div>
+            
+            <div className="bg-white p-8 rounded-xl shadow-lg">
+              <div className="text-blue-600 mb-4">
+                <SearchIcon className="h-8 w-8 mx-auto" />
+              </div>
+              <h4 className="text-xl font-bold text-gray-800 mb-2">Built-in SEO</h4>
+              <p className="text-gray-600">Automatic keyword optimization and meta descriptions for better search rankings.</p>
+            </div>
+            
+            <div className="bg-white p-8 rounded-xl shadow-lg">
+              <div className="text-blue-600 mb-4">
+                <EditIcon className="h-8 w-8 mx-auto" />
+              </div>
+              <h4 className="text-xl font-bold text-gray-800 mb-2">Full Control</h4>
+              <p className="text-gray-600">Edit and customize your content directly in our built-in editor before downloading.</p>
+            </div>
+          </div>
+        </div>
+
+
+
+        {/* Pricing Section */}
+        <div className="text-center">
+          <h2 className="text-4xl font-bold mb-16 text-gray-800">
             Choose Your Plan
           </h2>
-          
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Free Plan */}
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 
-                          border border-gray-200 dark:border-gray-700
-                          hover:shadow-xl transition-shadow duration-300">
-              <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+            <div className="relative bg-white rounded-2xl shadow-lg p-8 
+                          border border-gray-100
+                          hover:shadow-xl transition-all duration-300
+                          group">
+              <h3 className="text-2xl font-bold mb-4 text-gray-800">
                 Free Plan
               </h3>
-              <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+              <p className="text-4xl font-bold text-gray-800 mb-6">
                 £0
               </p>
-              <ul className="space-y-4 mb-8 text-left text-gray-700 dark:text-gray-200">
+              <ul className="space-y-4 mb-8 text-left text-gray-600">
                 <li className="flex items-center">
-                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <CheckIcon className="text-blue-500 mr-3" />
                   <span>3 Articles per month</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <CheckIcon className="text-blue-500 mr-3" />
                   <span>Basic templates</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <CheckIcon className="text-blue-500 mr-3" />
                   <span>Standard support</span>
                 </li>
               </ul>
@@ -163,30 +253,31 @@ const LandingPage = () => {
             </div>
 
             {/* Pro Plan */}
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 
-                          border-2 border-primary-600 dark:border-white
-                          hover:shadow-xl transition-shadow duration-300">
-              <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+            <div className="relative bg-white rounded-2xl p-8 
+                          border-2 border-blue-500
+                          shadow-lg hover:shadow-xl 
+                          transition-all duration-300">
+              <h3 className="text-2xl font-bold mb-4 text-gray-800">
                 Pro Plan
               </h3>
-              <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                £19<span className="text-lg text-gray-600 dark:text-gray-200">/mo</span>
+              <p className="text-4xl font-bold text-gray-800 mb-6">
+                £19<span className="text-lg text-gray-500 font-medium">/mo</span>
               </p>
-              <ul className="space-y-4 mb-8 text-left text-gray-700 dark:text-gray-200">
+              <ul className="space-y-4 mb-8 text-left text-gray-600">
                 <li className="flex items-center">
-                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <CheckIcon className="text-blue-500 mr-3" />
                   <span>50 Articles per month</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <CheckIcon className="text-blue-500 mr-3" />
                   <span>All Premium Templates</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <CheckIcon className="text-blue-500 mr-3" />
                   <span>Priority Support</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckIcon className="text-green-500 dark:text-green-400 mr-3" />
+                  <CheckIcon className="text-blue-500 mr-3" />
                   <span>Advanced Features</span>
                 </li>
               </ul>

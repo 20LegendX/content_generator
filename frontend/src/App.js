@@ -75,6 +75,7 @@ const getTheme = (mode) => createTheme({
 
 // Define the base schema
 const baseSchema = Yup.object({
+  article_type: Yup.string().required('Article type is required'),
   publisher_name: Yup.string().required('Publisher name is required'),
   publisher_url: Yup.string()
     .url('Invalid URL')
@@ -89,7 +90,8 @@ const baseSchema = Yup.object({
 
 // Define base values
 const baseValues = {
-  template_name: 'download_template.html',
+  article_type: 'general',
+  template_name: 'article_template.html',
   publisher_name: '',
   publisher_url: '',
   keywords: '',
@@ -155,9 +157,12 @@ function AppContent() {
 
   // Initialize formik with the default template
   const formik = useFormik({
-    initialValues: getInitialValues(DEFAULT_TEMPLATE),
-    validationSchema: getValidationSchema(DEFAULT_TEMPLATE),
-    enableReinitialize: false,
+    initialValues: {
+      ...baseValues,
+      ...getInitialValues(templateName)
+    },
+    validationSchema: getValidationSchema(templateName),
+    enableReinitialize: true,
     onSubmit: async (values) => {
       if (hasGeneratedContent) {
         setShowRegenerateConfirm(true);
@@ -195,6 +200,15 @@ function AppContent() {
   const handleTemplateChange = (event) => {
     const newTemplate = event.target.value;
     setTemplateName(newTemplate);
+    
+    // Reset form with new template's initial values
+    formik.resetForm({
+      values: {
+        ...baseValues,
+        ...getInitialValues(newTemplate),
+        template_name: newTemplate
+      }
+    });
   };
 
   const handleImageChange = (e) => {
@@ -467,197 +481,205 @@ function AppContent() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
-        <AppBar position="static" color="primary" elevation={0}>
-          <Toolbar>
-            <ArticleIcon sx={{ mr: 2 }} />
-            <Typography 
-              variant="h6" 
-              component="div" 
-              sx={{ flexGrow: 1, cursor: 'pointer' }}
-              onClick={() => navigate('/')}
-            >
-              AI Article Generator
-            </Typography>
-            
-            {session ? (
-              // Navigation for authenticated users
-              <>
-                <Button 
-                  color="inherit" 
-                  onClick={() => {
-                    if (subscription?.plan_type !== 'pro' && subscription?.articles_remaining === 0) {
-                      navigate('/subscription');
-                    } else {
-                      navigate('/generate');
-                    }
-                  }}
-                  sx={{ mr: 2 }}
-                >
-                  Generate Content
-                </Button>
-                <SubscriptionStatus />
-                <Button 
-                  color="inherit"
-                  onClick={() => {
-                    supabase.auth.signOut();
-                    navigate('/');
-                  }}
-                >
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              // Only show sign in button for non-authenticated users
-              <Button 
-                color="inherit"
-                onClick={() => navigate('/login')}
+    <div className="min-h-screen bg-[#fef6e4] dark:bg-gray-900">
+      <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            {/* Logo and Brand */}
+            <div className="flex items-center">
+              <div 
+                className="flex items-center space-x-3 cursor-pointer"
+                onClick={() => navigate('/')}
               >
-                Sign In
-              </Button>
-            )}
-            
-            <IconButton
-              color="inherit"
-              onClick={() => setDarkMode(!darkMode)}
-              sx={{ ml: 1 }}
-            >
-              {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-          </Toolbar>
-        </AppBar>
+                <ArticleIcon 
+                  className="h-6 w-6 text-blue-600 dark:text-blue-500" 
+                />
+                <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent text-xl font-bold">
+                  PageCrafter AI
+                </span>
+              </div>
+            </div>
 
-        <Container maxWidth={generatedContent ? "xl" : "lg"}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Paper
-              elevation={3}
-              sx={{
-                padding: 4,
-                borderRadius: 2,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-              }}
-            >
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route 
-                  path="/generate" 
-                  element={
-                    !session ? (
-                      <Navigate to="/login" replace />
-                    ) : subscription?.plan_type !== 'pro' && 
-                         subscription?.articles_remaining === 0 && 
-                         !generatedContent ? (
-                      <UpgradePrompt />
+            {/* Navigation and Actions */}
+            <div className="flex items-center space-x-1 sm:space-x-3">
+              {session ? (
+                <>
+                  <button
+                    onClick={() => {
+                      if (subscription?.plan_type !== 'pro' && subscription?.articles_remaining === 0) {
+                        navigate('/subscription');
+                      } else {
+                        navigate('/generate');
+                      }
+                    }}
+                    className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 
+                             hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  >
+                    <ArticleIcon className="w-4 h-4 mr-2" />
+                    Generate Content
+                  </button>
+
+                  <div className="hidden sm:block">
+                    <SubscriptionStatus />
+                  </div>
+
+                  {/* Profile Dropdown - You might want to add this later */}
+                  <Button
+                    onClick={() => {
+                      supabase.auth.signOut();
+                      navigate('/');
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 
+                             hover:text-gray-900 dark:hover:text-white rounded-lg 
+                             hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+                  >
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 
+                           hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                >
+                  Sign In
+                </button>
+              )}
+
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white 
+                         rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? (
+                  <Brightness7Icon className="h-5 w-5" />
+                ) : (
+                  <Brightness4Icon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route 
+              path="/generate"
+              element={
+                !session ? (
+                  <Navigate to="/login" replace />
+                ) : subscription?.plan_type !== 'pro' && 
+                    subscription?.articles_remaining === 0 && 
+                    !generatedContent ? (
+                  <UpgradePrompt />
+                ) : (
+                  <>
+                    {!generatedContent ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        {renderArticleForm()}
+                      </motion.div>
                     ) : (
-                      <>
-                        {!generatedContent ? (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                          >
-                            {renderArticleForm()}
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                          >
-                            <Box sx={{ mb: 3 }}>
-                              {subscription?.plan_type !== 'pro' && 
-                               subscription?.articles_remaining === 0 && (
-                                <Alert 
-                                  severity="warning" 
-                                  sx={{ mb: 2 }}
-                                  action={
-                                    <Button
-                                      color="inherit"
-                                      size="small"
-                                      onClick={() => navigate('/subscription')}
-                                    >
-                                      Upgrade to Pro
-                                    </Button>
-                                  }
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <Box sx={{ mb: 3 }}>
+                          {subscription?.plan_type !== 'pro' && 
+                           subscription?.articles_remaining === 0 && (
+                            <Alert 
+                              severity="warning" 
+                              sx={{ mb: 2 }}
+                              action={
+                                <Button
+                                  color="inherit"
+                                  size="small"
+                                  onClick={() => navigate('/subscription')}
                                 >
-                                  This was your last free article. Upgrade to Pro to generate more articles.
-                                </Alert>
-                              )}
+                                  Upgrade to Pro
+                                </Button>
+                              }
+                            >
+                              This was your last free article. Upgrade to Pro to generate more articles.
+                            </Alert>
+                          )}
+                          <Button
+                            startIcon={<ArrowBackIcon />}
+                            onClick={handleBackToForm}
+                            sx={{ mb: 2 }}
+                          >
+                            Back to Form
+                          </Button>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Typography variant="h5">Preview</Typography>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                               <Button
-                                startIcon={<ArrowBackIcon />}
-                                onClick={handleBackToForm}
-                                sx={{ mb: 2 }}
+                                variant="outlined"
+                                color="primary"
+                                startIcon={<EditIcon />}
+                                onClick={() => setEditModalOpen(true)}
                               >
-                                Back to Form
+                                Edit Content
                               </Button>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                <Typography variant="h5">Preview</Typography>
-                                <Box sx={{ display: 'flex', gap: 2 }}>
-                                  <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    startIcon={<EditIcon />}
-                                    onClick={() => setEditModalOpen(true)}
-                                  >
-                                    Edit Content
-                                  </Button>
-                                  <Button
-                                    variant="contained"
-                                    color="primary"
-                                    startIcon={<DownloadIcon />}
-                                    onClick={downloadArticle}
-                                  >
-                                    Download Article
-                                  </Button>
-                                </Box>
-                              </Box>
-                              <div 
-                                dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
-                                style={{ 
-                                  width: '100%',
-                                  maxWidth: '100%',
-                                  margin: '0 auto',
-                                  backgroundColor: 'transparent !important',
-                                }}
-                                className="preview-content"
-                              />
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<DownloadIcon />}
+                                onClick={downloadArticle}
+                              >
+                                Download Article
+                              </Button>
                             </Box>
-                          </motion.div>
-                        )}
-                      </>
-                    )
-                  } 
-                />
-                <Route path="/login" element={<Auth />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route 
-                  path="/subscription" 
-                  element={
-                    <ProtectedRoute>
-                      <SubscriptionManager />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-                <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Paper>
-          </motion.div>
-        </Container>
-      </Box>
+                          </Box>
+                          <div 
+                            dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
+                            style={{ 
+                              width: '100%',
+                              maxWidth: '100%',
+                              margin: '0 auto',
+                              backgroundColor: 'transparent !important',
+                            }}
+                            className="preview-content"
+                          />
+                        </Box>
+                      </motion.div>
+                    )}
+                  </>
+                )
+              }
+            />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route 
+              path="/subscription" 
+              element={
+                <ProtectedRoute>
+                  <SubscriptionManager />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+            <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </main>
       <EditContentModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         content={generatedContent}
         onSave={handleContentEdit}
       />
-    </ThemeProvider>
+    </div>
   );
 }
 
