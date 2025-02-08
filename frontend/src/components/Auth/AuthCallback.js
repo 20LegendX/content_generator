@@ -13,31 +13,78 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the session immediately after the redirect
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Log the full URL and hash
+        console.log('Auth Callback URL:', {
+          full: window.location.href,
+          hash: window.location.hash,
+          hashParams: new URLSearchParams(window.location.hash.substring(1))
+        });
+
+        // Get the session immediately after redirect
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw sessionError;
+        console.log('Initial Session Check:', {
+          hasSession: !!session,
+          error: error,
+          sessionData: session ? {
+            userId: session.user.id,
+            email: session.user.email,
+            provider: session.user.app_metadata?.provider,
+            accessToken: session.access_token?.substring(0, 10) + '...'
+          } : null
+        });
+
+        if (error) {
+          console.error('Session Error:', error);
+          throw error;
         }
 
-        if (!session) {
-          console.error('No session after redirect');
-          throw new Error('No session established');
+        let currentSession = session;
+
+        if (!currentSession) {
+          // If no session, try to set it from the URL hash
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+          
+          console.log('Hash Params:', {
+            hasAccessToken: !!accessToken,
+            hasRefreshToken: !!refreshToken,
+            tokenType: hashParams.get('token_type'),
+            expiresIn: hashParams.get('expires_in')
+          });
+
+          if (accessToken) {
+            // Set the session manually
+            const { data, error: setSessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+
+            console.log('Set Session Result:', {
+              success: !!data.session,
+              error: setSessionError
+            });
+
+            if (setSessionError) throw setSessionError;
+            currentSession = data.session;
+          } else {
+            throw new Error('No access token in URL');
+          }
         }
 
-        console.log('Session established:', session);
+        if (!currentSession) throw new Error('Failed to establish session');
 
-        console.log('Creating records for user:', session.user.id);
+        console.log('Creating records for user:', currentSession.user.id);
 
-        // Create user record
+        // Create/update user record
         const { error: userError } = await supabase
           .from('users')
           .upsert({
-            id: session.user.id,
-            email: session.user.email,
-            auth_provider: session.user.app_metadata?.provider || 'email',
-            provider_id: session.user.app_metadata?.provider_id,
+            id: currentSession.user.id,
+            email: currentSession.user.email,
+            auth_provider: currentSession.user.app_metadata?.provider || 'email',
+            provider_id: currentSession.user.app_metadata?.provider_id,
             status: 'active',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -45,7 +92,10 @@ const AuthCallback = () => {
             onConflict: 'id'
           });
 
-        if (userError) throw userError;
+        if (userError) {
+          console.error('User record error:', userError);
+          throw userError;
+        }
 
         console.log('User record created/updated successfully');
 
@@ -53,15 +103,15 @@ const AuthCallback = () => {
         const { data: existingSub, error: checkError } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', currentSession.user.id)
           .single();
 
         if (checkError && !existingSub) {
-          console.log('No existing subscription found, creating new one');
-          await supabase
+          console.log('Creating new subscription for user');
+          const { error: subError } = await supabase
             .from('subscriptions')
             .insert({
-              user_id: session.user.id,
+              user_id: currentSession.user.id,
               plan_type: 'free',
               status: 'active',
               articles_generated: 0,
@@ -70,13 +120,23 @@ const AuthCallback = () => {
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
+
+          if (subError) {
+            console.error('Subscription creation error:', subError);
+            throw subError;
+          }
         } else {
           console.log('Existing subscription found:', existingSub);
         }
 
+        // If we get here, everything was successful
         navigate('/');
       } catch (error) {
-        console.error('Auth callback error:', error);
+        console.error('Auth Callback Error:', {
+          message: error.message,
+          stack: error.stack,
+          type: error.constructor.name
+        });
         navigate('/login');
       }
     };
@@ -85,8 +145,11 @@ const AuthCallback = () => {
   }, [navigate]);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div>Processing login...</div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
+      <div>Processing authentication...</div>
+      <div style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>
+        {window.location.href}
+      </div>
     </div>
   );
 };

@@ -781,6 +781,25 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    // Validate critical environment variables
+    const requiredEnvVars = {
+      REACT_APP_SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
+      REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY,
+      REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+    };
+
+    console.log('Environment Validation:', {
+      missingVars: Object.entries(requiredEnvVars)
+        .filter(([_, value]) => !value)
+        .map(([key]) => key),
+      origin: window.location.origin,
+      hostname: window.location.hostname,
+      protocol: window.location.protocol,
+      buildEnv: process.env.NODE_ENV
+    });
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
