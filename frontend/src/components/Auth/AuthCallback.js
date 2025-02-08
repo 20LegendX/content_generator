@@ -13,10 +13,20 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Get the session immediately after the redirect
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) throw error;
-        if (!session) throw new Error('No session established');
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw sessionError;
+        }
+
+        if (!session) {
+          console.error('No session after redirect');
+          throw new Error('No session established');
+        }
+
+        console.log('Session established:', session);
 
         console.log('Creating records for user:', session.user.id);
 

@@ -69,8 +69,9 @@ CORS(app, resources={
             "https://www.pagecrafter.ai"  # Add www version
         ],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Accept"],
-        "supports_credentials": True
+        "allow_headers": ["Content-Type", "Authorization", "Accept", "user-id"],  # Add user-id
+        "supports_credentials": True,
+        "expose_headers": ["Content-Range", "X-Content-Range"]
     }
 })
 
