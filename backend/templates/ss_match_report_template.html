@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background-color: {{ theme.colors.background }}; margin: 0; padding: 0; min-height: 100%;">
 <head>
         <!-- Google Analytics (with consent management) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZXDJNBML2H"></script>
@@ -68,12 +68,80 @@
 
 
 <style>
-
-
+    /* Base Reset & Typography */
     body {
-        background-color: #0b0c1f;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        color: white;
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        font-family: {{ theme.font }}, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: {{ theme.colors.background }};
+    }
+
+    .match-report {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+    }
+
+    .match-header {
+        background-color: {{ theme.colors.background }};
+        text-align: center;
+        padding: 2rem 0;
+    }
+
+    /* Make sure all sections have the correct background */
+    .score-display, 
+    .match-details,
+    .match-stats,
+    .stat-row,
+    .stat-bars,
+    .stat-label,
+    .home-bar,
+    .away-bar {
+        background-color: {{ theme.colors.background }};
+    }
+
+    /* Main content area */
+    .main-content {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        padding: 3rem 1rem;
+    }
+
+    /* Article container */
+    .article-container {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Update container background */
+    .container {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        padding: 2rem;
+    }
+
+    /* Update match content */
+    .match-content {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        line-height: 1.8;
     }
 
     footer {
@@ -236,17 +304,6 @@
     .my-lg-0 {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-    }
-
-    .container {
-        width: 100%;
-        margin: 0 auto;
-    }
-
-    .main-content {
-        display: flex;
-        justify-content: center;
-        margin: 20px 0;
     }
 
     .main-content .column {
@@ -733,8 +790,8 @@
 
         /* Match header styles */
         .match-header {
-            background: linear-gradient(135deg, #0f1442 0%, #000000 100%);
-            color: white;
+            background: linear-gradient(135deg, {{ theme.colors.headerBg }} 0%, #000000 100%);
+            color: {{ theme.colors.headerText }};
             padding: 3rem 1rem;
             margin: -2rem -2rem 2rem -2rem;
             border-radius: 12px 12px 0 0;
@@ -846,6 +903,7 @@
             opacity: 0;
             transform: translateY(20px);
             animation: fadeInUp 0.6s ease forwards;
+            color: {{ theme.colors.bodyText }};
         }
 
         /* Stagger the animations */
@@ -894,7 +952,7 @@
         }
 
         .home-bar {
-            background: linear-gradient(90deg, #11c7dd 0%, #00f2ff 100%);
+            background-color: #ffa433;  /* Fixed orange color */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -910,7 +968,7 @@
         }
 
         .away-bar {
-            background: linear-gradient(90deg, #dc8f2a 0%, #ff8c00 100%);
+            background-color: #7bfaff;  /* Fixed cyan color */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1046,7 +1104,7 @@
 
         .match-content p {
             margin-bottom: 1.5rem;
-            color: #ffffff;
+            color: {{ theme.colors.bodyText }};
         }
 
         /* Footer */
@@ -1309,7 +1367,7 @@
 
 </style>
 
-<body>
+<body style="background-color: {{ theme.colors.background }}; margin: 0; padding: 0; min-height: 100vh;">
 
 
     <!-- Bootstrap Navigation Bar -->

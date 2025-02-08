@@ -44,7 +44,6 @@ export const SubscriptionProvider = ({ children }) => {
 
         if (createError) {
           console.error('Error creating free subscription:', createError);
-          // Fallback to memory state if DB insert fails
           setSubscription({
             plan_type: 'free',
             articles_remaining: 3,
@@ -52,9 +51,33 @@ export const SubscriptionProvider = ({ children }) => {
             status: 'active'
           });
         } else {
-          setSubscription(newSub[0]); // Set the newly created subscription
+          setSubscription(newSub[0]);
         }
       } else {
+        // For pro users, check if we need to reset their monthly limit
+        if (data.plan_type === 'pro') {
+          const currentDate = new Date().toISOString().split('T')[0];
+          const billingCycleStart = data.billing_cycle_start;
+          
+          // If it's a new month, reset the articles_remaining
+          if (currentDate > billingCycleStart) {
+            const { data: updatedSub, error: updateError } = await supabase
+              .from('subscriptions')
+              .update({
+                articles_remaining: data.monthly_limit,
+                billing_cycle_start: currentDate,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', session.user.id)
+              .select()
+              .single();
+
+            if (!updateError) {
+              setSubscription(updatedSub);
+              return;
+            }
+          }
+        }
         setSubscription(data);
       }
     } catch (error) {

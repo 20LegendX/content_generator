@@ -124,19 +124,6 @@ export default function Auth() {
         >
           Sign In with Google
         </Button>
-        
-        {/* Debug button */}
-        <Button 
-          onClick={checkSession}
-          variant="outlined"
-          color="secondary"
-        >
-          Check Session
-        </Button>
-
-        <Button onClick={debugUserCreation}>
-          Debug User Creation
-        </Button>
       </Box>
     </Container>
   );

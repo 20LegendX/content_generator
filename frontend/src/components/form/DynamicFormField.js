@@ -110,6 +110,25 @@ const DynamicFormField = ({ field, formik }) => {
           </FormHelperText>
         </FormControl>
       );
+    case 'date':
+      return (
+        <TextField 
+          {...commonProps}
+          type="date"
+          InputLabelProps={{
+            shrink: true,
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+            },
+            '& .MuiInputLabel-root': {
+              backgroundColor: 'white',
+              px: 0.5,
+            }
+          }}
+        />
+      );
     default:
       return null;
   }

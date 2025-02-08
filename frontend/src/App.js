@@ -1,4 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsAndConditions from './components/TermsAndConditions';
+import Footer from './components/layout/Footer';
 import {
   Button,
   Typography,
@@ -46,9 +49,11 @@ import SubscriptionSuccess from './components/subscription/SubscriptionSuccess';
 import SubscriptionCancel from './components/subscription/SubscriptionCancel';
 import SubscriptionStatus from './components/subscription/SubscriptionStatus';
 import UpgradePrompt from './components/subscription/UpgradePrompt';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TEMPLATE_CONFIGS } from './templates/config';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import RouteGuard from './components/Auth/RouteGuard';
+import { themes } from './config/themes';  // Import the themes we defined earlier
 
 // Fix: Update to use the same protocol as the current page
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -77,9 +82,6 @@ const getTheme = (mode) => createTheme({
 const baseSchema = Yup.object({
   article_type: Yup.string().required('Article type is required'),
   publisher_name: Yup.string().required('Publisher name is required'),
-  publisher_url: Yup.string()
-    .url('Invalid URL')
-    .required('Publisher URL is required'),
   keywords: Yup.string()
     .max(150, 'Keywords must be 150 characters or less')
     .required('Keywords are required'),
@@ -93,11 +95,11 @@ const baseValues = {
   article_type: 'general',
   template_name: 'article_template.html',
   publisher_name: '',
-  publisher_url: '',
   keywords: '',
   context: '',
   supporting_data: '',
   image_url: '',
+  theme: themes && themes.length > 0 ? themes[0] : null, // Add null check
 };
 
 const getValidationSchema = (templateName) => {
@@ -125,6 +127,7 @@ const getInitialValues = (templateName) => {
 
 function AppContent() {
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -132,7 +135,6 @@ function AppContent() {
   const [darkMode, setDarkMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
-  const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   
@@ -142,6 +144,8 @@ function AppContent() {
   // Add the missing state variables
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [hasGeneratedContent, setHasGeneratedContent] = useState(false);
+  
+  const [isInitializing, setIsInitializing] = useState(true);
   
   const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
   const { 
@@ -172,8 +176,39 @@ function AppContent() {
     }
   });
 
+  // Move session check to a separate useEffect
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        if (session) {
+          const savedContent = localStorage.getItem('currentGeneratedContent');
+          if (savedContent) {
+            setGeneratedContent(JSON.parse(savedContent));
+            setHasGeneratedContent(true);
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setAuthError(error.message);
+      } finally {
+        setIsInitializing(false);
+        setAuthLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, [session]);
+
+  // Save content to localStorage whenever it changes
+  useEffect(() => {
+    if (generatedContent) {
+      localStorage.setItem('currentGeneratedContent', JSON.stringify(generatedContent));
+    }
+  }, [generatedContent]);
+
   // Reset form when navigating back
   const handleBackToForm = () => {
+    localStorage.removeItem('currentGeneratedContent');
     setPreviousContent(generatedContent);
     setGeneratedContent(null);
     formik.resetForm();
@@ -224,49 +259,61 @@ function AppContent() {
 
   const downloadArticle = async () => {
     try {
-      console.log('Downloading with content:', generatedContent);
+      const downloadData = {
+        ...generatedContent.raw_content,
+        template_name: formik.values.template_name,
+        hero_image_position: formik.values.hero_image_position,
+        theme: formik.values.theme
+      };
+
+      // Add match stats only for match report template
+      if (formik.values.template_name === 'ss_match_report_template.html') {
+        downloadData.match_stats = {
+          possession: {
+            home: formik.values.home_possession || 50,
+            away: formik.values.away_possession || 50
+          },
+          shots: {
+            home: formik.values.home_shots || 0,
+            away: formik.values.away_shots || 0
+          },
+          shots_on_target: {
+            home: formik.values.home_shots_on_target || 0,
+            away: formik.values.away_shots_on_target || 0
+          },
+          corners: {
+            home: formik.values.home_corners || 0,
+            away: formik.values.away_corners || 0
+          },
+          fouls: {
+            home: formik.values.home_fouls || 0,
+            away: formik.values.away_fouls || 0
+          },
+          yellow_cards: {
+            home: formik.values.home_yellow_cards || 0,
+            away: formik.values.away_yellow_cards || 0
+          },
+          red_cards: {
+            home: formik.values.home_red_cards || 0,
+            away: formik.values.away_red_cards || 0
+          },
+          offsides: {
+            home: formik.values.home_offsides || 0,
+            away: formik.values.away_offsides || 0
+          },
+          xg: {
+            home: parseFloat(formik.values.home_xg || 0.0),
+            away: parseFloat(formik.values.away_xg || 0.0)
+          }
+        };
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/download_article`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...generatedContent.raw_content,
-          template_name: formik.values.template_name,
-          headline: generatedContent.raw_content.headline,
-          article_content: generatedContent.raw_content.article_content,
-          featured_image_url: formik.values.image_url,
-          keywords: formik.values.keywords,
-          home_team: formik.values.home_team,
-          away_team: formik.values.away_team,
-          home_score: formik.values.home_score,
-          away_score: formik.values.away_score,
-          home_scorers: formik.values.home_scorers,
-          away_scorers: formik.values.away_scorers,
-          competition: formik.values.competition,
-          match_date: formik.values.match_date,
-          venue: formik.values.venue,
-          // Match Statistics
-          home_possession: formik.values.home_possession,
-          away_possession: formik.values.away_possession,
-          home_shots: formik.values.home_shots,
-          away_shots: formik.values.away_shots,
-          home_shots_on_target: formik.values.home_shots_on_target,
-          away_shots_on_target: formik.values.away_shots_on_target,
-          home_corners: formik.values.home_corners,
-          away_corners: formik.values.away_corners,
-          home_fouls: formik.values.home_fouls,
-          away_fouls: formik.values.away_fouls,
-          home_yellow_cards: formik.values.home_yellow_cards,
-          away_yellow_cards: formik.values.away_yellow_cards,
-          home_red_cards: formik.values.home_red_cards,
-          away_red_cards: formik.values.away_red_cards,
-          home_offsides: formik.values.home_offsides,
-          away_offsides: formik.values.away_offsides,
-          home_lineup: formik.values.home_lineup,
-          away_lineup: formik.values.away_lineup,
-          key_events: formik.values.key_events,
-        }),
+        body: JSON.stringify(downloadData),
       });
 
       if (!response.ok) {
@@ -301,8 +348,12 @@ function AppContent() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          template_name: formik.values.template_name || 'article_template.html', // Add default
-          content: updatedContent
+          template_name: formik.values.template_name,
+          content: {
+            ...updatedContent,
+            theme: formik.values.theme
+          },
+          theme: formik.values.theme
         }),
       });
 
@@ -338,7 +389,6 @@ function AppContent() {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       console.log("Current session:", session); // Debug log
       
       if (!session) {
@@ -346,6 +396,56 @@ function AppContent() {
       }
 
       console.log("Making API request with token:", session.access_token.substring(0, 10) + "..."); // Debug log first 10 chars
+
+      // Base content object
+      const contentData = {
+        ...values,
+        template_name: values.template_name || 'article_template.html',
+        hero_image_position: values.hero_image_position,
+        theme: values.theme
+      };
+
+      // Add match stats only for match report template
+      if (values.template_name === 'ss_match_report_template.html') {
+        contentData.match_stats = {
+          possession: {
+            home: values.home_possession || 50,
+            away: values.away_possession || 50
+          },
+          shots: {
+            home: values.home_shots || 0,
+            away: values.away_shots || 0
+          },
+          shots_on_target: {
+            home: values.home_shots_on_target || 0,
+            away: values.away_shots_on_target || 0
+          },
+          corners: {
+            home: values.home_corners || 0,
+            away: values.away_corners || 0
+          },
+          fouls: {
+            home: values.home_fouls || 0,
+            away: values.away_fouls || 0
+          },
+          yellow_cards: {
+            home: values.home_yellow_cards || 0,
+            away: values.away_yellow_cards || 0
+          },
+          red_cards: {
+            home: values.home_red_cards || 0,
+            away: values.away_red_cards || 0
+          },
+          offsides: {
+            home: values.home_offsides || 0,
+            away: values.away_offsides || 0
+          },
+          xg: {
+            home: parseFloat(values.home_xg || 0.0),
+            away: parseFloat(values.away_xg || 0.0)
+          }
+        };
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/generate`, {
         method: 'POST',
@@ -356,7 +456,7 @@ function AppContent() {
           'Authorization': `Bearer ${session.access_token}`,
           'user-id': session.user.id
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(contentData),
       });
 
       if (!response.ok) {
@@ -387,57 +487,12 @@ function AppContent() {
     await generateContent(formik.values);
   };
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session);
-      setSession(session);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session);
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleUser = async (user) => {
-    try {
-      const userData = {
-        id: user.id,
-        email: user.email,
-        provider: user.app_metadata.provider || 'email',
-      };
-      await upsertUser(userData);
-    } catch (error) {
-      console.error('Error handling user:', error);
-      // You might want to show an error message to the user
-    }
-  };
-
-  // Show error if session check fails
-  if (authError) {
+  // Show loading state during initialization
+  if (isInitializing) {
     return (
       <ThemeProvider theme={theme}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-          <div style={{ color: 'red', marginBottom: '1rem' }}>Error checking auth: {authError}</div>
-          <Button variant="contained" onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </div>
-      </ThemeProvider>
-    );
-  }
-
-  // Only show loading during initial auth check
-  if (authLoading) {
-    return (
-      <ThemeProvider theme={theme}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
           <CircularProgress />
-          <div style={{ marginTop: '1rem' }}>Checking authentication...</div>
         </div>
       </ThemeProvider>
     );
@@ -478,6 +533,15 @@ function AppContent() {
         />
       </>
     );
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
@@ -525,10 +589,7 @@ function AppContent() {
 
                   {/* Profile Dropdown - You might want to add this later */}
                   <Button
-                    onClick={() => {
-                      supabase.auth.signOut();
-                      navigate('/');
-                    }}
+                    onClick={handleSignOut}
                     className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 
                              hover:text-gray-900 dark:hover:text-white rounded-lg 
                              hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
@@ -565,114 +626,113 @@ function AppContent() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route 
-              path="/generate"
-              element={
-                !session ? (
-                  <Navigate to="/login" replace />
-                ) : subscription?.plan_type !== 'pro' && 
-                    subscription?.articles_remaining === 0 && 
-                    !generatedContent ? (
-                  <UpgradePrompt />
-                ) : (
-                  <>
-                    {!generatedContent ? (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        {renderArticleForm()}
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        <Box sx={{ mb: 3 }}>
-                          {subscription?.plan_type !== 'pro' && 
-                           subscription?.articles_remaining === 0 && (
-                            <Alert 
-                              severity="warning" 
+        <div>
+          <div className="preview-container">
+            <div className="rounded-lg shadow-sm">
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                <Route 
+                  path="/generate"
+                  element={
+                    <RouteGuard>
+                      {!generatedContent ? (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          {renderArticleForm()}
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <Box sx={{ mb: 3 }}>
+                            {subscription?.plan_type !== 'pro' && 
+                             subscription?.articles_remaining === 0 && (
+                              <Alert 
+                                severity="warning" 
+                                sx={{ mb: 2 }}
+                                action={
+                                  <Button
+                                    color="inherit"
+                                    size="small"
+                                    onClick={() => navigate('/subscription')}
+                                  >
+                                    Upgrade to Pro
+                                  </Button>
+                                }
+                              >
+                                This was your last free article. Upgrade to Pro to generate more articles.
+                              </Alert>
+                            )}
+                            <Button
+                              startIcon={<ArrowBackIcon />}
+                              onClick={handleBackToForm}
                               sx={{ mb: 2 }}
-                              action={
-                                <Button
-                                  color="inherit"
-                                  size="small"
-                                  onClick={() => navigate('/subscription')}
-                                >
-                                  Upgrade to Pro
-                                </Button>
-                              }
                             >
-                              This was your last free article. Upgrade to Pro to generate more articles.
-                            </Alert>
-                          )}
-                          <Button
-                            startIcon={<ArrowBackIcon />}
-                            onClick={handleBackToForm}
-                            sx={{ mb: 2 }}
-                          >
-                            Back to Form
-                          </Button>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h5">Preview</Typography>
-                            <Box sx={{ display: 'flex', gap: 2 }}>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                startIcon={<EditIcon />}
-                                onClick={() => setEditModalOpen(true)}
-                              >
-                                Edit Content
-                              </Button>
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                startIcon={<DownloadIcon />}
-                                onClick={downloadArticle}
-                              >
-                                Download Article
-                              </Button>
+                              Back to Form
+                            </Button>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                              <Typography variant="h5">Preview</Typography>
+                              <Box sx={{ display: 'flex', gap: 2 }}>
+                                <Button
+                                  variant="outlined"
+                                  color="primary"
+                                  startIcon={<EditIcon />}
+                                  onClick={() => setEditModalOpen(true)}
+                                >
+                                  Edit Content
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  startIcon={<DownloadIcon />}
+                                  onClick={downloadArticle}
+                                >
+                                  Download Article
+                                </Button>
+                              </Box>
                             </Box>
+                            <div 
+                              dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
+                              style={{ 
+                                width: '100%',
+                                maxWidth: '100%',
+                              }}
+                            />
                           </Box>
-                          <div 
-                            dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
-                            style={{ 
-                              width: '100%',
-                              maxWidth: '100%',
-                              margin: '0 auto',
-                              backgroundColor: 'transparent !important',
-                            }}
-                            className="preview-content"
-                          />
-                        </Box>
-                      </motion.div>
-                    )}
-                  </>
-                )
-              }
-            />
-            <Route path="/login" element={<Auth />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route 
-              path="/subscription" 
-              element={
-                <ProtectedRoute>
-                  <SubscriptionManager />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-            <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+                        </motion.div>
+                      )}
+                    </RouteGuard>
+                  }
+                />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/login" element={<Auth />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route 
+                  path="/subscription" 
+                  element={
+                    <ProtectedRoute>
+                      <SubscriptionManager />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+                <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <Footer />
       <EditContentModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}

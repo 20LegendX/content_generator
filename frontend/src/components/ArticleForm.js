@@ -5,6 +5,8 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { useNavigate } from 'react-router-dom';
 import { TEMPLATE_CONFIGS } from '../templates/config';
 import DynamicFormField from './form/DynamicFormField';
+import ImagePositionControl from './ImagePositionControl';
+import ThemeSelector from './ThemeSelector';
 
 const ArticleForm = ({ 
   formik, 
@@ -21,8 +23,7 @@ const ArticleForm = ({
   
   // Get template config only once based on the selected template
   const templateConfig = TEMPLATE_CONFIGS[formik.values.template_name || 'article_template.html'];
-  console.log('Form values:', formik.values);
-  console.log('Form errors:', formik.errors);
+
   // Single render of fields
   const renderFields = (fields) => {
     return fields.map(field => {
@@ -74,6 +75,11 @@ const ArticleForm = ({
       )}
       
       <form onSubmit={formik.handleSubmit} className="space-y-6">
+        <ThemeSelector
+          selectedTheme={formik.values.theme}
+          onThemeSelect={(theme) => formik.setFieldValue('theme', theme)}
+        />
+        
         <TemplateSelector
           selectedTemplate={formik.values.template_name || 'article_template.html'}
           onSelect={(templateId) => formik.setFieldValue('template_name', templateId)}
@@ -103,6 +109,29 @@ const ArticleForm = ({
           <div className="space-y-4">
             {renderFields(templateConfig.fields.filter(field => field.id !== 'article_type'))}
           </div>
+        )}
+
+        {/* Image URL Field */}
+        <TextField
+          fullWidth
+          label="Featured Image URL"
+          name="image_url"
+          value={formik.values.image_url || ''}
+          onChange={(e) => {
+            handleImageChange(e);
+            formik.handleChange(e);
+          }}
+          error={formik.touched.image_url && Boolean(formik.errors.image_url)}
+          helperText={formik.touched.image_url && formik.errors.image_url}
+        />
+
+        {imagePreview && (
+          <ImagePositionControl
+            imageUrl={imagePreview}
+            onPositionChange={(position) => {
+              formik.setFieldValue('hero_image_position', position);
+            }}
+          />
         )}
 
         <Button

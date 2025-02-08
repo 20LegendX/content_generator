@@ -96,18 +96,38 @@ def serve(path):
     """Serve React App"""
     app.logger.debug(f'Serving path: {path}')
     app.logger.debug(f'Static folder: {app.static_folder}')
-    app.logger.debug(f'File exists: {os.path.exists(app.static_folder + "/" + path) if path else "N/A"}')
     
+    # First, try to serve actual files
     if path != "" and os.path.exists(app.static_folder + '/' + path):
         return send_from_directory(app.static_folder, path)
     
-    # Always serve index.html for non-API routes
-    if not path.startswith('api/'):
-        app.logger.debug('Serving index.html')
-        return send_from_directory(app.static_folder, 'index.html')
-    
-    # If we get here, it's a 404
-    return 'Not Found', 404
+    # For API routes, return 404 if not found
+    if path.startswith('api/'):
+        return 'Not Found', 404
+        
+    # For all other routes, serve index.html
+    return send_from_directory(app.static_folder, 'index.html')
+
+# Add explicit handlers for your routes to ensure they serve index.html
+@app.route('/generate')
+def generate_page():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/login')
+def login_page():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/subscription')
+def subscription_page():
+    return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route('/privacy-policy')
+def privacy_policy_page():
+    return send_from_directory(app.static_folder, 'index.html')
+
+
+# Add any other routes your app uses
 
 # Protected API routes
 @app.route('/api/*')
@@ -184,17 +204,44 @@ def get_user_id_from_token(token):
 @app.route('/api/generate', methods=['POST', 'OPTIONS'])
 @require_auth
 def generate_api():
-    # Handle OPTIONS request for CORS
-    if request.method == "OPTIONS":
-        response = jsonify({})
-        response.headers.add('Access-Control-Allow-Origin', request.origin or '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept')
-        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        return response, 200
-
     try:
         user_id = request.user.id
-        print(f"Generating content for user: {user_id}")
+        print(f"Generating content for user: {user_id}")  # Add debug logging
+
+        # Add more detailed logging for subscription check
+        try:
+            subscription_response = supabase_client.table('subscriptions')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .eq('status', 'active')\
+                .order('created_at', desc=True)\
+                .limit(1)\
+                .execute()
+            
+            print(f"Subscription response: {subscription_response}")  # Debug log
+            
+            user_subscription = {
+                'plan_type': 'free',
+                'articles_remaining': 3,
+                'articles_generated': 0,
+                'status': 'active'
+            }
+
+            if subscription_response.data:
+                user_subscription = subscription_response.data[0]
+                print(f"Found subscription: {user_subscription}")  # Debug log
+            else:
+                print("No subscription found, using default free tier")  # Debug log
+
+            if user_subscription['articles_remaining'] <= 0 and user_subscription['plan_type'] != 'pro':
+                return jsonify({
+                    'error': 'No articles remaining. Please upgrade to continue generating content.'
+                }), 403
+
+        except Exception as e:
+            print(f"Subscription error details: {str(e)}")  # Add detailed error logging
+            logger.error(f"Supabase error: {str(e)}")
+            return jsonify({'error': 'Error accessing subscription data'}), 500
 
         data = request.get_json()
         if not data:
@@ -211,119 +258,90 @@ def generate_api():
         ]:
             template_name = 'article_template.html'
 
-        # Check subscription
-        try:
-            subscription_response = supabase_client.table('subscriptions')\
-                .select('*')\
-                .eq('user_id', user_id)\
-                .eq('status', 'active')\
-                .order('created_at', desc=True)\
-                .limit(1)\
-                .execute()
+        # Check if this is an edit request
+        if 'edited_content' in data:
+            formatted_content = data['edited_content']
+        else:
+            # Validate required fields for new content
+            required_fields = ['topic', 'keywords', 'context', 'supporting_data']
+            missing_fields = [field for field in required_fields if not data.get(field)]
+            if missing_fields:
+                return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
-            user_subscription = {
-                'plan_type': 'free',
-                'articles_remaining': 3,
-                'articles_generated': 0,
-                'status': 'active'
+            # Generate content
+            prompt = create_prompt(data)
+            print(f"Created prompt: {prompt[:200]}...")
+
+            response = run_gpt4(prompt, template_name)
+            print(f"GPT response: {response[:200] if response else 'None'}")
+
+            if not response:
+                return jsonify({'error': 'Failed to generate content'}), 500
+
+            formatted_content = format_article_content(response, template_name)
+            if not formatted_content:
+                return jsonify({'error': 'Failed to format article content'}), 500
+
+        # Template-specific validation and defaults
+        if template_name == 'ss_player_scout_report_template':
+            required_defaults = {
+                'headline': 'Player Scout Report',
+                'summary': 'No summary provided.',
+                'article_content': '<p>No content available.</p>',
+                'meta_description': 'A comprehensive scout report on the player.',
+                'keywords': ['Football', 'Scout Report'],
+                'featured_image_url': '/static/images/default-featured-image.jpg',
+                'featured_image_alt': 'Default featured image',
+                'publish_date': datetime.now().strftime('%Y-%m-%d'),
+                'player_name': 'Unknown Player',
+                'player_position': 'Unknown Position',
+                'player_age': 'Unknown Age',
+                'player_nationality': 'Unknown Nationality',
+                'favored_foot': 'Unknown',
+                'scout_stats': 'No stats available.'
+            }
+            for key, default_value in required_defaults.items():
+                formatted_content.setdefault(key, default_value)
+
+        if template_name in ['match_report_template.html', 'ss_match_report_template.html']:
+            is_valid, error_message = validate_template_vars(formatted_content, template_name)
+            if not is_valid:
+                return jsonify({'error': error_message}), 400
+
+        # Add match stats if needed
+        if template_name == 'match_report_template.html' and 'match_stats' not in formatted_content:
+            formatted_content['match_stats'] = {
+                'possession': {'home': data.get('home_possession', 50), 'away': data.get('away_possession', 50)},
+                'shots': {'home': data.get('home_shots', 0), 'away': data.get('away_shots', 0)},
+                'shots_on_target': {'home': data.get('home_shots_on_target', 0), 'away': data.get('away_shots_on_target', 0)},
+                'corners': {'home': data.get('home_corners', 0), 'away': data.get('away_corners', 0)},
+                'fouls': {'home': data.get('home_fouls', 0), 'away': data.get('away_fouls', 0)},
+                'yellow_cards': {'home': data.get('home_yellow_cards', 0), 'away': data.get('away_yellow_cards', 0)},
+                'red_cards': {'home': data.get('home_red_cards', 0), 'away': data.get('away_red_cards', 0)},
+                'offsides': {'home': data.get('home_offsides', 0), 'away': data.get('away_offsides', 0)}
             }
 
-            if subscription_response.data:
-                user_subscription = subscription_response.data[0]
+        try:
+            # Render template
+            preview_html = render_template(template_name, **formatted_content)
+        except Exception as template_error:
+            print(f"Template rendering error: {str(template_error)}")
+            return jsonify({'error': f'Template rendering failed: {str(template_error)}'}), 500
 
-            if user_subscription['articles_remaining'] <= 0 and user_subscription['plan_type'] != 'pro':
-                return jsonify({
-                    'error': 'No articles remaining. Please upgrade to continue generating content.'
-                }), 403
+        # Update subscription for all users
+        supabase_client.table('subscriptions')\
+            .update({
+                'articles_remaining': user_subscription['articles_remaining'] - 1,
+                'articles_generated': user_subscription['articles_generated'] + 1
+            })\
+            .eq('user_id', user_id)\
+            .execute()
 
-            # Check if this is an edit request
-            if 'edited_content' in data:
-                formatted_content = data['edited_content']
-            else:
-                # Validate required fields for new content
-                required_fields = ['topic', 'keywords', 'context', 'supporting_data']
-                missing_fields = [field for field in required_fields if not data.get(field)]
-                if missing_fields:
-                    return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
-
-                # Generate content
-                prompt = create_prompt(data)
-                print(f"Created prompt: {prompt[:200]}...")
-
-                response = run_gpt4(prompt, template_name)
-                print(f"GPT response: {response[:200] if response else 'None'}")
-
-                if not response:
-                    return jsonify({'error': 'Failed to generate content'}), 500
-
-                formatted_content = format_article_content(response, template_name)
-                if not formatted_content:
-                    return jsonify({'error': 'Failed to format article content'}), 500
-
-            # Template-specific validation and defaults
-            if template_name == 'ss_player_scout_report_template':
-                required_defaults = {
-                    'headline': 'Player Scout Report',
-                    'summary': 'No summary provided.',
-                    'article_content': '<p>No content available.</p>',
-                    'meta_description': 'A comprehensive scout report on the player.',
-                    'keywords': ['Football', 'Scout Report'],
-                    'featured_image_url': '/static/images/default-featured-image.jpg',
-                    'featured_image_alt': 'Default featured image',
-                    'publish_date': datetime.now().strftime('%Y-%m-%d'),
-                    'player_name': 'Unknown Player',
-                    'player_position': 'Unknown Position',
-                    'player_age': 'Unknown Age',
-                    'player_nationality': 'Unknown Nationality',
-                    'favored_foot': 'Unknown',
-                    'scout_stats': 'No stats available.'
-                }
-                for key, default_value in required_defaults.items():
-                    formatted_content.setdefault(key, default_value)
-
-            if template_name in ['match_report_template.html', 'ss_match_report_template.html']:
-                is_valid, error_message = validate_template_vars(formatted_content, template_name)
-                if not is_valid:
-                    return jsonify({'error': error_message}), 400
-
-            # Add match stats if needed
-            if template_name == 'match_report_template.html' and 'match_stats' not in formatted_content:
-                formatted_content['match_stats'] = {
-                    'possession': {'home': data.get('home_possession', 50), 'away': data.get('away_possession', 50)},
-                    'shots': {'home': data.get('home_shots', 0), 'away': data.get('away_shots', 0)},
-                    'shots_on_target': {'home': data.get('home_shots_on_target', 0), 'away': data.get('away_shots_on_target', 0)},
-                    'corners': {'home': data.get('home_corners', 0), 'away': data.get('away_corners', 0)},
-                    'fouls': {'home': data.get('home_fouls', 0), 'away': data.get('away_fouls', 0)},
-                    'yellow_cards': {'home': data.get('home_yellow_cards', 0), 'away': data.get('away_yellow_cards', 0)},
-                    'red_cards': {'home': data.get('home_red_cards', 0), 'away': data.get('away_red_cards', 0)},
-                    'offsides': {'home': data.get('home_offsides', 0), 'away': data.get('away_offsides', 0)}
-                }
-
-            try:
-                # Render template
-                preview_html = render_template(template_name, **formatted_content)
-            except Exception as template_error:
-                print(f"Template rendering error: {str(template_error)}")
-                return jsonify({'error': f'Template rendering failed: {str(template_error)}'}), 500
-
-            # Update subscription for all users
-            supabase_client.table('subscriptions')\
-                .update({
-                    'articles_remaining': user_subscription['articles_remaining'] - 1,
-                    'articles_generated': user_subscription['articles_generated'] + 1
-                })\
-                .eq('user_id', user_id)\
-                .execute()
-
-            return jsonify({
-                'preview_html': preview_html,
-                'raw_content': formatted_content,
-                'template_used': template_name
-            })
-
-        except Exception as e:
-            logger.error(f"Supabase error: {str(e)}")
-            return jsonify({'error': 'Error accessing subscription data'}), 500
+        return jsonify({
+            'preview_html': preview_html,
+            'raw_content': formatted_content,
+            'template_used': template_name
+        })
 
     except Exception as e:
         print(f"Generate API error: {str(e)}")
@@ -405,7 +423,7 @@ def create_prompt(user_input):
 
     ✅ **Skip the filler drama.**  
        - ❌ "The situation remains uncertain, and only time will tell what happens next."  
-       - ✅ Instead, explain **why it matters** and **what’s actually happening.**  
+       - ✅ Instead, explain **why it matters** and **what's actually happening.**  
 
     ✅ **Talk like an expert, not a corporate press release.**  
        - ❌ "This breakthrough presents an exciting opportunity for businesses worldwide."  
@@ -417,10 +435,10 @@ def create_prompt(user_input):
 
     ✅ **Keep it punchy and specific.**  
        - ❌ "The rise of AI in healthcare is fascinating."  
-       - ✅ "AI is already detecting diseases earlier than doctors in some cases—like Google’s retinal scan technology for diabetes-related blindness."  
+       - ✅ "AI is already detecting diseases earlier than doctors in some cases—like Google's retinal scan technology for diabetes-related blindness."  
 
     ✅ **Write like a person, not a bot.**  
-       - Use **contractions** (“it’s” instead of “it is”).  
+       - Use **contractions** (“it's” instead of “it is”).  
        - Vary sentence length—**mix short, punchy lines with longer ones.**  
        - **Avoid generic transitions** like "moreover" or "in addition"—use natural ones like "That said" or "Even so."  
 
@@ -564,7 +582,7 @@ def create_prompt(user_input):
 
 
 
-def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature=0.55, top_p=0.85):
+def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=12000, temperature=0.55, top_p=0.85):
     """Send prompt to GPT-4 and get structured response."""
     print("Using model:", model)  # Debug log
     print("Sending prompt:", prompt[:500] + "...")  # Debug first 200 chars of prompt
@@ -649,11 +667,11 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature
             Return your response in valid JSON format with enhanced SEO elements:
             
                 **Must-Have Writing Style:**
-            - **Tell a story**, don’t just list facts.
-            - **Use contractions** (e.g., “he’s” instead of “he is”).
-            - **Ditch robotic phrases** like “presents an opportunity” or “remains uncertain.”
+            - **Tell a story**, don't just list facts.
+            - **Use contractions** (e.g., "he's" instead of "he is").
+            - **Ditch robotic phrases** like "presents an opportunity" or "remains uncertain."
             - **Mix sentence structures**—short, impactful sentences should balance longer ones.
-            - **Use strong verbs**—no weak passive phrases like “Tel is considered a top talent.” 
+            - **Use strong verbs**—no weak passive phrases like "Tel is considered a top talent." 
             - Instead, say: **"Tel is turning heads across Europe."**
             
             {
@@ -684,7 +702,7 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature
                     {
                         "type": "section",
                         "heading": string,
-                        "content": array of strings (paragraphs)
+                        "content": array of strings 
                     }
                 ]
             }
@@ -696,6 +714,9 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=8000, temperature
             - Create engaging meta descriptions
             - Optimize headings hierarchy
             - Write SEO-optimized alt text for the featured image
+            - Keep the total number of sections **at or below 3** to ensure the article remains cohesive and doesn't get fragmented with short sections.
+            
+            Write a well-structured article that flows naturally between sections...
             """
 
         completion = client.chat.completions.create(
@@ -736,6 +757,7 @@ def format_article_content(gpt_response, template_type):
             'featured_image_url': '/static/images/default-match-image.jpg',
             'featured_image_alt': 'Default image alt text.',
             'article_category': 'Default Category',
+            'hero_image_position': 'center center',
         }
         # Default image values
         default_image_url = '/static/images/default-match-image.jpg'
@@ -790,7 +812,6 @@ def format_article_content(gpt_response, template_type):
                 'twitter_description': response_data['meta_data'].get('twitter_description', ''),
                 'author': response_data['meta_data'].get('author', 'Sports Reporter'),
                 'publisher_name': request.json.get('publisher_name', ''),
-                'publisher_url': request.json.get('publisher_url', ''),
                 # Add lineup data
                 'home_lineup': request.json.get('home_lineup', ''),
                 'away_lineup': request.json.get('away_lineup', ''),
@@ -832,7 +853,9 @@ def format_article_content(gpt_response, template_type):
                         'home': float(request.json.get('home_xg', 0.0)),
                         'away': float(request.json.get('away_xg', 0.0))
                     }
-                }
+                },
+                'theme': request.json.get('theme', {}),
+                'hero_image_position': request.json.get('hero_image_position', 'center center')
             })
 
         elif template_type == 'ss_match_report_template.html':
@@ -872,7 +895,6 @@ def format_article_content(gpt_response, template_type):
                 'twitter_description': response_data['meta_data'].get('twitter_description', ''),
                 'author': response_data['meta_data'].get('author', 'Sports Reporter'),
                 'publisher_name': request.json.get('publisher_name', ''),
-                'publisher_url': request.json.get('publisher_url', ''),
                 # Match stats
                 'match_stats': {
                     'possession': {
@@ -911,7 +933,9 @@ def format_article_content(gpt_response, template_type):
                         'home': float(request.json.get('home_xg', 0.0)),
                         'away': float(request.json.get('away_xg', 0.0))
                     }
-                }
+                },
+                'theme': request.json.get('theme', {}),
+                'hero_image_position': request.json.get('hero_image_position', 'center center')
             })
         elif template_type == 'ss_player_scout_report_template.html':
             # == New Player Scout Report ==
@@ -962,23 +986,35 @@ def format_article_content(gpt_response, template_type):
                 'keywords': ', '.join(response_data['meta_data'].get('keywords', [])),  # Convert list to string
                 'scout_stats': request.json.get('scout_stats', 'No stats available.'),
                 'form_summary': form_summary,
-                'recent_matches': recent_matches  # Add the parsed matches data
+                'recent_matches': recent_matches,  # Add the parsed matches data
+                'hero_image_position': request.json.get('hero_image_position', 'center center'),
+                'theme': request.json.get('theme', {}),
+                'hero_image_position': request.json.get('hero_image_position', 'center center')
             })
 
 
         elif template_type == 'article_template.html':
+
             html_content = []
+            main_headline = response_data['template_data'].get('headline', '')
+
             for section in response_data['article_content']:
-                if section.get('heading'):
+                # If section heading is the same as main_headline, skip it.
+                # Or skip if you just don't want any repeated top-level headings.
+                if section.get('heading') and section["heading"] == main_headline:
+                    continue
+
+                if 'heading' in section:
                     html_content.append(f'<h2>{section["heading"]}</h2>')
+
                 for paragraph in section['content']:
-                    # Remove any existing <p> tags and rewrap content
                     clean_paragraph = paragraph.replace('<p>', '').replace('</p>', '').strip()
                     html_content.append(f'<p>{clean_paragraph}</p>')
 
             # Create template_vars exactly like in download_article_api (no match stats)
             template_vars.update({
                 "headline": response_data['template_data'].get('headline', ''),
+                "article_title": response_data['template_data'].get('headline', ''),
                 "article_content": '\n'.join(html_content),  # Join as single HTML string
                 "featured_image_url": request.json.get("image_url", default_image_url),
                 "featured_image_alt": response_data['template_data'].get('featured_image_alt', default_image_alt),
@@ -989,11 +1025,13 @@ def format_article_content(gpt_response, template_type):
                 "publish_date": current_date,
                 "author": response_data['meta_data'].get('author', ''),
                 "publisher_name": request.json.get("publisher_name", ''),
-                "publisher_url": request.json.get("publisher_url", ''),
-                "og_title": response_data['template_data'].get('headline', ''),
-                "og_description": response_data['meta_data'].get('meta_description', ''),
-                "twitter_title": response_data['template_data'].get('headline', ''),
-                "twitter_description": response_data['meta_data'].get('meta_description', '')
+                "og_title": response_data['meta_data'].get('og_title', ''),
+                "og_description": response_data['meta_data'].get('og_description', ''),
+                "twitter_title": response_data['meta_data'].get('twitter_title', ''),
+                "twitter_description": response_data['meta_data'].get('twitter_description', ''),
+                'hero_image_position': request.json.get('hero_image_position', 'center center'),
+                'theme': request.json.get('theme', {}),
+                'hero_image_position': request.json.get('hero_image_position', 'center center')
             })
 
             return template_vars
@@ -1027,7 +1065,9 @@ def format_article_content(gpt_response, template_type):
                 'schema_type': response_data['meta_data']['schema_type'],
                 'focus_keyword': response_data['meta_data']['focus_keyword'],
                 'publisher_name': request.json.get('publisher_name', ''),
-                'publisher_url': request.json.get('publisher_url', '')
+                'hero_image_position': request.json.get('hero_image_position', 'center center'),
+                'theme': request.json.get('theme', {}),
+                'hero_image_position': request.json.get('hero_image_position', 'center center')
             })
 
         return template_vars
@@ -1070,101 +1110,65 @@ def generate_article_api():
 
 
 @app.route('/api/download_article', methods=['POST'])
-def download_article_api():
+def download_article():
     try:
-        data = request.get_json()
-        template_name = data.get('template_name', 'article_template.html')
+        content = request.json
+        template_name = content.get('template_name', 'article_template.html')
 
         # Create template variables based on the template type
         template_vars = {
-            'headline': data.get('headline', ''),
-            'article_content': data.get('article_content', ''),
-            'meta_description': data.get('meta_description', ''),
-            'keywords': data.get('keywords', ''),
-            'featured_image_url': data.get('featured_image_url', ''),
-            'featured_image_alt': data.get('featured_image_alt', ''),
+            'headline': content.get('headline', ''),
+            'article_content': content.get('article_content', ''),
+            'meta_description': content.get('meta_description', ''),
+            'keywords': content.get('keywords', ''),
+            'featured_image_url': content.get('featured_image_url', ''),
+            'featured_image_alt': content.get('featured_image_alt', ''),
             'publish_date': datetime.now().strftime("%Y-%m-%d"),
-            'author': data.get('author', ''),
-            'publisher_name': data.get('publisher_name', ''),
-            'publisher_url': data.get('publisher_url', '')
+            'author': content.get('author', ''),
+            'publisher_name': content.get('publisher_name', ''),
+            'hero_image_position': content.get('hero_image_position', 'center 50%'),
+            'theme': content.get('theme', {})
         }
 
         # Add template-specific variables
         if template_name == 'article_template.html':
             template_vars.update({
-                'article_title': data.get('headline', ''),
-                'short_title': data.get('short_title', ''),
-                'article_category': data.get('article_category', ''),
-                'slug': data.get('slug', ''),
-                'og_title': data.get('og_title', ''),
-                'og_description': data.get('og_description', ''),
-                'twitter_title': data.get('twitter_title', ''),
-                'twitter_description': data.get('twitter_description', ''),
-                'schema_type': data.get('schema_type', 'Article'),
-                'focus_keyword': data.get('focus_keyword', '')
+                'article_title': content.get('headline', ''),
+                'short_title': content.get('short_title', ''),
+                'article_category': content.get('article_category', ''),
+                'slug': content.get('slug', ''),
+                'og_title': content.get('og_title', ''),
+                'og_description': content.get('og_description', ''),
+                'twitter_title': content.get('twitter_title', ''),
+                'twitter_description': content.get('twitter_description', ''),
+                'schema_type': content.get('schema_type', 'Article'),
+                'focus_keyword': content.get('focus_keyword', '')
             })
         elif template_name in ['match_report_template.html', 'ss_match_report_template.html']:
             template_vars.update({
-                'home_team': data.get('home_team', ''),
-                'away_team': data.get('away_team', ''),
-                'home_score': data.get('home_score', ''),
-                'away_score': data.get('away_score', ''),
-                'competition': data.get('competition', ''),
-                'match_date': data.get('match_date', ''),
-                'venue': data.get('venue', ''),
-                'home_lineup': data.get('home_lineup', ''),
-                'away_lineup': data.get('away_lineup', ''),
-                'key_events': data.get('key_events', ''),
-                'match_stats': {
-                    'possession': {
-                        'home': data.get('home_possession', 50),
-                        'away': data.get('away_possession', 50)
-                    },
-                    'shots': {
-                        'home': data.get('home_shots', 0),
-                        'away': data.get('away_shots', 0)
-                    },
-                    'shots_on_target': {
-                        'home': data.get('home_shots_on_target', 0),
-                        'away': data.get('away_shots_on_target', 0)
-                    },
-                    'corners': {
-                        'home': data.get('home_corners', 0),
-                        'away': data.get('away_corners', 0)
-                    },
-                    'fouls': {
-                        'home': data.get('home_fouls', 0),
-                        'away': data.get('away_fouls', 0)
-                    },
-                    'yellow_cards': {
-                        'home': data.get('home_yellow_cards', 0),
-                        'away': data.get('away_yellow_cards', 0)
-                    },
-                    'red_cards': {
-                        'home': data.get('home_red_cards', 0),
-                        'away': data.get('away_red_cards', 0)
-                    },
-                    'offsides': {
-                        'home': data.get('home_offsides', 0),
-                        'away': data.get('away_offsides', 0)
-                    },
-                    'xg': {
-                        'home': float(data.get('home_xg', 0.0)),
-                        'away': float(data.get('away_xg', 0.0))
-                    }
-                }
+                'home_team': content.get('home_team', ''),
+                'away_team': content.get('away_team', ''),
+                'home_score': content.get('home_score', ''),
+                'away_score': content.get('away_score', ''),
+                'competition': content.get('competition', ''),
+                'match_date': content.get('match_date', ''),
+                'venue': content.get('venue', ''),
+                'home_lineup': content.get('home_lineup', ''),
+                'away_lineup': content.get('away_lineup', ''),
+                'key_events': content.get('key_events', ''),
+                'match_stats': content.get('match_stats', {})  # Just pass through the match_stats object directly
             })
         elif template_name == 'ss_player_scout_report_template.html':
             template_vars.update({
-                'player_name': data.get('player_name', ''),
-                'player_position': data.get('player_position', ''),
-                'player_age': data.get('player_age', ''),
-                'player_nationality': data.get('player_nationality', ''),
-                'favored_foot': data.get('favored_foot', ''),
-                'scout_stats': data.get('scout_stats', ''),
-                'summary': data.get('summary', ''),
-                'form_summary': data.get('form_summary', {}),
-                'recent_matches': data.get('recent_matches', [])
+                'player_name': content.get('player_name', ''),
+                'player_position': content.get('player_position', ''),
+                'player_age': content.get('player_age', ''),
+                'player_nationality': content.get('player_nationality', ''),
+                'favored_foot': content.get('favored_foot', ''),
+                'scout_stats': content.get('scout_stats', ''),
+                'summary': content.get('summary', ''),
+                'form_summary': content.get('form_summary', {}),
+                'recent_matches': content.get('recent_matches', [])
             })
 
         rendered_html = render_template(template_name, **template_vars)
@@ -1173,7 +1177,7 @@ def download_article_api():
         buffer.write(rendered_html.encode('utf-8'))
         buffer.seek(0)
 
-        filename = f"{data.get('headline', 'article').replace(' ', '-')}.html"
+        filename = f"{content.get('headline', 'article').replace(' ', '-')}.html"
 
         return send_file(
             buffer,
@@ -1259,7 +1263,7 @@ def create_checkout_session():
     try:
         # Get origin from request headers
         frontend_url = request.origin or 'http://127.0.0.1:5001'
-        
+
         auth_header = request.headers.get('Authorization')
         if not auth_header:
             return jsonify({'message': 'No authorization header'}), 401
@@ -1283,9 +1287,9 @@ def create_checkout_session():
                 'user_id': user.id,
             }
         )
-        
+
         return jsonify({'url': checkout_session.url})
-        
+
     except Exception as e:
         logger.error(f"Error creating checkout session: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -1311,21 +1315,21 @@ def webhook():
     # Handle the checkout.session.completed event
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
-        
+
         # Add debug logging
         logger.debug(f"Received checkout.session.completed event: {session}")
-        
+
         # Safely get user_id from metadata, with fallback for testing
         user_id = session.get('metadata', {}).get('user_id')
         if not user_id:
             logger.warning("No user_id in metadata, this might be a test event")
             return jsonify({'status': 'success', 'note': 'Test event ignored'}), 200
-        
+
         try:
             # Get subscription ID safely
             subscription_id = session.get('subscription')
             customer_id = session.get('customer')
-            
+
             if not subscription_id or not customer_id:
                 logger.warning("Missing subscription or customer ID")
                 return jsonify({'status': 'success', 'note': 'Missing required IDs'}), 200
@@ -1342,9 +1346,9 @@ def webhook():
                 })\
                 .eq('user_id', user_id)\
                 .execute()
-                
+
             logger.info(f"Successfully updated subscription for user {user_id}")
-            
+
         except Exception as e:
             logger.error(f"Error updating subscription: {str(e)}")
             return jsonify({'error': str(e)}), 500
@@ -1353,26 +1357,15 @@ def webhook():
 
 @app.route('/api/render-template', methods=['POST'])
 @require_auth
-def render_template_api():
+def render_template_preview():
     try:
-        data = request.get_json()
-        template_name = data.get('template_name')
-        content = data.get('content')
-        
-        # Add debugging
-        print(f"Debug - Template name: {template_name}")
-        print(f"Debug - Template folder path: {app.template_folder}")
-        print(f"Debug - Current working directory: {os.getcwd()}")
-        print(f"Debug - Content received: {json.dumps(content, indent=2)}")
-        
-        # Verify template exists
-        template_path = os.path.join(app.template_folder, template_name)
-        if not os.path.exists(template_path):
-            print(f"Debug - Template not found at: {template_path}")
-            return jsonify({'error': f'Template not found at {template_path}'}), 404
-            
+        content = request.json.get('content', {})
+        template_name = request.json.get('template_name', 'article_template.html')
+        theme = request.json.get('theme', {})
+
         template_vars = {
             'headline': content.get('headline', ''),
+            'article_title': content.get('headline', ''),
             'article_content': content.get('article_content', ''),
             'meta_description': content.get('meta_description', ''),
             'keywords': content.get('keywords', ''),
@@ -1381,17 +1374,35 @@ def render_template_api():
             'publish_date': datetime.now().strftime("%Y-%m-%d"),
             'author': content.get('author', ''),
             'publisher_name': content.get('publisher_name', ''),
-            'publisher_url': content.get('publisher_url', '')
+            'hero_image_position': content.get('hero_image_position', 'center 50%'),
+            'theme': request.json.get('theme', {}),
         }
+
+        # Wrap the template in a div with the correct background color
+        preview_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{
+                    background-color: {theme.get('colors', {}).get('background', '#ffffff')};
+                    color: {theme.get('colors', {}).get('text', '#000000')};
+                    font-family: {theme.get('font', 'Inter')}, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                }}
+            </style>
+        </head>
+        <body>
+            {render_template(template_name, **template_vars)}
+        </body>
+        </html>
+        """
         
-        print(f"Debug - Template vars: {json.dumps(template_vars, indent=2)}")
-        
-        preview_html = render_template(template_name, **template_vars)
         return jsonify({'preview_html': preview_html})
-        
+
     except Exception as e:
         print(f"Template rendering error: {str(e)}")
-        print(f"Debug - Full error: {traceback.format_exc()}")
         return jsonify({'error': f'Template rendering failed: {str(e)}'}), 500
 
 if __name__ == '__main__':

@@ -29,7 +29,6 @@ export const TEMPLATE_CONFIGS = {
     initialValues: {
       article_type: 'general',
       publisher_name: '',
-      publisher_url: '',
       topic: '',
       keywords: '',
       context: '',
@@ -58,14 +57,6 @@ export const TEMPLATE_CONFIGS = {
         required: true,
         validation: Yup.string().required('Publisher name is required'),
         helperText: 'Name of the publishing organization - will be used in meta tags'
-      },
-      {
-        id: 'publisher_url',
-        type: 'text',
-        label: 'Publisher URL',
-        required: true,
-        validation: Yup.string().url('Invalid URL').required('Publisher URL is required'),
-        helperText: 'Website URL where the article will be published - will be used in meta tags'
       },
       {
         id: 'topic',
@@ -110,36 +101,30 @@ export const TEMPLATE_CONFIGS = {
 • Key player quote: "Innovation drives our industry forward"
 • Recent study: 67% of users prefer...`
       },
-      {
-        id: 'image_url',
-        type: 'text',
-        label: 'Featured Image URL',
-        required: false,
-        validation: Yup.string().url('Invalid image URL').nullable(),
-        helperText: 'URL of the main image',
-        placeholder: 'https://example.com/image.jpg'
-      }
     ]
   },
   'ss_match_report_template.html': {
     id: 'ss_match_report_template.html',
-    name: 'Enhanced Match Report',
+    name: 'Match Report',
     icon: <AssessmentIcon />,
-    description: 'Detailed match analysis with advanced statistics. Perfect for in-depth match coverage.',
+    description: 'Template for football match reports and analysis.',
     category: 'Sports',
-    tags: ['football', 'match', 'advanced', 'stats'],
+    tags: ['football', 'match report', 'analysis'],
     access: {
       type: 'restricted',
       conditions: {
         userId: [ADMIN_USER_ID],
-        // Optionally add plan type restriction
         planType: ['pro']
       }
     },
     initialValues: {
+      article_type: 'sports',
       publisher_name: '',
-      publisher_url: '',
+      topic: '', 
       keywords: '',
+      context: '',
+      supporting_data: '',
+      image_url: '',
       home_team: '',
       away_team: '',
       home_score: '0',
@@ -147,7 +132,7 @@ export const TEMPLATE_CONFIGS = {
       home_scorers: '',
       away_scorers: '',
       competition: '',
-      match_date: '',
+      match_date: new Date().toISOString().split('T')[0],
       venue: '',
       home_possession: '50',
       away_possession: '50',
@@ -155,29 +140,43 @@ export const TEMPLATE_CONFIGS = {
       away_shots: '0',
       home_shots_on_target: '0',
       away_shots_on_target: '0',
+      home_xg: '0.0',
+      away_xg: '0.0',
       home_corners: '0',
       away_corners: '0',
       home_fouls: '0',
       away_fouls: '0',
-      context: '',
-      supporting_data: '',
-      image_url: '',
+      home_yellow_cards: '0',
+      away_yellow_cards: '0',
+      home_red_cards: '0',
+      away_red_cards: '0',
+      home_offsides: '0',
+      away_offsides: '0'
     },
     fields: [
       // Base fields
+      {
+        id: 'article_type',
+        type: 'select',
+        label: 'Article Type',
+        required: true,
+        options: [
+          { value: 'sports', label: 'Sports' }
+        ]
+      },
+      {
+        id: 'topic',  // Add this field
+        type: 'text',
+        label: 'Topic',
+        required: true,
+        helperText: 'Main topic or focus of the match report'
+      },
       {
         id: 'publisher_name',
         type: 'text',
         label: 'Publisher Name',
         required: true,
         validation: Yup.string().required('Publisher name is required')
-      },
-      {
-        id: 'publisher_url',
-        type: 'text',
-        label: 'Publisher URL',
-        required: true,
-        validation: Yup.string().url('Invalid URL').required('Publisher URL is required')
       },
       {
         id: 'keywords',
@@ -325,6 +324,20 @@ export const TEMPLATE_CONFIGS = {
             validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
           },
           {
+            id: 'home_xg',
+            type: 'number',
+            label: 'Home xG',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+          },
+          {
+            id: 'away_xg',
+            type: 'number',
+            label: 'Away xG',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+          },
+          {
             id: 'home_corners',
             type: 'number',
             label: 'Home Corners',
@@ -349,6 +362,48 @@ export const TEMPLATE_CONFIGS = {
             id: 'away_fouls',
             type: 'number',
             label: 'Away Fouls',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_yellow_cards',
+            type: 'number',
+            label: 'Home Yellow Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_yellow_cards',
+            type: 'number',
+            label: 'Away Yellow Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_red_cards',
+            type: 'number',
+            label: 'Home Red Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_red_cards',
+            type: 'number',
+            label: 'Away Red Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_offsides',
+            type: 'number',
+            label: 'Home Offsides',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_offsides',
+            type: 'number',
+            label: 'Away Offsides',
             required: true,
             validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
           }
@@ -413,7 +468,6 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
     },
     initialValues: {
       publisher_name: '',
-      publisher_url: '',
       keywords: '',
       player_name: '',
       player_position: '',
@@ -435,13 +489,6 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
         label: 'Publisher Name',
         required: true,
         validation: Yup.string().required('Publisher name is required')
-      },
-      {
-        id: 'publisher_url',
-        type: 'text',
-        label: 'Publisher URL',
-        required: true,
-        validation: Yup.string().url('Invalid URL').required('Publisher URL is required')
       },
       {
         id: 'keywords',
