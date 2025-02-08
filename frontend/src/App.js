@@ -176,11 +176,36 @@ function AppContent() {
     }
   });
 
-  // Move session check to a separate useEffect
+  // Add debug logging for session changes
+  useEffect(() => {
+    console.log('Session changed:', session);
+    
+    const checkSession = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log('Current Supabase session:', currentSession);
+      
+      if (!session && currentSession) {
+        console.log('Session mismatch - refreshing auth state');
+        // Force a refresh of the auth state
+        const { data: { user } } = await supabase.auth.refreshSession();
+        if (user) {
+          console.log('Session refreshed successfully');
+        }
+      }
+    };
+
+    checkSession();
+  }, [session]);
+
+  // Update the initialization effect
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (session) {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('Init check - current session:', currentSession);
+        
+        if (currentSession) {
+          console.log('Found valid session during init');
           const savedContent = localStorage.getItem('currentGeneratedContent');
           if (savedContent) {
             setGeneratedContent(JSON.parse(savedContent));
@@ -197,7 +222,7 @@ function AppContent() {
     };
 
     initializeAuth();
-  }, [session]);
+  }, []);
 
   // Save content to localStorage whenever it changes
   useEffect(() => {
@@ -535,16 +560,22 @@ function AppContent() {
     );
   };
 
+  // Update the sign out handler
   const handleSignOut = async () => {
     try {
+      console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
       
+      console.log('Sign out successful');
       // Clear any local storage items
       localStorage.removeItem('currentGeneratedContent');
       
-      // Navigate after successful sign out
-      navigate('/');
+      // Force a navigation to clear the state
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
     }
