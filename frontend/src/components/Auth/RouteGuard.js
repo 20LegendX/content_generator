@@ -11,11 +11,23 @@ export function RouteGuard({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        console.log('Route Guard Check:', {
+          hasSession: !!currentSession,
+          error: error,
+          path: window.location.pathname,
+          storage: {
+            hasLocalStorage: !!window.localStorage,
+            hasToken: !!window.localStorage.getItem(`sb-${supabase.supabaseUrl.split('//')[1]}-auth-token`)
+          }
+        });
+
+        if (error) throw error;
+        
         setSession(currentSession);
 
         if (!currentSession) {
-          // Save the current path before redirecting
           localStorage.setItem('redirectPath', window.location.pathname);
           navigate('/login', { replace: true });
         }
@@ -27,11 +39,14 @@ export function RouteGuard({ children }) {
       }
     };
 
-    // Initial check
     checkAuth();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth State Change in RouteGuard:', {
+        hasSession: !!session,
+        event: _event
+      });
+      
       setSession(session);
       if (!session) {
         navigate('/login', { replace: true });
@@ -43,18 +58,12 @@ export function RouteGuard({ children }) {
 
   if (isChecking) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="200px"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
       </Box>
     );
   }
 
-  // Only render children if we have a session
   return session ? children : null;
 }
 

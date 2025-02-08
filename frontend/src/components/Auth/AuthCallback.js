@@ -17,15 +17,19 @@ const AuthCallback = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const access_token = hashParams.get('access_token');
         const refresh_token = hashParams.get('refresh_token');
+        const expires_in = hashParams.get('expires_in');
+        const token_type = hashParams.get('token_type');
 
-        console.log('Token Debug:', {
+        console.log('Auth Callback Debug:', {
           hasAccessToken: !!access_token,
-          accessTokenLength: access_token?.length,
-          accessTokenPrefix: access_token?.substring(0, 20),
+          tokenType: token_type,
+          expiresIn: expires_in,
           hasRefreshToken: !!refresh_token,
+          fullHash: window.location.hash,
           storage: {
             hasLocalStorage: !!window.localStorage,
-            currentToken: !!window.localStorage.getItem(`sb-${API_BASE_URL.split('//')[1]}-auth-token`)
+            // Use the correct Supabase URL for storage key
+            currentToken: !!window.localStorage.getItem(`sb-${supabase.supabaseUrl.split('//')[1]}-auth-token`)
           }
         });
 
@@ -33,26 +37,29 @@ const AuthCallback = () => {
           throw new Error('No access token in URL');
         }
 
-        // Explicitly set the session
+        // Set the session with full token details
         const { data, error } = await supabase.auth.setSession({
           access_token,
-          refresh_token
+          refresh_token,
+          expires_in: parseInt(expires_in || '3600', 10),
+          token_type: token_type || 'bearer'
         });
 
-        console.log('Set Session Result:', {
-          success: !!data?.session,
-          error: error,
-          session: data?.session ? {
-            userId: data.session.user.id,
-            email: data.session.user.email,
-            expiresAt: data.session.expires_at
-          } : null
-        });
+        if (error) {
+          console.error('Set Session Error:', {
+            message: error.message,
+            name: error.name,
+            status: error.status,
+            stack: error.stack
+          });
+          throw error;
+        }
 
-        if (error) throw error;
-
-        // If successful, navigate home
-        navigate('/');
+        // Get the redirect path or default to '/'
+        const redirectPath = localStorage.getItem('redirectPath') || '/';
+        localStorage.removeItem('redirectPath'); // Clean up
+        
+        navigate(redirectPath);
       } catch (error) {
         console.error('Auth Error:', {
           message: error.message,
