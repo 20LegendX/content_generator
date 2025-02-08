@@ -19,7 +19,10 @@ export default function Auth() {
           redirectTo: window.location.origin + '/auth/callback'
         }
       });
-      if (error) throw error;
+      if (error) {
+        console.error('SignIn error:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Error signing in with Google:', error);
     }

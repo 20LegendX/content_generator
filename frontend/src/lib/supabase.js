@@ -14,8 +14,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: window.localStorage,
-    flowType: 'pkce',
-    redirectTo: window.location.origin + '/auth/callback'
+    storage: window.localStorage
   }
 });
