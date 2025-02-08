@@ -14,25 +14,44 @@ console.log('Environment Check:', {
   hostname: window.location.hostname
 });
 
+// Add detailed logging for auth events
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     storage: window.localStorage,
-    debug: true // Enable Supabase's internal debug logging
+    debug: true,
+    // Add these event listeners
+    async onAuthStateChange(event, session) {
+      console.log('Auth State Change:', {
+        event,
+        hasSession: !!session,
+        sessionDetails: session ? {
+          userId: session.user?.id,
+          email: session.user?.email,
+          expiresAt: session.expires_at,
+          provider: session.user?.app_metadata?.provider
+        } : null
+      });
+    }
   }
 });
 
-// Test the connection immediately
+// Add this to test session handling
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Supabase Auth Event:', event, {
+  console.log('Detailed Auth Event:', {
+    event,
     hasSession: !!session,
-    sessionDetails: session ? {
-      expiresAt: session.expires_at,
-      provider: session?.user?.app_metadata?.provider,
-      hasAccessToken: !!session.access_token,
-      accessTokenPrefix: session.access_token?.substring(0, 8)
+    storage: {
+      hasLocalStorage: !!window.localStorage,
+      authToken: !!window.localStorage.getItem(`sb-${supabaseUrl.split('//')[1]}-auth-token`)
+    },
+    sessionInfo: session ? {
+      expiresAt: new Date(session.expires_at * 1000).toISOString(),
+      expiresIn: session.expires_in,
+      tokenType: session.token_type,
+      hasRefreshToken: !!session.refresh_token
     } : null
   });
 });
