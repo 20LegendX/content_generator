@@ -537,7 +537,13 @@ function AppContent() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear any local storage items
+      localStorage.removeItem('currentGeneratedContent');
+      
+      // Navigate after successful sign out
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
