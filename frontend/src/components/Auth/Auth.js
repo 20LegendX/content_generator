@@ -1,8 +1,23 @@
 import React, { useEffect } from 'react';
 import { Box, Button, Container, Typography } from '@mui/material';
 import { supabase } from '../../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Auth() {
+  const navigate = useNavigate();
+  const { session } = useAuth();
+
+  useEffect(() => {
+    // If user is already authenticated, redirect them
+    if (session) {
+      // Get the intended destination from localStorage, or default to '/'
+      const redirectPath = localStorage.getItem('redirectPath') || '/';
+      localStorage.removeItem('redirectPath'); // Clean up
+      navigate(redirectPath);
+    }
+  }, [session, navigate]);
+
   useEffect(() => {
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { CircularProgress, Box } from '@mui/material';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function RouteGuard({ children }) {
+  const { session } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
-  const [session, setSession] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -25,10 +27,8 @@ export function RouteGuard({ children }) {
 
         if (error) throw error;
         
-        setSession(currentSession);
-
         if (!currentSession) {
-          localStorage.setItem('redirectPath', window.location.pathname);
+          localStorage.setItem('redirectPath', location.pathname);
           navigate('/login', { replace: true });
         }
       } catch (error) {
@@ -47,14 +47,13 @@ export function RouteGuard({ children }) {
         event: _event
       });
       
-      setSession(session);
       if (!session) {
         navigate('/login', { replace: true });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [session, navigate, location]);
 
   if (isChecking) {
     return (
