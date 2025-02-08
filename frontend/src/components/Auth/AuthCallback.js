@@ -13,129 +13,51 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Log the full URL and hash
-        console.log('Auth Callback URL:', {
-          full: window.location.href,
-          hash: window.location.hash,
-          hashParams: new URLSearchParams(window.location.hash.substring(1))
+        // Get hash parameters
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const access_token = hashParams.get('access_token');
+        const refresh_token = hashParams.get('refresh_token');
+
+        console.log('Token Debug:', {
+          hasAccessToken: !!access_token,
+          accessTokenLength: access_token?.length,
+          accessTokenPrefix: access_token?.substring(0, 20),
+          hasRefreshToken: !!refresh_token,
+          storage: {
+            hasLocalStorage: !!window.localStorage,
+            currentToken: !!window.localStorage.getItem(`sb-${API_BASE_URL.split('//')[1]}-auth-token`)
+          }
         });
 
-        // Get the session immediately after redirect
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        console.log('Initial Session Check:', {
-          hasSession: !!session,
+        if (!access_token) {
+          throw new Error('No access token in URL');
+        }
+
+        // Explicitly set the session
+        const { data, error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token
+        });
+
+        console.log('Set Session Result:', {
+          success: !!data?.session,
           error: error,
-          sessionData: session ? {
-            userId: session.user.id,
-            email: session.user.email,
-            provider: session.user.app_metadata?.provider,
-            accessToken: session.access_token?.substring(0, 10) + '...'
+          session: data?.session ? {
+            userId: data.session.user.id,
+            email: data.session.user.email,
+            expiresAt: data.session.expires_at
           } : null
         });
 
-        if (error) {
-          console.error('Session Error:', error);
-          throw error;
-        }
+        if (error) throw error;
 
-        let currentSession = session;
-
-        if (!currentSession) {
-          // If no session, try to set it from the URL hash
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const accessToken = hashParams.get('access_token');
-          const refreshToken = hashParams.get('refresh_token');
-          
-          console.log('Hash Params:', {
-            hasAccessToken: !!accessToken,
-            hasRefreshToken: !!refreshToken,
-            tokenType: hashParams.get('token_type'),
-            expiresIn: hashParams.get('expires_in')
-          });
-
-          if (accessToken) {
-            // Set the session manually
-            const { data, error: setSessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken
-            });
-
-            console.log('Set Session Result:', {
-              success: !!data.session,
-              error: setSessionError
-            });
-
-            if (setSessionError) throw setSessionError;
-            currentSession = data.session;
-          } else {
-            throw new Error('No access token in URL');
-          }
-        }
-
-        if (!currentSession) throw new Error('Failed to establish session');
-
-        console.log('Creating records for user:', currentSession.user.id);
-
-        // Create/update user record
-        const { error: userError } = await supabase
-          .from('users')
-          .upsert({
-            id: currentSession.user.id,
-            email: currentSession.user.email,
-            auth_provider: currentSession.user.app_metadata?.provider || 'email',
-            provider_id: currentSession.user.app_metadata?.provider_id,
-            status: 'active',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'id'
-          });
-
-        if (userError) {
-          console.error('User record error:', userError);
-          throw userError;
-        }
-
-        console.log('User record created/updated successfully');
-
-        // Check for existing subscription
-        const { data: existingSub, error: checkError } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', currentSession.user.id)
-          .single();
-
-        if (checkError && !existingSub) {
-          console.log('Creating new subscription for user');
-          const { error: subError } = await supabase
-            .from('subscriptions')
-            .insert({
-              user_id: currentSession.user.id,
-              plan_type: 'free',
-              status: 'active',
-              articles_generated: 0,
-              articles_remaining: 3,
-              monthly_limit: 3,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-
-          if (subError) {
-            console.error('Subscription creation error:', subError);
-            throw subError;
-          }
-        } else {
-          console.log('Existing subscription found:', existingSub);
-        }
-
-        // If we get here, everything was successful
+        // If successful, navigate home
         navigate('/');
       } catch (error) {
-        console.error('Auth Callback Error:', {
+        console.error('Auth Error:', {
           message: error.message,
-          stack: error.stack,
-          type: error.constructor.name
+          name: error.name,
+          stack: error.stack
         });
         navigate('/login');
       }
