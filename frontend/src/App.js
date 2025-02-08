@@ -58,7 +58,7 @@ import { themes } from './config/themes';  // Import the themes we defined earli
 // Fix: Update to use the same protocol as the current page
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? `http://${window.location.hostname}:5001`
-  : `${window.location.protocol}//${window.location.hostname}`;  // Use current protocol
+  : `https://${window.location.hostname}`;  // Always HTTPS in production
 
 const getTheme = (mode) => createTheme({
   palette: {
