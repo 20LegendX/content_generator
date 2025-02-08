@@ -20,16 +20,15 @@ const AuthCallback = () => {
         const expires_in = hashParams.get('expires_in');
         const token_type = hashParams.get('token_type');
 
-        console.log('Auth Callback Debug:', {
-          hasAccessToken: !!access_token,
-          tokenType: token_type,
-          expiresIn: expires_in,
-          hasRefreshToken: !!refresh_token,
-          fullHash: window.location.hash,
-          storage: {
-            hasLocalStorage: !!window.localStorage,
-            // Use the correct Supabase URL for storage key
-            currentToken: !!window.localStorage.getItem(`sb-${supabase.supabaseUrl.split('//')[1]}-auth-token`)
+        // Debug the Supabase configuration
+        console.log('Supabase Config Debug:', {
+          hasUrl: !!supabase.supabaseUrl,
+          urlValue: supabase.supabaseUrl,
+          hasAnonKey: !!supabase.supabaseKey,
+          keyPrefix: supabase.supabaseKey?.substring(0, 10),
+          envCheck: {
+            hasEnvUrl: !!process.env.REACT_APP_SUPABASE_URL,
+            hasEnvKey: !!process.env.REACT_APP_SUPABASE_ANON_KEY,
           }
         });
 
@@ -37,7 +36,7 @@ const AuthCallback = () => {
           throw new Error('No access token in URL');
         }
 
-        // Set the session with full token details
+        // Set the session with full token details and explicit headers
         const { data, error } = await supabase.auth.setSession({
           access_token,
           refresh_token,
@@ -50,7 +49,9 @@ const AuthCallback = () => {
             message: error.message,
             name: error.name,
             status: error.status,
-            stack: error.stack
+            stack: error.stack,
+            supabaseUrl: supabase.supabaseUrl,
+            hasAnonKey: !!supabase.supabaseKey
           });
           throw error;
         }
@@ -64,7 +65,11 @@ const AuthCallback = () => {
         console.error('Auth Error:', {
           message: error.message,
           name: error.name,
-          stack: error.stack
+          stack: error.stack,
+          supabaseConfig: {
+            hasUrl: !!supabase.supabaseUrl,
+            hasKey: !!supabase.supabaseKey
+          }
         });
         navigate('/login');
       }
@@ -77,7 +82,7 @@ const AuthCallback = () => {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
       <div>Processing authentication...</div>
       <div style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>
-        {window.location.href}
+        Debug Info: {process.env.NODE_ENV} - {window.location.hostname}
       </div>
     </div>
   );

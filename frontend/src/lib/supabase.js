@@ -3,6 +3,34 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY
 
+// Add more detailed initialization logging
+console.log('Supabase Client Init:', {
+  hasUrl: !!supabaseUrl,
+  urlValue: supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  keyLength: supabaseAnonKey?.length,
+  keyPrefix: supabaseAnonKey?.substring(0, 10),
+  env: process.env.NODE_ENV,
+  hostname: window.location.hostname
+});
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase configuration:', {
+    url: !!supabaseUrl,
+    key: !!supabaseAnonKey,
+    env: process.env.NODE_ENV
+  });
+}
+
+// Add this at the top of your supabase.js
+console.log('Environment Check:', {
+  REACT_APP_SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  hasAnonKey: !!process.env.REACT_APP_SUPABASE_ANON_KEY,
+  nodeEnv: process.env.NODE_ENV,
+  hostname: window.location.hostname
+});
+
 // Enhanced debug logging
 console.log('Environment Check:', {
   nodeEnv: process.env.NODE_ENV,

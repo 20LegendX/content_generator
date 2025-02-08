@@ -1406,5 +1406,14 @@ def render_template_preview():
         print(f"Template rendering error: {str(e)}")
         return jsonify({'error': f'Template rendering failed: {str(e)}'}), 500
 
+@app.route('/api/debug/env', methods=['GET'])
+def debug_env():
+    return jsonify({
+        'has_supabase_url': bool(os.getenv('SUPABASE_URL')),
+        'has_supabase_key': bool(os.getenv('SUPABASE_SERVICE_KEY')),
+        'env': os.getenv('FLASK_ENV'),
+        'api_url': os.getenv('API_URL')
+    })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=False)
