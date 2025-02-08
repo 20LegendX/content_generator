@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { CircularProgress } from '@mui/material';
 
 // Import or define API_BASE_URL
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -10,11 +9,11 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
 
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // Get the session from the URL and check hash params
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         console.log('Session check in callback:', session);
         
@@ -84,16 +83,29 @@ const AuthCallback = () => {
             console.log('Existing subscription found:', existingSub);
           }
 
-          window.location.href = `${API_BASE_URL}/`;
+          // Add additional session handling for production
+          if (!session.access_token) {
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            
+            if (accessToken && refreshToken) {
+              await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+              });
+            }
+          }
+
+          navigate('/');
           return;
         }
 
         throw new Error('No session established');
       } catch (error) {
         console.error('Auth callback error:', error);
-        setError(error.message);
         setTimeout(() => {
-          window.location.href = `${API_BASE_URL}/login`;
+          navigate('/login');
         }, 3000);
       }
     };
@@ -101,19 +113,9 @@ const AuthCallback = () => {
     handleAuthCallback();
   }, [navigate]);
 
-  if (error) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-        <div style={{ color: 'red', marginBottom: '1rem' }}>Error: {error}</div>
-        <div>Redirecting to login...</div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-      <CircularProgress />
-      <div style={{ marginTop: '1rem' }}>Processing login...</div>
+      <div>Processing login...</div>
     </div>
   );
 };
