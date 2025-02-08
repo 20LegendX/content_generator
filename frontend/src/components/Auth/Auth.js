@@ -13,28 +13,15 @@ export default function Auth() {
   const handleGoogleLogin = async () => {
     console.log('Login button clicked');
     try {
-      const redirectTo = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://127.0.0.1:5001/auth/callback'
-        : `${window.location.protocol}//${window.location.hostname}/auth/callback`;
-
-      console.log('Starting OAuth sign in...');
-      console.log('Redirect URL:', redirectTo); 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
+          redirectTo: window.location.origin + '/auth/callback'
         }
       });
-      console.log('OAuth response:', data, error);
-      
       if (error) throw error;
     } catch (error) {
-      console.error('Error:', error);
-      alert(error.message);
+      console.error('Error signing in with Google:', error);
     }
   };
 
