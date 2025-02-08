@@ -36,8 +36,7 @@ const AuthCallback = () => {
           throw new Error('No access token in URL');
         }
 
-        // Set the session with full token details and explicit headers
-        const { data, error } = await supabase.auth.setSession({
+        const { error } = await supabase.auth.setSession({
           access_token,
           refresh_token,
           expires_in: parseInt(expires_in || '3600', 10),
@@ -45,32 +44,15 @@ const AuthCallback = () => {
         });
 
         if (error) {
-          console.error('Set Session Error:', {
-            message: error.message,
-            name: error.name,
-            status: error.status,
-            stack: error.stack,
-            supabaseUrl: supabase.supabaseUrl,
-            hasAnonKey: !!supabase.supabaseKey
-          });
           throw error;
         }
 
-        // Get the redirect path or default to '/'
         const redirectPath = localStorage.getItem('redirectPath') || '/';
-        localStorage.removeItem('redirectPath'); // Clean up
-        
+        localStorage.removeItem('redirectPath');
         navigate(redirectPath);
       } catch (error) {
-        console.error('Auth Error:', {
-          message: error.message,
-          name: error.name,
-          stack: error.stack,
-          supabaseConfig: {
-            hasUrl: !!supabase.supabaseUrl,
-            hasKey: !!supabase.supabaseKey
-          }
-        });
+        // Generic error for production
+        console.error('Authentication error occurred');
         navigate('/login');
       }
     };
