@@ -1369,8 +1369,8 @@
 
 <body style="background-color: {{ theme.colors.background }}; margin: 0; padding: 0; min-height: 100vh;">
 
-
-    <!-- Bootstrap Navigation Bar -->
+{% if not preview_mode %}
+    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg">
         <div class="container d-flex align-items-center">
             <a class="navbar-brand" href="/static">
@@ -1478,131 +1478,132 @@
             </div>
         </div>
     </nav>
+{% endif %}
 
-    <div class="container">
-        <article class="match-report">
-            <header class="match-header">
-                <h1>{{ headline }}</h1>
+<div class="container">
+    <article class="match-report">
+        <header class="match-header">
+            <h1>{{ headline }}</h1>
 
-                <div class="score-display">
-                    <span class="team-name">{{ home_team }}</span>
-                    <span class="score">{{ home_score }} - {{ away_score }}</span>
-                    <span class="team-name">{{ away_team }}</span>
-                </div>
+            <div class="score-display">
+                <span class="team-name">{{ home_team }}</span>
+                <span class="score">{{ home_score }} - {{ away_score }}</span>
+                <span class="team-name">{{ away_team }}</span>
+            </div>
 
-                <div class="match-details">
-                    <span>{{ competition }}</span> |
-                    <span>{{ venue }}</span> |
-                    <span>{{ match_date }}</span>
-                </div>
+            <div class="match-details">
+                <span>{{ competition }}</span> |
+                <span>{{ venue }}</span> |
+                <span>{{ match_date }}</span>
+            </div>
 
-                {% if featured_image_url %}
-                <img src="{{ featured_image_url }}"
-                     alt="{{ featured_image_alt }}"
-                     class="featured-image">
-                {% endif %}
-            </header>
+            {% if featured_image_url %}
+            <img src="{{ featured_image_url }}"
+                 alt="{{ featured_image_alt }}"
+                 class="featured-image">
+            {% endif %}
+        </header>
 
 
-        <!-- Add in body where you want the stats to appear -->
-        <section class="match-section">
-            <h2>Match Statistics</h2>
-            <div class="stats-container">
-                <!-- Add xG as the first stat -->
-                <div class="stat-row">
-                    <div class="stat-label">Expected Goals (xG)</div>
-                    <div class="stat-bars">
-                        {% set total_xg = match_stats.xg.home + match_stats.xg.away %}
-                        {% if total_xg > 0 %}
-                            {% set home_xg_percent = (match_stats.xg.home / total_xg * 100)|round %}
-                            {% set away_xg_percent = (match_stats.xg.away / total_xg * 100)|round %}
-                        {% else %}
-                            {% set home_xg_percent = 50 %}
-                            {% set away_xg_percent = 50 %}
-                        {% endif %}
-                        <div class="home-bar" style="width: {{ home_xg_percent }}%">
-                            {{ match_stats.xg.home }}
-                        </div>
-                        <div class="away-bar" style="width: {{ away_xg_percent }}%">
-                            {{ match_stats.xg.away }}
-                        </div>
+    <!-- Add in body where you want the stats to appear -->
+    <section class="match-section">
+        <h2>Match Statistics</h2>
+        <div class="stats-container">
+            <!-- Add xG as the first stat -->
+            <div class="stat-row">
+                <div class="stat-label">Expected Goals (xG)</div>
+                <div class="stat-bars">
+                    {% set total_xg = match_stats.xg.home + match_stats.xg.away %}
+                    {% if total_xg > 0 %}
+                        {% set home_xg_percent = (match_stats.xg.home / total_xg * 100)|round %}
+                        {% set away_xg_percent = (match_stats.xg.away / total_xg * 100)|round %}
+                    {% else %}
+                        {% set home_xg_percent = 50 %}
+                        {% set away_xg_percent = 50 %}
+                    {% endif %}
+                    <div class="home-bar" style="width: {{ home_xg_percent }}%">
+                        {{ match_stats.xg.home }}
+                    </div>
+                    <div class="away-bar" style="width: {{ away_xg_percent }}%">
+                        {{ match_stats.xg.away }}
                     </div>
                 </div>
+            </div>
 
-                <!-- Possession -->
-                <div class="stat-row">
-                    <div class="stat-label">Possession</div>
-                    <div class="stat-bars">
-                        <div class="home-bar" style="width: {{ match_stats.possession.home }}%">
-                            {{ match_stats.possession.home }}%
-                        </div>
-                        <div class="away-bar" style="width: {{ match_stats.possession.away }}%">
-                            {{ match_stats.possession.away }}%
-                        </div>
+            <!-- Possession -->
+            <div class="stat-row">
+                <div class="stat-label">Possession</div>
+                <div class="stat-bars">
+                    <div class="home-bar" style="width: {{ match_stats.possession.home }}%">
+                        {{ match_stats.possession.home }}%
+                    </div>
+                    <div class="away-bar" style="width: {{ match_stats.possession.away }}%">
+                        {{ match_stats.possession.away }}%
                     </div>
                 </div>
+            </div>
 
 
 
-                <!-- Shots -->
-                <div class="stat-row">
-                    <div class="stat-label">Shots</div>
-                    <div class="stat-bars">
-                        {% set total = match_stats.shots.home + match_stats.shots.away %}
-                        {% if total > 0 %}
-                            {% set home_shots_percent = (match_stats.shots.home / total * 100)|round %}
-                            {% set away_shots_percent = (match_stats.shots.away / total * 100)|round %}
-                        {% else %}
-                            {% set home_shots_percent = 50 %}
-                            {% set away_shots_percent = 50 %}
-                        {% endif %}
-                        <div class="home-bar" style="width: {{ home_shots_percent }}%">
-                            {{ match_stats.shots.home }}
-                        </div>
-                        <div class="away-bar" style="width: {{ away_shots_percent }}%">
-                            {{ match_stats.shots.away }}
-                        </div>
+            <!-- Shots -->
+            <div class="stat-row">
+                <div class="stat-label">Shots</div>
+                <div class="stat-bars">
+                    {% set total = match_stats.shots.home + match_stats.shots.away %}
+                    {% if total > 0 %}
+                        {% set home_shots_percent = (match_stats.shots.home / total * 100)|round %}
+                        {% set away_shots_percent = (match_stats.shots.away / total * 100)|round %}
+                    {% else %}
+                        {% set home_shots_percent = 50 %}
+                        {% set away_shots_percent = 50 %}
+                    {% endif %}
+                    <div class="home-bar" style="width: {{ home_shots_percent }}%">
+                        {{ match_stats.shots.home }}
+                    </div>
+                    <div class="away-bar" style="width: {{ away_shots_percent }}%">
+                        {{ match_stats.shots.away }}
                     </div>
                 </div>
+            </div>
 
-                <!-- Add more stats in the same pattern -->
-                {% for stat, values in match_stats.items() %}
-                    {% if stat not in ['possession', 'shots', 'xg'] %}  <!-- Added 'xg' to excluded stats -->
-                        <div class="stat-row">
-                            <div class="stat-label">{{ stat|replace('_', ' ')|title }}</div>
-                            <div class="stat-bars">
-                                {% set total = values.home + values.away %}
-                                {% if total > 0 %}
-                                    {% set home_percent = (values.home / total * 100)|round %}
-                                    {% set away_percent = (values.away / total * 100)|round %}
-                                {% else %}
-                                    {% set home_percent = 50 %}
-                                    {% set away_percent = 50 %}
-                                {% endif %}
-                                <div class="home-bar" style="width: {{ home_percent }}%">
-                                    {{ values.home }}
-                                </div>
-                                <div class="away-bar" style="width: {{ away_percent }}%">
-                                    {{ values.away }}
-                                </div>
+            <!-- Add more stats in the same pattern -->
+            {% for stat, values in match_stats.items() %}
+                {% if stat not in ['possession', 'shots', 'xg'] %}  <!-- Added 'xg' to excluded stats -->
+                    <div class="stat-row">
+                        <div class="stat-label">{{ stat|replace('_', ' ')|title }}</div>
+                        <div class="stat-bars">
+                            {% set total = values.home + values.away %}
+                            {% if total > 0 %}
+                                {% set home_percent = (values.home / total * 100)|round %}
+                                {% set away_percent = (values.away / total * 100)|round %}
+                            {% else %}
+                                {% set home_percent = 50 %}
+                                {% set away_percent = 50 %}
+                            {% endif %}
+                            <div class="home-bar" style="width: {{ home_percent }}%">
+                                {{ values.home }}
+                            </div>
+                            <div class="away-bar" style="width: {{ away_percent }}%">
+                                {{ values.away }}
                             </div>
                         </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </section>
-
-            <div class="match-content">
-                <!-- Match Report Content -->
-                <section class="match-section">
-                    <div class="match-analysis">
-                        {{ article_content|safe }}
                     </div>
-                </section>
-            </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+
+        <div class="match-content">
+            <!-- Match Report Content -->
+            <section class="match-section">
+                <div class="match-analysis">
+                    {{ article_content|safe }}
+                </div>
+            </section>
+        </div>
 
 
-                        <!-- Add this after the match header section -->
+                    <!-- Add this after the match header section -->
             {% if home_lineup or away_lineup %}
             <section class="lineups-section">
               <h2>Starting Lineups</h2>
@@ -1644,54 +1645,64 @@
             {% endif %}
 
 
-        </article>
+    </article>
+</div>
 
-<footer class="text-white text-center" style="background-color: #0b0c1f;">
-    <div class="container p-4">
-        <div class="row justify-content-center">
-            <!-- Advanced Scouting Tools Section -->
-            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
-                <h5 class="text-uppercase">Advanced Scouting Tools</h5>
-                <ul class="list-unstyled mb-0">
-                    <li class="list-inline-item"><a href="/scatterscout" id="scatter-scout-link" target="_blank">Scatterscout</a></li>
-                    <li class="list-inline-item"><a href="/advanced-search" id="advanced-search-link" target="_blank">Advanced Search Engine</a></li>
-                    <li class="list-inline-item"><a href="/compare-players" target="_blank">Player Comparison</a></li>
-                </ul>
-            </div>
-            <!-- Leagues Section -->
-            <div class="col-lg-6 col-md-6 mb-4 mb-md-0">
-                <h5 class="text-uppercase">Leagues</h5>
-                <ul class="list-unstyled d-flex flex-wrap justify-content-center mb-0 leagues-list">
-                    <li class="list-inline-item"><a href="/leagues/premier-league.html" target="_blank">Premier League</a></li>
-                    <li class="list-inline-item"><a href="/leagues/la-liga.html" target="_blank">La Liga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/bundesliga.html" target="_blank">Bundesliga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/ligue-1.html" target="_blank">Ligue 1</a></li>
-                    <li class="list-inline-item"><a href="/leagues/serie-a.html" target="_blank">Serie A</a></li>
-                    <li class="list-inline-item"><a href="/leagues/eredivisie.html" target="_blank">Eredivisie</a></li>
-                    <li class="list-inline-item"><a href="/leagues/primeira-liga.html" target="_blank">Primeira Liga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/pro-league-a.html" target="_blank">Pro League A</a></li>
-                    <li class="list-inline-item"><a href="/leagues/s%C3%BCper-lig.html" target="_blank">Süper Lig</a></li>
-                    <li class="list-inline-item"><a href="/leagues/championship.html" target="_blank">Championship</a></li>
-                    <li class="list-inline-item"><a href="/leagues/la-liga-2.html" target="_blank">La Liga 2</a></li>
-                    <li class="list-inline-item"><a href="/leagues/2.-bundesliga.html" target="_blank">2. Bundesliga</a></li>
-                    <li class="list-inline-item"><a href="/leagues/premiership.html" target="_blank">Premiership</a></li>
-                    <li class="list-inline-item"><a href="/leagues/j1-league.html" target="_blank">J1 League</a></li>
-                    <li class="list-inline-item"><a href="/leagues/s%C3%A9rie-a.html" target="_blank">Série A</a></li>
-                    <!-- Add more leagues as needed -->
-                </ul>
-            </div>
-            <!-- Privacy Policy Section -->
-            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
-                <ul class="list-unstyled mb-0">
-                    <li>
-                        <p>&copy; 2025 ScoutingStats.AI. All rights reserved.</p>
-                        <a href="/privacy-policy" target="_blank" class="text-white">Privacy Policy</a>
-                    </li>
-                </ul>
+
+{% if not preview_mode %}
+    <!-- Footer -->
+    <footer class="text-white text-center" style="background-color: #0b0c1f;">
+        <div class="container p-4">
+            <div class="row justify-content-center">
+                <!-- Advanced Scouting Tools Section -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">Advanced Scouting Tools</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="list-inline-item"><a href="/scatterscout" id="scatter-scout-link" target="_blank">Scatterscout</a></li>
+                        <li class="list-inline-item"><a href="/advanced-search" id="advanced-search-link" target="_blank">Advanced Search Engine</a></li>
+                        <li class="list-inline-item"><a href="/compare-players" target="_blank">Player Comparison</a></li>
+                    </ul>
+                </div>
+                <!-- Leagues Section -->
+                <div class="col-lg-6 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">Leagues</h5>
+                    <ul class="list-unstyled d-flex flex-wrap justify-content-center mb-0 leagues-list">
+                        <li class="list-inline-item"><a href="/leagues/premier-league.html" target="_blank">Premier League</a></li>
+                        <li class="list-inline-item"><a href="/leagues/la-liga.html" target="_blank">La Liga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/bundesliga.html" target="_blank">Bundesliga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/ligue-1.html" target="_blank">Ligue 1</a></li>
+                        <li class="list-inline-item"><a href="/leagues/serie-a.html" target="_blank">Serie A</a></li>
+                        <li class="list-inline-item"><a href="/leagues/eredivisie.html" target="_blank">Eredivisie</a></li>
+                        <li class="list-inline-item"><a href="/leagues/primeira-liga.html" target="_blank">Primeira Liga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/pro-league-a.html" target="_blank">Pro League A</a></li>
+                        <li class="list-inline-item"><a href="/leagues/s%C3%BCper-lig.html" target="_blank">Süper Lig</a></li>
+                        <li class="list-inline-item"><a href="/leagues/championship.html" target="_blank">Championship</a></li>
+                        <li class="list-inline-item"><a href="/leagues/la-liga-2.html" target="_blank">La Liga 2</a></li>
+                        <li class="list-inline-item"><a href="/leagues/2.-bundesliga.html" target="_blank">2. Bundesliga</a></li>
+                        <li class="list-inline-item"><a href="/leagues/premiership.html" target="_blank">Premiership</a></li>
+                        <li class="list-inline-item"><a href="/leagues/j1-league.html" target="_blank">J1 League</a></li>
+                        <li class="list-inline-item"><a href="/leagues/s%C3%A9rie-a.html" target="_blank">Série A</a></li>
+                        <!-- Add more leagues as needed -->
+                    </ul>
+                </div>
+                <!-- Privacy Policy Section -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                    <ul class="list-unstyled mb-0">
+                        <li>
+                            <p>&copy; 2025 ScoutingStats.AI. All rights reserved.</p>
+                            <a href="/privacy-policy" target="_blank" class="text-white">Privacy Policy</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-</footer>
+    </footer>
+
+      <!-- Add footer after main content -->
+      <footer class="article-footer">
+        <p>Article created with <a href="https://pagecrafter.ai" target="_blank" rel="noopener noreferrer">PageCrafter.ai</a></p>
+      </footer>
+{% endif %}
 
 <!-- Correct order of script tags -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

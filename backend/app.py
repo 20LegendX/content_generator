@@ -53,8 +53,8 @@ def find_free_port(start_port=5001, max_port=5010):
     raise RuntimeError('No free ports found')
 
 app = Flask(__name__, 
-    static_folder="../frontend/build",
-    static_url_path='',
+    static_folder="../frontend/build/static",  # Point to the static files directory
+    static_url_path='/static',  # Keep the static URL path
     template_folder='templates'
 )
 CORS(app, resources={
@@ -93,26 +93,15 @@ def log_request_info():
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def serve(path):
-    """Serve React App"""
-    app.logger.debug(f'Serving path: {path}')
-    app.logger.debug(f'Static folder: {app.static_folder}')
-    
-    # First, try to serve actual files
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
-        return send_from_directory(app.static_folder, path)
-    
-    # For API routes, return 404 if not found
+def catch_all(path):
     if path.startswith('api/'):
-        return 'Not Found', 404
-        
-    # For all other routes, serve index.html
-    return send_from_directory(app.static_folder, 'index.html')
+        return {'error': 'Not Found'}, 404
+    return send_from_directory('../frontend/build', 'index.html')
 
 # Add explicit handlers for your routes to ensure they serve index.html
 @app.route('/generate')
 def generate_page():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory('../frontend/build', 'index.html')
 
 @app.route('/login')
 def login_page():
@@ -127,6 +116,9 @@ def subscription_page():
 def privacy_policy_page():
     return send_from_directory(app.static_folder, 'index.html')
 
+@app.route('/history')
+def history_page():
+    return send_from_directory('../frontend/build', 'index.html')
 
 # Add any other routes your app uses
 
@@ -324,7 +316,11 @@ def generate_api():
 
         try:
             # Render template
-            preview_html = render_template(template_name, **formatted_content)
+            preview_html = render_template(
+                template_name,
+                preview_mode=True,
+                **formatted_content
+            )
         except Exception as template_error:
             print(f"Template rendering error: {str(template_error)}")
             return jsonify({'error': f'Template rendering failed: {str(template_error)}'}), 500
@@ -340,8 +336,11 @@ def generate_api():
 
         return jsonify({
             'preview_html': preview_html,
-            'raw_content': formatted_content,
-            'template_used': template_name
+            'raw_content': {
+                'template_name': template_name,
+                'theme': formatted_content.get('theme', {}),
+                **formatted_content
+            }
         })
 
     except Exception as e:
@@ -486,7 +485,7 @@ def create_prompt(user_input):
         - **Do NOT fabricate real-world events.**
         """
 
-    elif template_name == 'ss_match_report_template.html':
+    elif template_name in ['ss_match_report_template.html','match_report_template.html']:
         prompt = f"""
         Write a professional match report for {user_input['home_team']} vs {user_input['away_team']} using ONLY the provided information.
         {style_guide}
@@ -859,85 +858,96 @@ def format_article_content(gpt_response, template_type):
                 'hero_image_position': request.json.get('hero_image_position', 'center center')
             })
 
-        elif template_type == 'ss_match_report_template.html':
-            # Similar structure but with your site's specific needs
-            match_content = []
-            for section in response_data['match_report']:
-                match_content.append(f'\n<div class="ss-match-section">\n')  # Your site's class names
-                if 'heading' in section:
-                    match_content.append(f'<h2 class="ss-section-heading">{section["heading"]}</h2>\n')
-                for paragraph in section['content']:
-                    match_content.append(f'<p class="ss-content-paragraph">{paragraph}</p>\n')
-                match_content.append('</div>\n')
-
-            template_vars.update({
-                'headline': response_data['template_data']['headline'],
-                'match_summary': response_data['template_data'].get('match_summary', ''),
-                'article_content': '\n'.join(match_content),
-                'meta_description': response_data['meta_data']['meta_description'],
-                'keywords': response_data['meta_data'].get('keywords', []),
-                'publish_date': current_date,
-                'featured_image_url': request.json.get('image_url', default_image_url),
-                'featured_image_alt': response_data['template_data'].get('featured_image_alt', default_image_alt),
-                'article_category': 'Sports',
-                # Match-specific data
-                'home_team': request.json.get('home_team', ''),
-                'away_team': request.json.get('away_team', ''),
-                'home_score': request.json.get('home_score', ''),
-                'away_score': request.json.get('away_score', ''),
-                'competition': request.json.get('competition', ''),
-                'match_date': request.json.get('match_date', ''),
-                'venue': request.json.get('venue', ''),
-                # Additional meta data
-                'schema_type': 'SportsEvent',
-                'og_title': response_data['meta_data'].get('og_title', ''),
-                'og_description': response_data['meta_data'].get('og_description', ''),
-                'twitter_title': response_data['meta_data'].get('twitter_title', ''),
-                'twitter_description': response_data['meta_data'].get('twitter_description', ''),
-                'author': response_data['meta_data'].get('author', 'Sports Reporter'),
-                'publisher_name': request.json.get('publisher_name', ''),
-                # Match stats
-                'match_stats': {
-                    'possession': {
-                        'home': request.json.get('home_possession', 50),
-                        'away': request.json.get('away_possession', 50)
+        elif template_type in ['match_report_template.html', 'ss_match_report_template.html']:
+            # For updates, the content might come directly rather than in sections
+            if isinstance(gpt_response, dict) and 'article_content' in gpt_response:
+                # Direct content update
+                template_vars.update({
+                    'headline': gpt_response.get('headline', ''),
+                    'match_summary': gpt_response.get('match_summary', ''),
+                    'article_content': gpt_response.get('article_content', ''),
+                    'meta_description': gpt_response.get('meta_description', ''),
+                    # ... preserve other fields ...
+                })
+            else:
+                # Original content generation path
+                match_content = []
+                for section in response_data['match_report']:
+                    match_content.append(f'\n<div class="ss-match-section">\n')
+                    if 'heading' in section:
+                        match_content.append(f'<h2 class="ss-section-heading">{section["heading"]}</h2>\n')
+                    for paragraph in section['content']:
+                        match_content.append(f'<p class="ss-content-paragraph">{paragraph}</p>\n')
+                    match_content.append('</div>\n')
+                
+                template_vars.update({
+                    'headline': response_data['template_data']['headline'],
+                    'match_summary': response_data['template_data'].get('match_summary', ''),
+                    'article_content': '\n'.join(match_content),
+                    'meta_description': response_data['meta_data']['meta_description'],
+                    'keywords': response_data['meta_data'].get('keywords', []),
+                    'publish_date': current_date,
+                    'featured_image_url': request.json.get('image_url', default_image_url),
+                    'featured_image_alt': response_data['template_data'].get('featured_image_alt', default_image_alt),
+                    'article_category': 'Sports',
+                    # Match-specific data
+                    'home_team': request.json.get('home_team', ''),
+                    'away_team': request.json.get('away_team', ''),
+                    'home_score': request.json.get('home_score', ''),
+                    'away_score': request.json.get('away_score', ''),
+                    'competition': request.json.get('competition', ''),
+                    'match_date': request.json.get('match_date', ''),
+                    'venue': request.json.get('venue', ''),
+                    # Additional meta data
+                    'schema_type': 'SportsEvent',
+                    'og_title': response_data['meta_data'].get('og_title', ''),
+                    'og_description': response_data['meta_data'].get('og_description', ''),
+                    'twitter_title': response_data['meta_data'].get('twitter_title', ''),
+                    'twitter_description': response_data['meta_data'].get('twitter_description', ''),
+                    'author': response_data['meta_data'].get('author', 'Sports Reporter'),
+                    'publisher_name': request.json.get('publisher_name', ''),
+                    # Match stats
+                    'match_stats': {
+                        'possession': {
+                            'home': request.json.get('home_possession', 50),
+                            'away': request.json.get('away_possession', 50)
+                        },
+                        'shots': {
+                            'home': request.json.get('home_shots', 0),
+                            'away': request.json.get('away_shots', 0)
+                        },
+                        'shots_on_target': {
+                            'home': request.json.get('home_shots_on_target', 0),
+                            'away': request.json.get('away_shots_on_target', 0)
+                        },
+                        'corners': {
+                            'home': request.json.get('home_corners', 0),
+                            'away': request.json.get('away_corners', 0)
+                        },
+                        'fouls': {
+                            'home': request.json.get('home_fouls', 0),
+                            'away': request.json.get('away_fouls', 0)
+                        },
+                        'yellow_cards': {
+                            'home': request.json.get('home_yellow_cards', 0),
+                            'away': request.json.get('away_yellow_cards', 0)
+                        },
+                        'red_cards': {
+                            'home': request.json.get('home_red_cards', 0),
+                            'away': request.json.get('away_red_cards', 0)
+                        },
+                        'offsides': {
+                            'home': request.json.get('home_offsides', 0),
+                            'away': request.json.get('away_offsides', 0)
+                        },
+                        'xg': {
+                            'home': float(request.json.get('home_xg', 0.0)),
+                            'away': float(request.json.get('away_xg', 0.0))
+                        }
                     },
-                    'shots': {
-                        'home': request.json.get('home_shots', 0),
-                        'away': request.json.get('away_shots', 0)
-                    },
-                    'shots_on_target': {
-                        'home': request.json.get('home_shots_on_target', 0),
-                        'away': request.json.get('away_shots_on_target', 0)
-                    },
-                    'corners': {
-                        'home': request.json.get('home_corners', 0),
-                        'away': request.json.get('away_corners', 0)
-                    },
-                    'fouls': {
-                        'home': request.json.get('home_fouls', 0),
-                        'away': request.json.get('away_fouls', 0)
-                    },
-                    'yellow_cards': {
-                        'home': request.json.get('home_yellow_cards', 0),
-                        'away': request.json.get('away_yellow_cards', 0)
-                    },
-                    'red_cards': {
-                        'home': request.json.get('home_red_cards', 0),
-                        'away': request.json.get('away_red_cards', 0)
-                    },
-                    'offsides': {
-                        'home': request.json.get('home_offsides', 0),
-                        'away': request.json.get('away_offsides', 0)
-                    },
-                    'xg': {
-                        'home': float(request.json.get('home_xg', 0.0)),
-                        'away': float(request.json.get('away_xg', 0.0))
-                    }
-                },
-                'theme': request.json.get('theme', {}),
-                'hero_image_position': request.json.get('hero_image_position', 'center center')
-            })
+                    'theme': request.json.get('theme', {}),
+                    'hero_image_position': request.json.get('hero_image_position', 'center center')
+                })
         elif template_type == 'ss_player_scout_report_template.html':
             # == New Player Scout Report ==
             scout_content = []
@@ -1231,16 +1241,16 @@ def parse_recent_form(form_text):
 # Add this route handler
 @app.route('/auth/callback')
 def auth_callback():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory('../frontend/build', 'index.html')
 
 # Add this route handler (similar to auth_callback)
 @app.route('/subscription/success')
 def subscription_success():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory('../frontend/build', 'index.html')
 
 @app.route('/subscription/cancel')
 def subscription_cancel():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory('../frontend/build', 'index.html')
 
 
 # Initialize Stripe with your secret key
@@ -1376,26 +1386,58 @@ def render_template_preview():
             'author': content.get('author', ''),
             'publisher_name': content.get('publisher_name', ''),
             'hero_image_position': content.get('hero_image_position', 'center 50%'),
-            'theme': request.json.get('theme', {}),
+            'theme': theme,
         }
 
-        # Wrap the template in a div with the correct background color
+        # Add match-specific data for match report template
+        if template_name in ['match_report_template.html', 'ss_match_report_template.html']:
+            template_vars.update({
+                'home_team': content.get('home_team', ''),
+                'away_team': content.get('away_team', ''),
+                'home_score': content.get('home_score', ''),
+                'away_score': content.get('away_score', ''),
+                'competition': content.get('competition', ''),
+                'match_date': content.get('match_date', ''),
+                'venue': content.get('venue', ''),
+                'home_lineup': content.get('home_lineup', ''),
+                'away_lineup': content.get('away_lineup', ''),
+                'match_stats': content.get('match_stats', {
+                    'possession': {'home': 50, 'away': 50},
+                    'shots': {'home': 0, 'away': 0},
+                    'shots_on_target': {'home': 0, 'away': 0},
+                    'corners': {'home': 0, 'away': 0},
+                    'fouls': {'home': 0, 'away': 0},
+                    'yellow_cards': {'home': 0, 'away': 0},
+                    'red_cards': {'home': 0, 'away': 0},
+                    'offsides': {'home': 0, 'away': 0},
+                    'xg': {'home': 0.0, 'away': 0.0}
+                })
+            })
+
+        # For preview, we only want to render the article content without nav and footer
         preview_html = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <style>
-                body {{
-                    background-color: {theme.get('colors', {}).get('background', '#ffffff')};
-                    color: {theme.get('colors', {}).get('text', '#000000')};
-                    font-family: {theme.get('font', 'Inter')}, sans-serif;
+                html, body {{
+                    background-color: {theme.get('colors', {}).get('background', '#0b0c1f')};
                     margin: 0;
                     padding: 0;
+                    min-height: 100vh;
+                }}
+                .preview-wrapper {{
+                    background-color: {theme.get('colors', {}).get('background', '#0b0c1f')};
+                    min-height: 100vh;
+                    padding: 0;
+                    margin: 0;
                 }}
             </style>
         </head>
         <body>
-            {render_template(template_name, **template_vars)}
+            <div class="preview-wrapper">
+                {render_template(template_name, preview_mode=True, **template_vars)}
+            </div>
         </body>
         </html>
         """

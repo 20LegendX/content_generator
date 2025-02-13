@@ -1,64 +1,365 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background-color: {{ theme.colors.background }}; margin: 0; padding: 0; min-height: 100%;">
 <head>
+        <!-- Google Analytics (with consent management) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZXDJNBML2H"></script>
+        <!-- Cookie Consent Script from GetTerms.io -->
+    <script type="text/javascript" src="https://app.getterms.io/cookie-consent/embed/7e6f5658-3c4e-4aed-ae82-2ebaf564853c/en-au"></script>
+
     <meta charset="UTF-8">
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+
+          // Initialize Google Analytics
+          gtag('js', new Date());
+
+          // Check if consent was given for Google Analytics
+          if (!window['ga-disable-G-ZXDJNBML2H']) {
+              gtag('config', 'G-ZXDJNBML2H');
+          }
+        </script>
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ headline }}</title>
-
-    <!-- Meta tags -->
-    <meta name="description" content="{{ meta_description }}">
+    <link rel="icon" type="image/png" href="/static/images/ss_logo.png">
+    <title>{{ og_title }} | ScoutingStats</title>
+    <meta name="description" content="{{ og_description }}">
     <meta name="keywords" content="{{ keywords }}">
-    <meta name="author" content="{{ author }}">
 
-    <!-- Open Graph -->
+    <!-- Open Graph tags -->
     <meta property="og:title" content="{{ og_title }}">
     <meta property="og:description" content="{{ og_description }}">
     <meta property="og:image" content="{{ featured_image_url }}">
+    <!--<meta property="og:url" content="/articles/why-rasmus-hojlund-could-become-ruben-amorims-next-viktor-gyokeres.html">-->
 
-    <!-- Twitter -->
-    <meta property="twitter:title" content="{{ twitter_title }}">
-    <meta property="twitter:description" content="{{ twitter_description }}">
-    <meta property="twitter:image" content="{{ featured_image_url }}">
-
-    <!-- Schema.org markup -->
     <script type="application/ld+json">
     {
-        "@context": "https://schema.org",
-        "@type": "SportsEvent",
-        "name": "{{ home_team }} vs {{ away_team }}",
-        "description": "{{ meta_description }}",
-        "startDate": "{{ match_date }}",
-        "location": {
-            "@type": "Place",
-            "name": "{{ venue }}"
-        },
-        "homeTeam": {
-            "@type": "SportsTeam",
-            "name": "{{ home_team }}"
-        },
-        "awayTeam": {
-            "@type": "SportsTeam",
-            "name": "{{ away_team }}"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "{{ publisher_name }}",
-            "url": "{{ publisher_url }}"
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{{ headline }}",
+      "datePublished": "2024-12-20",
+      "dateModified": "2024-12-20",
+      "image": {
+        "@type": "ImageObject",
+        "url": "{{ featured_image_url }}",
+        "height": 800,
+        "width": 1200
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "ScoutingStats",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "/static/images/ss_logo.png"
         }
+      },
+      "description": "{{ og_description }}",
+      "keywords": "{{ keywords }}",
+
+      "articleSection": "match report"
     }
     </script>
 
+    <meta property="og:type" content="article">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Base styles */
-        body {
-            background-color: #f4f6f8;
-            color: #2d3748;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+
+</head>
+
+
+<style>
+    /* Base Reset & Typography */
+    body {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        font-family: {{ theme.font }}, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: {{ theme.colors.background }};
+    }
+
+    .match-report {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+    }
+
+    .match-header {
+        background-color: {{ theme.colors.background }};
+        text-align: center;
+        padding: 2rem 0;
+    }
+
+    /* Make sure all sections have the correct background */
+    .score-display,
+    .match-details,
+    .match-stats,
+    .stat-row,
+    .stat-bars,
+    .stat-label,
+    .home-bar,
+    .away-bar {
+        background-color: {{ theme.colors.background }};
+    }
+
+    /* Main content area */
+    .main-content {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        padding: 3rem 1rem;
+    }
+
+    /* Article container */
+    .article-container {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Update container background */
+    .container {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        padding: 2rem;
+    }
+
+    /* Update match content */
+    .match-content {
+        background-color: {{ theme.colors.background }};
+        color: {{ theme.colors.text }};
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        line-height: 1.8;
+    }
+
+    footer {
+        padding: 20px 0;
+    }
+
+
+    .align-items-center {
+        align-items: center;
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+
+    .my-lg-0 {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    .main-content .column {
+        flex: 1;
+        max-width: 200px;
+        margin: 0 20px;
+    }
+
+    .main-content .article {
+        flex: 3;
+        max-width: 800px;
+        margin: 0 20px;
+        background-color: #070819;
+        color: #E5E7EB;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Headings */
+    .article h1, .article h2, .article h3 {
+        color: #ffffff;
+        text-align: center;
+        margin-bottom: 20px;
+        font-family: 'Poppins', sans-serif;
+    }
+
+.article h2, .article h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+    /* Paragraphs */
+    .article p {
+        line-height: 1.7;
+        margin-bottom: 1.5em;
+    }
+
+    /* Blockquote Styling */
+    .article blockquote {
+        border-left: 5px solid #00b4d8;
+        background-color: #1f2937;
+        padding: 15px 20px;
+        margin: 20px 0;
+        font-style: italic;
+        color: #A0AEC0;
+        position: relative;
+    }
+
+    .article blockquote::before {
+        content: open-quote;
+        font-size: 3rem;
+        color: #00b4d8;
+        position: absolute;
+        left: -15px;
+        top: -5px;
+    }
+
+    .article blockquote p {
+        margin: 0;
+        padding: 0;
+    }
+
+
+
+    /* Update image styles in the article */
+    .article img {
+        display: block;
+        margin: 20px auto;
+        max-width: 100%; /* Changed from fixed 600px to 100% */
+        height: auto; /* Maintain aspect ratio */
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Links */
+    .article a {
+        color: #00b4d8;
+        text-decoration: underline;
+    }
+
+    .article a:hover {
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+    /* Unordered List */
+    .article ul {
+        list-style-type: disc;
+        padding-left: 20px;
+        margin-bottom: 1.5em;
+    }
+
+    .article ul li {
+        margin-bottom: 0.5em;
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            flex-direction: column;
+            align-items: center;
         }
 
+        .main-content .column {
+            display: none;
+        }
+
+        .main-content .article {
+            max-width: 100%;
+            margin: 0 10px;
+            padding: 0 15px;
+        }
+
+        body {
+            font-size: 14px;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+        }
+
+        h2, h3 {
+            font-size: 1rem;
+        }
+
+        p, .article div {
+            font-size: 0.875rem;
+        }
+
+    }
+
+
+    figure {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    figcaption {
+        margin-top: 8px;
+        font-size: 0.9rem; /* Slightly smaller text */
+        font-style: italic;
+        color: #a0aec0; /* Soft gray color for a subtle look */
+        padding: 5px 15px;
+        background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+        border-radius: 5px; /* Rounded corners */
+        width: fit-content; /* Keeps width to the text content */
+    }
+
+
+    /* For very small screens */
+    @media (max-width: 360px) {
+
+
+        .article {
+            padding: 15px; /* Reduce padding on mobile */
+        }
+
+        .article img {
+            margin: 10px auto; /* Reduce margin on mobile */
+        }
+    }
+
+
+
+.lineups {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap; /* Ensures images stack vertically on smaller screens */
+    gap: 20px; /* Adds space between the figures */
+    margin: 20px 0;
+}
+
+.lineups figure {
+    flex: 1 1 300px; /* Ensures a responsive layout with a minimum width of 300px per figure */
+    text-align: center;
+    max-width: 45%; /* Prevents figures from growing too large */
+}
+
+.lineups img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px; /* Adds a slight rounding to the images */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Adds a subtle shadow effect */
+}
+
+.lineups figcaption {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #a0aec0; /* Soft grey colour */
+    padding: 5px 15px;
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    border-radius: 5px; /* Rounded corners */
+}
+
         .container {
-            background-color: #ffffff;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
             margin-top: 2rem;
@@ -68,12 +369,19 @@
 
         /* Match header styles */
         .match-header {
-            background: linear-gradient(135deg, #1a365d 0%, #2d4373 100%);
-            color: white;
+            background: linear-gradient(135deg, {{ theme.colors.headerBg }} 0%, #000000 100%);
+            color: {{ theme.colors.headerText }};
             padding: 3rem 1rem;
             margin: -2rem -2rem 2rem -2rem;
             border-radius: 12px 12px 0 0;
             text-align: center;
+        }
+
+        .match-header h1 {
+            font-size: 2rem;
+            line-height: 1.3;
+            margin-bottom: 1.5rem;
+            padding: 0 1rem;
         }
 
         .score-display {
@@ -84,24 +392,80 @@
             align-items: center;
             justify-content: center;
             gap: 1rem;
+            padding: 0.5rem;
         }
 
         .team-name {
             font-size: 1.8rem;
             font-weight: 600;
+            padding: 0 0.5rem;
         }
 
         .match-details {
             font-size: 1.1rem;
             color: #e2e8f0;
             margin-top: 1rem;
+            padding: 0.5rem;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .match-header {
+                padding: 1.5rem 0.5rem;
+                margin: -1rem -1rem 1rem -1rem;
+            }
+
+            .match-header h1 {
+                font-size: 1.4rem;
+                margin-bottom: 1rem;
+                padding: 0 0.5rem;
+            }
+
+            .score-display {
+                font-size: 2rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin: 1rem 0;
+            }
+
+            .team-name {
+                font-size: 1.2rem;
+                text-align: center;
+                width: 100%;
+                padding: 0.25rem;
+            }
+
+            .match-details {
+                font-size: 0.9rem;
+                margin-top: 0.5rem;
+                padding: 0.25rem;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 360px) {
+            .match-header h1 {
+                font-size: 1.2rem;
+            }
+
+            .score-display {
+                font-size: 1.5rem;
+            }
+
+            .team-name {
+                font-size: 1rem;
+            }
+
+            .match-details {
+                font-size: 0.8rem;
+            }
         }
 
         /* Stats container styles */
         .stats-container {
             max-width: 800px;
             margin: 3rem auto;
-            background: linear-gradient(to bottom, #ffffff, #f8fafc);
+            background: linear-gradient(to bottom, #0f3460, #131b2c);
             padding: 2.5rem;
             border-radius: 16px;
             box-shadow:
@@ -118,6 +482,7 @@
             opacity: 0;
             transform: translateY(20px);
             animation: fadeInUp 0.6s ease forwards;
+            color: {{ theme.colors.bodyText }};
         }
 
         /* Stagger the animations */
@@ -146,13 +511,13 @@
             width: 100%;
             text-align: center;
             font-weight: 600;
-            color: #4a5568;
+            color: #ffffff;
             z-index: 1;
             text-transform: uppercase;
             font-size: 0.85rem;
             letter-spacing: 0.1em;
             top: -24px;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+            text-shadow: 0 1px 2px rgb(0, 0, 0);
         }
 
         .stat-bars {
@@ -166,7 +531,7 @@
         }
 
         .home-bar {
-            background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+            background-color: #ffa433;  /* Fixed orange color */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -182,7 +547,7 @@
         }
 
         .away-bar {
-            background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+            background-color: #7bfaff;  /* Fixed cyan color */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -231,7 +596,7 @@
         /* Section title enhancement */
         .match-section h2 {
             text-align: center;
-            color: #1e293b;
+            color: #ffffff;
             font-size: 1.8rem;
             font-weight: 700;
             margin-bottom: 2.5rem;
@@ -247,7 +612,7 @@
             transform: translateX(-50%);
             width: 60px;
             height: 4px;
-            background: linear-gradient(90deg, #2563eb, #ef4444);
+            background: linear-gradient(90deg, #7bfaff, #ffa433);
             border-radius: 2px;
         }
 
@@ -281,7 +646,7 @@
         }
 
         .match-section h2 {
-            color: #2d3748;
+            color: #ffffff;
             font-size: 1.8rem;
             font-weight: 600;
             margin-bottom: 1.5rem;
@@ -294,7 +659,7 @@
             display: block;
             width: 60px;
             height: 4px;
-            background: #4299e1;
+            background: #ff8c00;
             margin: 1rem auto;
             border-radius: 2px;
         }
@@ -318,169 +683,383 @@
 
         .match-content p {
             margin-bottom: 1.5rem;
-            color: #4a5568;
+            color: {{ theme.colors.bodyText }};
         }
 
-        /* Footer */
-        footer {
-            border-top: 1px solid #e2e8f0;
-            margin-top: 3rem;
-            padding-top: 2rem;
-            color: #718096;
-        }
 
-        footer a {
-            color: #4299e1;
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
 
 
         .lineups-section {
-          margin: 3rem 0;
-          padding: 2rem;
-          background: linear-gradient(to bottom, #f8f9fa, #ffffff);
-          border-radius: 12px;
-          box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            margin: 2rem 0;
+            padding: 1rem;
+            background: linear-gradient(to bottom, #000000, #005b67);
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
         }
 
         .lineups-container {
-          display: flex;
-          justify-content: space-between;
-          gap: 3rem;
-          margin-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            flex-direction: row; /* Default for desktop */
         }
 
         .lineup {
-          flex: 1;
-          padding: 2rem;
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-          position: relative;
+            flex: 1;
+            padding: 1.5rem;
+            background: #131b2c;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            position: relative;
+            min-width: 0; /* Prevents flex items from overflowing */
         }
 
         .lineup::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          border-radius: 12px 12px 0 0;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 12px 12px 0 0;
         }
 
         .home-lineup::before {
-          background: linear-gradient(90deg, #3182ce 0%, #4299e1 100%);
+            background: linear-gradient(90deg, #11c7dd 0%, #00f2ff 100%);
         }
 
         .away-lineup::before {
-          background: linear-gradient(90deg, #e53e3e 0%, #f56565 100%);
+            background: linear-gradient(90deg, #dc8f2a 0%, #ff8c00 100%);
         }
 
         .lineup h3 {
-          text-align: center;
-          color: #2d3748;
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-bottom: 1.5rem;
-          padding-bottom: 1rem;
-          border-bottom: 2px solid #edf2f7;
+            text-align: center;
+            color: #f3f2f2;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #edf2f7;
         }
 
         .lineup-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
         .lineup-player {
-          display: flex;
-          align-items: center;
-          padding: 0.75rem 1rem;
-          margin: 0.5rem 0;
-          background: #f7fafc;
-          border-radius: 8px;
-          transition: transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+            background: #000000;
+            border-radius: 8px;
+            transition: transform 0.2s ease;
         }
 
         .lineup-player:hover {
-          transform: translateX(5px);
-          background: #edf2f7;
+            transform: translateX(5px);
+            background: #1b2d49;
         }
 
         .player-number {
-          background: #2d3748;
-          color: white;
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          margin-right: 1rem;
-          font-size: 0.9rem;
+            background: #2d3748;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+            font-size: 0.9rem;
         }
 
         .player-name {
-          font-size: 1rem;
-          color: #4a5568;
-          font-weight: 500;
+            font-size: 1rem;
+            color: #f3f2f2;
+            font-weight: 500;
         }
 
         /* Add pitch background effect */
         .lineup::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background:
-            linear-gradient(rgba(255,255,255,0.97), rgba(255,255,255,0.97)),
-            repeating-linear-gradient(
-              0deg,
-              #f0f0f0,
-              #f0f0f0 5px,
-              transparent 5px,
-              transparent 50px
-            );
-          z-index: -1;
-          border-radius: 12px;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                linear-gradient(rgba(255,255,255,0.97), rgba(255,255,255,0.97)),
+                repeating-linear-gradient(
+                    0deg,
+                    #f0f0f0,
+                    #f0f0f0 5px,
+                    transparent 5px,
+                    transparent 50px
+                );
+            z-index: -1;
+            border-radius: 12px;
         }
 
-    </style>
-</head>
-<body>
-    <div class="container">
-        <article class="match-report">
-            <header class="match-header">
-                <h1>{{ headline }}</h1>
+        .featured-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 400px; /* Add maximum height */
+            object-fit: cover; /* Maintain aspect ratio while covering container */
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 600px; /* Set a fixed width */
+        }
 
-                <div class="score-display">
-                    <span class="team-name">{{ home_team }}</span>
-                    <span class="score">{{ home_score }} - {{ away_score }}</span>
-                    <span class="team-name">{{ away_team }}</span>
+        /* Adjust for mobile screens */
+        @media (max-width: 768px) {
+            .featured-image {
+                width: 100%; /* Full width on mobile */
+                max-height: 300px; /* Smaller max-height on mobile */
+                margin: 1rem 0;
+            }
+        }
+        /* Add responsive styles for mobile */
+        @media (max-width: 768px) {
+            .lineups-container {
+                flex-direction: column; /* Stack vertically on mobile */
+                gap: 1rem;
+            }
+
+            .lineup {
+                padding: 1rem;
+            }
+
+            .lineup h3 {
+                font-size: 1.2rem;
+                margin-bottom: 1rem;
+            }
+
+            .lineup-player {
+                padding: 0.5rem;
+                margin: 0.25rem 0;
+            }
+
+            .player-number {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+                margin-right: 0.5rem;
+            }
+
+            .player-name {
+                font-size: 0.9rem;
+            }
+
+            /* Adjust match header for mobile */
+            .match-header {
+                padding: 1.5rem 0.5rem;
+            }
+
+            .score-display {
+                font-size: 2rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .team-name {
+                font-size: 1.2rem;
+                text-align: center;
+                width: 100%;
+            }
+
+            /* Adjust stats container for mobile */
+            .stats-container {
+                padding: 1rem;
+                margin: 1rem auto;
+            }
+
+            .stat-row {
+                margin: 1rem 0;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            /* Adjust featured image for mobile */
+            .featured-image {
+                margin: 1rem 0;
+            }
+
+            /* Improve mobile padding and margins */
+            .container {
+                padding: 0.5rem;
+            }
+
+            .match-content {
+                padding: 0 0.5rem;
+            }
+        }
+
+        /* Additional mobile optimizations for very small screens */
+        @media (max-width: 360px) {
+            .score-display {
+                font-size: 1.5rem;
+            }
+
+            .team-name {
+                font-size: 1rem;
+            }
+
+            .lineup h3 {
+                font-size: 1rem;
+            }
+
+            .player-name {
+                font-size: 0.8rem;
+            }
+
+            .match-details {
+                font-size: 0.8rem;
+            }
+        }
+
+</style>
+
+<body style="background-color: {{ theme.colors.background }}; margin: 0; padding: 0; min-height: 100vh;">
+
+{% if not preview_mode %}
+
+{% endif %}
+
+<div class="container">
+    <article class="match-report">
+        <header class="match-header">
+            <h1>{{ headline }}</h1>
+
+            <div class="score-display">
+                <span class="team-name">{{ home_team }}</span>
+                <span class="score">{{ home_score }} - {{ away_score }}</span>
+                <span class="team-name">{{ away_team }}</span>
+            </div>
+
+            <div class="match-details">
+                <span>{{ competition }}</span> |
+                <span>{{ venue }}</span> |
+                <span>{{ match_date }}</span>
+            </div>
+
+            {% if featured_image_url %}
+            <img src="{{ featured_image_url }}"
+                 alt="{{ featured_image_alt }}"
+                 class="featured-image">
+            {% endif %}
+        </header>
+
+
+    <!-- Add in body where you want the stats to appear -->
+    <section class="match-section">
+        <h2>Match Statistics</h2>
+        <div class="stats-container">
+            <!-- Add xG as the first stat -->
+            <div class="stat-row">
+                <div class="stat-label">Expected Goals (xG)</div>
+                <div class="stat-bars">
+                    {% set total_xg = match_stats.xg.home + match_stats.xg.away %}
+                    {% if total_xg > 0 %}
+                        {% set home_xg_percent = (match_stats.xg.home / total_xg * 100)|round %}
+                        {% set away_xg_percent = (match_stats.xg.away / total_xg * 100)|round %}
+                    {% else %}
+                        {% set home_xg_percent = 50 %}
+                        {% set away_xg_percent = 50 %}
+                    {% endif %}
+                    <div class="home-bar" style="width: {{ home_xg_percent }}%">
+                        {{ match_stats.xg.home }}
+                    </div>
+                    <div class="away-bar" style="width: {{ away_xg_percent }}%">
+                        {{ match_stats.xg.away }}
+                    </div>
                 </div>
+            </div>
 
-                <div class="match-details">
-                    <span>{{ competition }}</span> |
-                    <span>{{ venue }}</span> |
-                    <span>{{ match_date }}</span>
+            <!-- Possession -->
+            <div class="stat-row">
+                <div class="stat-label">Possession</div>
+                <div class="stat-bars">
+                    <div class="home-bar" style="width: {{ match_stats.possession.home }}%">
+                        {{ match_stats.possession.home }}%
+                    </div>
+                    <div class="away-bar" style="width: {{ match_stats.possession.away }}%">
+                        {{ match_stats.possession.away }}%
+                    </div>
                 </div>
+            </div>
 
-                {% if featured_image_url %}
-                <img src="{{ featured_image_url }}"
-                     alt="{{ featured_image_alt }}"
-                     class="featured-image">
+
+
+            <!-- Shots -->
+            <div class="stat-row">
+                <div class="stat-label">Shots</div>
+                <div class="stat-bars">
+                    {% set total = match_stats.shots.home + match_stats.shots.away %}
+                    {% if total > 0 %}
+                        {% set home_shots_percent = (match_stats.shots.home / total * 100)|round %}
+                        {% set away_shots_percent = (match_stats.shots.away / total * 100)|round %}
+                    {% else %}
+                        {% set home_shots_percent = 50 %}
+                        {% set away_shots_percent = 50 %}
+                    {% endif %}
+                    <div class="home-bar" style="width: {{ home_shots_percent }}%">
+                        {{ match_stats.shots.home }}
+                    </div>
+                    <div class="away-bar" style="width: {{ away_shots_percent }}%">
+                        {{ match_stats.shots.away }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add more stats in the same pattern -->
+            {% for stat, values in match_stats.items() %}
+                {% if stat not in ['possession', 'shots', 'xg'] %}  <!-- Added 'xg' to excluded stats -->
+                    <div class="stat-row">
+                        <div class="stat-label">{{ stat|replace('_', ' ')|title }}</div>
+                        <div class="stat-bars">
+                            {% set total = values.home + values.away %}
+                            {% if total > 0 %}
+                                {% set home_percent = (values.home / total * 100)|round %}
+                                {% set away_percent = (values.away / total * 100)|round %}
+                            {% else %}
+                                {% set home_percent = 50 %}
+                                {% set away_percent = 50 %}
+                            {% endif %}
+                            <div class="home-bar" style="width: {{ home_percent }}%">
+                                {{ values.home }}
+                            </div>
+                            <div class="away-bar" style="width: {{ away_percent }}%">
+                                {{ values.away }}
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
-            </header>
+            {% endfor %}
+        </div>
+    </section>
 
-                        <!-- Add this after the match header section -->
+        <div class="match-content">
+            <!-- Match Report Content -->
+            <section class="match-section">
+                <div class="match-analysis">
+                    {{ article_content|safe }}
+                </div>
+            </section>
+        </div>
+
+
+                    <!-- Add this after the match header section -->
             {% if home_lineup or away_lineup %}
             <section class="lineups-section">
               <h2>Starting Lineups</h2>
@@ -522,106 +1101,20 @@
             {% endif %}
 
 
-        <!-- Add in body where you want the stats to appear -->
-        <section class="match-section">
-            <h2>Match Statistics</h2>
-            <div class="stats-container">
-                <!-- Add xG as the first stat -->
-                <div class="stat-row">
-                    <div class="stat-label">Expected Goals (xG)</div>
-                    <div class="stat-bars">
-                        {% set total_xg = match_stats.xg.home + match_stats.xg.away %}
-                        {% if total_xg > 0 %}
-                            {% set home_xg_percent = (match_stats.xg.home / total_xg * 100)|round %}
-                            {% set away_xg_percent = (match_stats.xg.away / total_xg * 100)|round %}
-                        {% else %}
-                            {% set home_xg_percent = 50 %}
-                            {% set away_xg_percent = 50 %}
-                        {% endif %}
-                        <div class="home-bar" style="width: {{ home_xg_percent }}%">
-                            {{ match_stats.xg.home }}
-                        </div>
-                        <div class="away-bar" style="width: {{ away_xg_percent }}%">
-                            {{ match_stats.xg.away }}
-                        </div>
-                    </div>
-                </div>
+    </article>
+</div>
 
-                <!-- Possession -->
-                <div class="stat-row">
-                    <div class="stat-label">Possession</div>
-                    <div class="stat-bars">
-                        <div class="home-bar" style="width: {{ match_stats.possession.home }}%">
-                            {{ match_stats.possession.home }}%
-                        </div>
-                        <div class="away-bar" style="width: {{ match_stats.possession.away }}%">
-                            {{ match_stats.possession.away }}%
-                        </div>
-                    </div>
-                </div>
+
+{% if not preview_mode %}
+
+
+      <!-- Add footer after main content -->
+      <footer class="article-footer">
+        <p>Article created with <a href="https://pagecrafter.ai" target="_blank" rel="noopener noreferrer">PageCrafter.ai</a></p>
+      </footer>
+{% endif %}
 
 
 
-                <!-- Shots -->
-                <div class="stat-row">
-                    <div class="stat-label">Shots</div>
-                    <div class="stat-bars">
-                        {% set total = match_stats.shots.home + match_stats.shots.away %}
-                        {% if total > 0 %}
-                            {% set home_shots_percent = (match_stats.shots.home / total * 100)|round %}
-                            {% set away_shots_percent = (match_stats.shots.away / total * 100)|round %}
-                        {% else %}
-                            {% set home_shots_percent = 50 %}
-                            {% set away_shots_percent = 50 %}
-                        {% endif %}
-                        <div class="home-bar" style="width: {{ home_shots_percent }}%">
-                            {{ match_stats.shots.home }}
-                        </div>
-                        <div class="away-bar" style="width: {{ away_shots_percent }}%">
-                            {{ match_stats.shots.away }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Add more stats in the same pattern -->
-                {% for stat, values in match_stats.items() %}
-                    {% if stat not in ['possession', 'shots', 'xg'] %}  <!-- Added 'xg' to excluded stats -->
-                        <div class="stat-row">
-                            <div class="stat-label">{{ stat|replace('_', ' ')|title }}</div>
-                            <div class="stat-bars">
-                                {% set total = values.home + values.away %}
-                                {% if total > 0 %}
-                                    {% set home_percent = (values.home / total * 100)|round %}
-                                    {% set away_percent = (values.away / total * 100)|round %}
-                                {% else %}
-                                    {% set home_percent = 50 %}
-                                    {% set away_percent = 50 %}
-                                {% endif %}
-                                <div class="home-bar" style="width: {{ home_percent }}%">
-                                    {{ values.home }}
-                                </div>
-                                <div class="away-bar" style="width: {{ away_percent }}%">
-                                    {{ values.away }}
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </section>
-
-            <div class="match-content">
-                {{ article_content|safe }}
-            </div>
-        </article>
-
-        <footer class="text-center mt-4 mb-4">
-            <p>Published by {{ publisher_name }}</p>
-            <p><a href="{{ publisher_url }}">Visit {{ publisher_name }}</a></p>
-            <p>Published on {{ publish_date }}</p>
-        </footer>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

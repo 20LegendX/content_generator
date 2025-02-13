@@ -15,7 +15,8 @@ export default function EditContentModal({
   open,
   onClose,
   content,
-  onSave
+  onSave,
+  isHistoryEdit = false
 }) {
   const [editedContent, setEditedContent] = useState({});
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
@@ -25,21 +26,38 @@ export default function EditContentModal({
 
   useEffect(() => {
     if (content?.raw_content) {
-      setEditedContent({
-        headline: content.raw_content.headline || '',
-        article_content: content.raw_content.article_content || '',
-        meta_description: content.raw_content.meta_description || '',
-        summary: content.raw_content.summary || '',
-        ...content.raw_content // Preserve other fields
-      });
+      if (content.raw_content.template_name === 'ss_match_report_template.html') {
+        setEditedContent({
+          headline: content.raw_content.headline || '',
+          article_content: content.raw_content.article_content || '',
+          meta_description: content.raw_content.meta_description || '',
+          match_summary: content.raw_content.match_summary || '',
+          ...content.raw_content
+        });
+      } else {
+        setEditedContent({
+          headline: content.raw_content.headline || '',
+          article_content: content.raw_content.article_content || '',
+          meta_description: content.raw_content.meta_description || '',
+          summary: content.raw_content.summary || '',
+          ...content.raw_content
+        });
+      }
     }
   }, [content, open]);
 
   const handleSave = () => {
     const updatedContent = {
-      ...content.raw_content,
-      ...editedContent
+      id: content.id,
+      ...content,
+      raw_content: {
+        ...content.raw_content,
+        ...editedContent,
+        article_content: editedContent.article_content || ''
+      },
+      preview_html: content.preview_html
     };
+    
     onSave(updatedContent);
     onClose();
   };
@@ -294,8 +312,12 @@ export default function EditContentModal({
       </DialogContent>
       <DialogActions sx={{ padding: 2 }}>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
-          Update Preview
+        <Button 
+          onClick={handleSave} 
+          variant="contained" 
+          color="primary"
+        >
+          {isHistoryEdit ? 'Save Changes' : 'Update Preview'}
         </Button>
       </DialogActions>
 

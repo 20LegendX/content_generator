@@ -5,7 +5,7 @@ import { CircularProgress, Box } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function RouteGuard({ children }) {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
@@ -13,49 +13,25 @@ export function RouteGuard({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        console.log('Route Guard Check:', {
-          hasSession: !!currentSession,
-          error: error,
-          path: window.location.pathname,
-          storage: {
-            hasLocalStorage: !!window.localStorage,
-            hasToken: !!window.localStorage.getItem(`sb-${supabase.supabaseUrl.split('//')[1]}-auth-token`)
-          }
-        });
+        if (loading) return;
 
-        if (error) throw error;
-        
-        if (!currentSession) {
+        if (!session) {
           localStorage.setItem('redirectPath', location.pathname);
           navigate('/login', { replace: true });
+          return;
         }
+
+        setIsChecking(false);
       } catch (error) {
         console.error('Auth check error:', error);
         navigate('/login', { replace: true });
-      } finally {
-        setIsChecking(false);
       }
     };
 
     checkAuth();
+  }, [session, loading, navigate, location]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth State Change in RouteGuard:', {
-        hasSession: !!session,
-        event: _event
-      });
-      
-      if (!session) {
-        navigate('/login', { replace: true });
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [session, navigate, location]);
-
-  if (isChecking) {
+  if (loading || isChecking) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />

@@ -103,6 +103,351 @@ export const TEMPLATE_CONFIGS = {
       },
     ]
   },
+  'match_report_template.html': {
+    id: 'match_report_template.html',
+    name: 'Basic Match Report',
+    icon: <SportsSoccerIcon />,
+    description: 'Template for creating football match reports and analysis.',
+    category: 'Sports',
+    tags: ['football', 'match report', 'analysis'],
+    access: {
+      type: 'all'  // This makes it available to all users
+    },
+    initialValues: {
+      article_type: 'sports',
+      publisher_name: '',
+      topic: '', 
+      keywords: '',
+      context: '',
+      supporting_data: '',
+      image_url: '',
+      home_team: '',
+      away_team: '',
+      home_score: '0',
+      away_score: '0',
+      home_scorers: '',
+      away_scorers: '',
+      competition: '',
+      match_date: new Date().toISOString().split('T')[0],
+      venue: '',
+      home_possession: '50',
+      away_possession: '50',
+      home_shots: '0',
+      away_shots: '0',
+      home_shots_on_target: '0',
+      away_shots_on_target: '0',
+      home_xg: '0.0',
+      away_xg: '0.0',
+      home_corners: '0',
+      away_corners: '0',
+      home_fouls: '0',
+      away_fouls: '0',
+      home_yellow_cards: '0',
+      away_yellow_cards: '0',
+      home_red_cards: '0',
+      away_red_cards: '0',
+      home_offsides: '0',
+      away_offsides: '0'
+    },
+    fields: [
+      // Base fields
+      {
+        id: 'article_type',
+        type: 'select',
+        label: 'Article Type',
+        required: true,
+        options: [
+          { value: 'sports', label: 'Sports' }
+        ]
+      },
+      {
+        id: 'topic',
+        type: 'text',
+        label: 'Topic',
+        required: true,
+        helperText: 'Main topic or focus of the match report'
+      },
+      {
+        id: 'publisher_name',
+        type: 'text',
+        label: 'Publisher Name',
+        required: true,
+        validation: Yup.string().required('Publisher name is required')
+      },
+      {
+        id: 'keywords',
+        type: 'text',
+        label: 'Keywords',
+        required: true,
+        validation: Yup.string().max(150, 'Keywords must be 150 characters or less').required('Keywords are required'),
+        helperText: 'Comma-separated keywords'
+      },
+      // Match Details Group
+      {
+        group: 'match_details',
+        label: 'Match Details',
+        fields: [
+          {
+            id: 'competition',
+            type: 'text',
+            label: 'Competition',
+            required: true,
+            validation: Yup.string().required('Competition is required').max(50, 'Competition name too long')
+          },
+          {
+            id: 'match_date',
+            type: 'date',
+            label: 'Match Date',
+            required: true,
+            validation: Yup.string().required('Match date is required')
+          },
+          {
+            id: 'venue',
+            type: 'text',
+            label: 'Venue',
+            required: true,
+            validation: Yup.string().required('Venue is required').max(100, 'Venue name too long')
+          }
+        ]
+      },
+      // Teams Group
+      {
+        group: 'teams',
+        label: 'Team Information',
+        fields: [
+          {
+            id: 'home_team',
+            type: 'text',
+            label: 'Home Team',
+            required: true,
+            validation: Yup.string().required('Home team is required').max(50, 'Team name too long')
+          },
+          {
+            id: 'away_team',
+            type: 'text',
+            label: 'Away Team',
+            required: true,
+            validation: Yup.string().required('Away team is required').max(50, 'Team name too long')
+          }
+        ]
+      },
+      // Score Group
+      {
+        group: 'score',
+        label: 'Match Score',
+        fields: [
+          {
+            id: 'home_score',
+            type: 'number',
+            label: 'Home Score',
+            required: true,
+            validation: Yup.number().required('Home score is required').min(0, 'Score cannot be negative').integer('Score must be a whole number')
+          },
+          {
+            id: 'away_score',
+            type: 'number',
+            label: 'Away Score',
+            required: true,
+            validation: Yup.number().required('Away score is required').min(0, 'Score cannot be negative').integer('Score must be a whole number')
+          },
+          {
+            id: 'home_scorers',
+            type: 'text',
+            label: 'Home Scorers',
+            placeholder: 'Example: Rashford (23\'), Bruno (67\')',
+            validation: Yup.string().matches(
+              /^$|^[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?(,\s*[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?)*$/,
+              'Invalid format. Example: Rashford (23\'), Bruno (67\') or leave empty'
+            )
+          },
+          {
+            id: 'away_scorers',
+            type: 'text',
+            label: 'Away Scorers',
+            placeholder: 'Example: Salah (15\'), Núñez (88\')',
+            validation: Yup.string().matches(
+              /^$|^[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?(,\s*[A-Za-z\s'\-]+(?: \(\d{1,3}'\))?)*$/,
+              'Invalid format. Example: Salah (15\'), Núñez (88\') or leave empty'
+            )
+          }
+        ]
+      },
+      // Match Stats Group
+      {
+        group: 'match_stats',
+        label: 'Match Statistics',
+        fields: [
+          {
+            id: 'home_possession',
+            type: 'number',
+            label: 'Home Possession %',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').max(100, 'Cannot exceed 100%')
+          },
+          {
+            id: 'away_possession',
+            type: 'number',
+            label: 'Away Possession %',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').max(100, 'Cannot exceed 100%')
+          },
+          {
+            id: 'home_shots',
+            type: 'number',
+            label: 'Home Shots',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_shots',
+            type: 'number',
+            label: 'Away Shots',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_shots_on_target',
+            type: 'number',
+            label: 'Home Shots on Target',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_shots_on_target',
+            type: 'number',
+            label: 'Away Shots on Target',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_xg',
+            type: 'number',
+            label: 'Home xG',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+          },
+          {
+            id: 'away_xg',
+            type: 'number',
+            label: 'Away xG',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+          },
+          {
+            id: 'home_corners',
+            type: 'number',
+            label: 'Home Corners',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_corners',
+            type: 'number',
+            label: 'Away Corners',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_fouls',
+            type: 'number',
+            label: 'Home Fouls',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_fouls',
+            type: 'number',
+            label: 'Away Fouls',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_yellow_cards',
+            type: 'number',
+            label: 'Home Yellow Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_yellow_cards',
+            type: 'number',
+            label: 'Away Yellow Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_red_cards',
+            type: 'number',
+            label: 'Home Red Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_red_cards',
+            type: 'number',
+            label: 'Away Red Cards',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'home_offsides',
+            type: 'number',
+            label: 'Home Offsides',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          },
+          {
+            id: 'away_offsides',
+            type: 'number',
+            label: 'Away Offsides',
+            required: true,
+            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+          }
+        ]
+      },
+      // Additional Information
+      {
+        id: 'context',
+        type: 'textarea',
+        label: 'Additional Context',
+        rows: 4,
+        required: true,
+        validation: Yup.string().required('Context is required'),
+        helperText: 'Add any additional match context'
+      },
+      {
+        id: 'supporting_data',
+        type: 'textarea',
+        label: 'Supporting Data',
+        rows: 4,
+        required: true,
+        validation: Yup.string().required('Supporting data is required'),
+        helperText: `Provide relevant context such as:
+• Current league positions
+• Recent form (e.g., "United: WWDLW, Liverpool: DWWLD")
+• Head-to-head record
+• Key player availability/injuries
+• Historical context of the fixture
+• Any significant milestones or records`,
+        placeholder: `Example:
+United sit 3rd in the table, having won their last three home games.
+Liverpool arrive in 5th place, unbeaten in their last 5 away matches.
+United's last 5: WWDLW
+Liverpool's last 5: DWWLD
+Previous meeting: Liverpool 2-1 United (Sep 2023)
+Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
+      },
+      {
+        id: 'image_url',
+        type: 'text',
+        label: 'Featured Image URL',
+        required: false,
+        validation: Yup.string().url('Invalid image URL').nullable(),
+        helperText: 'Enter the URL of the featured image',
+        placeholder: 'https://example.com/image.jpg'
+      }
+    ]
+  },
   'ss_match_report_template.html': {
     id: 'ss_match_report_template.html',
     name: 'Match Report',

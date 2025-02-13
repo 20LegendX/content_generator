@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { upsertUser } from '../../utils/db';
 
 // Import or define API_BASE_URL
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -13,46 +14,52 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get hash parameters
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const access_token = hashParams.get('access_token');
-        const refresh_token = hashParams.get('refresh_token');
-        const expires_in = hashParams.get('expires_in');
-        const token_type = hashParams.get('token_type');
+        // Get the session first
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw sessionError;
+        }
 
-        // Debug the Supabase configuration
-        console.log('Supabase Config Debug:', {
-          hasUrl: !!supabase.supabaseUrl,
-          urlValue: supabase.supabaseUrl,
-          hasAnonKey: !!supabase.supabaseKey,
-          keyPrefix: supabase.supabaseKey?.substring(0, 10),
-          envCheck: {
-            hasEnvUrl: !!process.env.REACT_APP_SUPABASE_URL,
-            hasEnvKey: !!process.env.REACT_APP_SUPABASE_ANON_KEY,
+        if (!session) {
+          console.error('No session found');
+          throw new Error('No session found');
+        }
+
+        // Get user data
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('User error:', userError);
+          throw userError;
+        }
+
+        // Update users table
+        if (user) {
+          try {
+            const userData = {
+              id: user.id,
+              email: user.email,
+              provider: user.app_metadata?.provider || 'email',
+              provider_id: user.identities?.[0]?.id || user.id
+            };
+
+            console.log('Attempting to upsert user with data:', userData);
+            const data = await upsertUser(userData);
+            console.log('Successfully upserted user:', data);
+          } catch (error) {
+            console.error('Error upserting user:', error);
+            // Continue with navigation even if upsert fails
           }
-        });
-
-        if (!access_token) {
-          throw new Error('No access token in URL');
         }
 
-        const { error } = await supabase.auth.setSession({
-          access_token,
-          refresh_token,
-          expires_in: parseInt(expires_in || '3600', 10),
-          token_type: token_type || 'bearer'
-        });
-
-        if (error) {
-          throw error;
-        }
-
+        // Navigate after successful auth
         const redirectPath = localStorage.getItem('redirectPath') || '/';
         localStorage.removeItem('redirectPath');
         navigate(redirectPath);
       } catch (error) {
-        // Generic error for production
-        console.error('Authentication error occurred');
+        console.error('Authentication error:', error);
         navigate('/login');
       }
     };
