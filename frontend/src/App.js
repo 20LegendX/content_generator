@@ -390,6 +390,9 @@ function AppContent() {
     }
 
     try {
+      console.log('Session:', session);  // Debug session
+      console.log('Content Data:', values);  // Debug request data
+      
       if (!session) {
         throw new Error('No active session');
       }
@@ -456,12 +459,15 @@ function AppContent() {
         body: JSON.stringify(contentData),
       });
 
+      console.log('Response status:', response.status);  // Debug response
+      const data = await response.json();
+      console.log('Response data:', data);  // Debug response data
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to generate article');
       }
 
-      const data = await response.json();
       setGeneratedContent({
         ...data,
         template_name: values.template_name
@@ -635,18 +641,29 @@ function AppContent() {
   // Update the sign out handler
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
+      // First clear any local storage items
+      localStorage.clear();  // Clear all local storage
       
-      // Clear any local storage items
-      localStorage.removeItem('currentGeneratedContent');
+      // Clear the session from Supabase
+      await supabase.auth.clearSession();
+      
+      // Then attempt to sign out
+      const { error } = await supabase.auth.signOut({
+        scope: 'local'  // Only clear local session, don't try to hit the server
+      });
+      
+      if (error) {
+        console.warn('Sign out error:', error);
+        // Continue with redirect even if there's an error
+      }
       
       // Force a navigation to clear the state
       window.location.href = '/';
+      
     } catch (error) {
       console.error('Error signing out:', error);
+      // Still redirect even if there's an error
+      window.location.href = '/';
     }
   };
 

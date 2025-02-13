@@ -198,6 +198,7 @@ def get_user_id_from_token(token):
 @require_auth
 def generate_api():
     try:
+        print("Received request data:", request.get_json())  # Log the incoming data
         user_id = request.user.id
         print(f"Generating content for user: {user_id}")  # Add debug logging
 
@@ -344,7 +345,8 @@ def generate_api():
         })
 
     except Exception as e:
-        print(f"Generate API error: {str(e)}")
+        print(f"Error in generate_api: {str(e)}")  # Log any errors
+        traceback.print_exc()  # Print the full stack trace
         return jsonify({'error': str(e)}), 500
 
 
@@ -1102,7 +1104,7 @@ def generate_article_api():
         gpt_response = run_gpt4(prompt, template_name)
 
         # Format for template
-        template_vars = format_article_content(gpt_response, format_article_content)
+        template_vars = format_article_content(gpt_response, template_name)
         template_vars['featured_image_url'] = image_url
 
         if template_vars is None:
