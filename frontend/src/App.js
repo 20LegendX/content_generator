@@ -36,8 +36,8 @@ import EditContentModal from './components/EditContentModal';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import Auth from './components/Auth/Auth';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { upsertUser } from './utils/db';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { upsertUser, saveArticle } from './utils/db';
 import LandingPage from './components/pages/LandingPage';
 import AuthCallback from './components/Auth/AuthCallback';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -54,6 +54,9 @@ import { TEMPLATE_CONFIGS } from './templates/config';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RouteGuard from './components/Auth/RouteGuard';
 import { themes } from './config/themes';  // Import the themes we defined earlier
+import ArticleHistory from './components/ArticleHistory';
+import HistoryIcon from '@mui/icons-material/History';
+import SaveIcon from '@mui/icons-material/Save';
 
 // Fix: Update to use the same protocol as the current page
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -127,7 +130,8 @@ const getInitialValues = (templateName) => {
 
 function AppContent() {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const location = useLocation();
+  const { session, loading: authLoading } = useAuth();
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -135,7 +139,6 @@ function AppContent() {
   const [darkMode, setDarkMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   
   // Modify to only store generated content, not form values
@@ -146,6 +149,8 @@ function AppContent() {
   const [hasGeneratedContent, setHasGeneratedContent] = useState(false);
   
   const [isInitializing, setIsInitializing] = useState(true);
+  
+  const [error, setError] = useState(null);
   
   const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
   const { 
@@ -176,36 +181,14 @@ function AppContent() {
     }
   });
 
-  // Add debug logging for session changes
-  useEffect(() => {
-    console.log('Session changed:', session);
-    
-    const checkSession = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log('Current Supabase session:', currentSession);
-      
-      if (!session && currentSession) {
-        console.log('Session mismatch - refreshing auth state');
-        // Force a refresh of the auth state
-        const { data: { user } } = await supabase.auth.refreshSession();
-        if (user) {
-          console.log('Session refreshed successfully');
-        }
-      }
-    };
-
-    checkSession();
-  }, [session]);
-
   // Update the initialization effect
   useEffect(() => {
-    const initializeAuth = async () => {
+    const initializeApp = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log('Init check - current session:', currentSession);
-        
-        if (currentSession) {
-          console.log('Found valid session during init');
+        // Don't initialize until auth is ready
+        if (authLoading) return;
+
+        if (session) {
           const savedContent = localStorage.getItem('currentGeneratedContent');
           if (savedContent) {
             setGeneratedContent(JSON.parse(savedContent));
@@ -213,16 +196,14 @@ function AppContent() {
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
         setAuthError(error.message);
       } finally {
         setIsInitializing(false);
-        setAuthLoading(false);
       }
     };
 
-    initializeAuth();
-  }, []);
+    initializeApp();
+  }, [session, authLoading]);
 
   // Save content to localStorage whenever it changes
   useEffect(() => {
@@ -361,11 +342,7 @@ function AppContent() {
 
   const handleContentEdit = async (updatedContent) => {
     try {
-      console.log("Debug - Making template render request with:", {
-        template_name: formik.values.template_name,
-        content: updatedContent
-      });
-
+      console.log('Updated content:', updatedContent); // Debug
       const response = await fetch(`${API_BASE_URL}/api/render-template`, {
         method: 'POST',
         headers: {
@@ -373,9 +350,10 @@ function AppContent() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
+          id: updatedContent.id, // Pass the ID
           template_name: formik.values.template_name,
           content: {
-            ...updatedContent,
+            ...updatedContent.raw_content,
             theme: formik.values.theme
           },
           theme: formik.values.theme
@@ -383,17 +361,15 @@ function AppContent() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Debug - API Error:", errorData);
-        throw new Error(errorData.error || 'Failed to update preview');
+        throw new Error('Failed to update preview');
       }
 
       const data = await response.json();
-      console.log("Debug - Received preview response:", data);
       
       setGeneratedContent({
+        id: updatedContent.id, // Preserve the ID
         ...generatedContent,
-        raw_content: updatedContent,
+        raw_content: updatedContent.raw_content,
         preview_html: data.preview_html
       });
       setEditModalOpen(false);
@@ -414,13 +390,9 @@ function AppContent() {
     }
 
     try {
-      console.log("Current session:", session); // Debug log
-      
       if (!session) {
         throw new Error('No active session');
       }
-
-      console.log("Making API request with token:", session.access_token.substring(0, 10) + "..."); // Debug log first 10 chars
 
       // Base content object
       const contentData = {
@@ -486,12 +458,14 @@ function AppContent() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("API Error:", errorData); // Debug log
         throw new Error(errorData.error || 'Failed to generate article');
       }
 
       const data = await response.json();
-      setGeneratedContent(data);
+      setGeneratedContent({
+        ...data,
+        template_name: values.template_name
+      });
       setHasGeneratedContent(true);
       
       // Decrement the article count for both free and pro users
@@ -499,9 +473,33 @@ function AppContent() {
       
       // Refresh subscription to update article count
       await refreshSubscription();
+
+      // Save the article to history with limit check
+      const articles = await supabase
+        .from('articles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
+
+      if (articles.data && articles.data.length >= 5) {
+        // Delete the oldest article(s) to maintain the 5 article limit
+        const oldestArticle = articles.data[articles.data.length - 1];
+        await supabase
+          .from('articles')
+          .delete()
+          .eq('id', oldestArticle.id);
+      }
+
+      // Now save the new article
+      await saveArticle({
+        user_id: session.user.id,
+        title: data.raw_content.headline || 'Untitled',
+        raw_content: data.raw_content,
+        template_name: values.template_name,
+        preview_html: data.preview_html
+      });
     } catch (error) {
       setErrorMessage(error.message);
-      console.error('Generate content error:', error);
     } finally {
       setLoading(false);
     }
@@ -512,8 +510,35 @@ function AppContent() {
     await generateContent(formik.values);
   };
 
-  // Show loading state during initialization
-  if (isInitializing) {
+  const handleSaveArticle = async () => {
+    if (!session?.user?.id || !generatedContent) return;
+
+    try {
+      // Create the article data object without the ID for new articles
+      const articleData = {
+        user_id: session.user.id,
+        title: generatedContent.raw_content.headline || 'Untitled Article',
+        raw_content: generatedContent.raw_content,
+        template_name: generatedContent.template_name || formik.values.template_name || 'article_template.html',
+        preview_html: generatedContent.preview_html
+      };
+
+      // If we have an ID (editing existing article), include it
+      if (generatedContent.id) {
+        articleData.id = generatedContent.id;
+      }
+
+      console.log('Saving article data:', articleData); // Debug log
+      await saveArticle(articleData);
+      alert('Article saved successfully!');
+    } catch (error) {
+      console.error('Failed to save article:', error);
+      alert('Failed to save article. Please try again.');
+    }
+  };
+
+  // Show loading state during initialization or auth loading
+  if (isInitializing || authLoading) {
     return (
       <ThemeProvider theme={theme}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -525,6 +550,53 @@ function AppContent() {
 
   // Pass the default template to ArticleForm
   const renderArticleForm = () => {
+    const handleSubmit = async (values) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify(values)
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to generate content');
+        }
+
+        setGeneratedContent(data);
+        setHasGeneratedContent(true);
+
+        // Save the article after successful generation
+        if (session?.user?.id) {
+          try {
+            await saveArticle({
+              user_id: session.user.id,
+              title: values.topic || 'Untitled Article',
+              raw_content: data.raw_content,
+              template_name: values.template_name,
+              preview_html: data.preview_html
+            });
+            console.log('Article saved successfully');
+          } catch (saveError) {
+            console.error('Failed to save article:', saveError);
+          }
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     return (
       <>
         {previousContent && (
@@ -563,14 +635,11 @@ function AppContent() {
   // Update the sign out handler
   const handleSignOut = async () => {
     try {
-      console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Sign out error:', error);
         throw error;
       }
       
-      console.log('Sign out successful');
       // Clear any local storage items
       localStorage.removeItem('currentGeneratedContent');
       
@@ -620,11 +689,20 @@ function AppContent() {
                     Generate Content
                   </button>
 
+                  <button
+                    onClick={() => navigate('/history')}
+                    className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-gray-700 
+                             dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg 
+                             transition-colors duration-200"
+                  >
+                    <HistoryIcon className="w-4 h-4 mr-2" />
+                    History
+                  </button>
+
                   <div className="hidden sm:block">
                     <SubscriptionStatus />
                   </div>
 
-                  {/* Profile Dropdown - You might want to add this later */}
                   <Button
                     onClick={handleSignOut}
                     className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 
@@ -728,6 +806,14 @@ function AppContent() {
                                 <Button
                                   variant="contained"
                                   color="primary"
+                                  startIcon={<SaveIcon />}
+                                  onClick={handleSaveArticle}
+                                >
+                                  Save Article
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  color="primary"
                                   startIcon={<DownloadIcon />}
                                   onClick={downloadArticle}
                                 >
@@ -761,6 +847,84 @@ function AppContent() {
                 />
                 <Route path="/subscription/success" element={<SubscriptionSuccess />} />
                 <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
+                <Route 
+                  path="/history" 
+                  element={
+                    <RouteGuard>
+                      <ArticleHistory 
+                        onPreview={(article) => {
+                          console.log('Article being previewed:', article); // Debug
+                          setGeneratedContent({
+                            id: article.id, // Ensure ID is set here
+                            preview_html: article.preview_html,
+                            raw_content: article.content,
+                            template_name: article.template_name
+                          });
+                          navigate('/preview');
+                        }}
+                        onDownload={(article) => {
+                          setGeneratedContent({
+                            preview_html: article.preview_html,
+                            raw_content: article.content
+                          });
+                          downloadArticle();
+                        }}
+                      />
+                    </RouteGuard>
+                  } 
+                />
+                <Route 
+                  path="/preview" 
+                  element={
+                    <RouteGuard>
+                      <Box sx={{ mb: 3 }}>
+                        <Button
+                          startIcon={<ArrowBackIcon />}
+                          onClick={() => navigate('/history')}
+                          sx={{ mb: 2 }}
+                        >
+                          Back to History
+                        </Button>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                          <Typography variant="h5">Preview</Typography>
+                          <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              startIcon={<EditIcon />}
+                              onClick={() => setEditModalOpen(true)}
+                            >
+                              Edit Content
+                            </Button>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              startIcon={<SaveIcon />}
+                              onClick={handleSaveArticle}
+                            >
+                              Save Article
+                            </Button>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              startIcon={<DownloadIcon />}
+                              onClick={downloadArticle}
+                            >
+                              Download Article
+                            </Button>
+                          </Box>
+                        </Box>
+                        <div 
+                          dangerouslySetInnerHTML={{ __html: generatedContent?.preview_html }}
+                          style={{ 
+                            width: '100%',
+                            maxWidth: '100%',
+                          }}
+                        />
+                      </Box>
+                    </RouteGuard>
+                  }
+                />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
@@ -775,33 +939,13 @@ function AppContent() {
         onClose={() => setEditModalOpen(false)}
         content={generatedContent}
         onSave={handleContentEdit}
+        isHistoryEdit={location.pathname === '/history'}
       />
     </div>
   );
 }
 
 function App() {
-  useEffect(() => {
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      const requiredEnvVars = {
-        REACT_APP_SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
-        REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY,
-        REACT_APP_API_URL: process.env.REACT_APP_API_URL,
-      };
-
-      console.log('Environment Validation:', {
-        missingVars: Object.entries(requiredEnvVars)
-          .filter(([_, value]) => !value)
-          .map(([key]) => key),
-        origin: window.location.origin,
-        hostname: window.location.hostname,
-        protocol: window.location.protocol,
-        buildEnv: process.env.NODE_ENV
-      });
-    }
-  }, []);
-
   return (
     <Router>
       <AuthProvider>
