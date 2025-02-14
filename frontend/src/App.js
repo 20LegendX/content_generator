@@ -173,7 +173,8 @@ function AppContent() {
     validationSchema: getValidationSchema(templateName),
     enableReinitialize: true,
     onSubmit: async (values) => {
-      if (hasGeneratedContent) {
+      // Remove the blocking behavior, just show confirmation dialog
+      if (hasGeneratedContent || previousContent) {
         setShowRegenerateConfirm(true);
         return;
       }
@@ -610,16 +611,30 @@ function AppContent() {
             <Alert 
               severity="info"
               action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={handleRestoreContent}
-                >
-                  View Generated Content
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={handleRestoreContent}
+                  >
+                    View Previous
+                  </Button>
+                  <Button
+                    color="primary"
+                    variant="contained"
+                    size="small"
+                    onClick={() => {
+                      setPreviousContent(null);  // Clear previous content
+                      setHasGeneratedContent(false);  // Reset generation state
+                      formik.handleSubmit();  // Submit the form
+                    }}
+                  >
+                    Generate New
+                  </Button>
+                </Box>
               }
             >
-              You have a previously generated article. Would you like to view it?
+              You have a previously generated article.
             </Alert>
           </Box>
         )}
@@ -958,6 +973,31 @@ function AppContent() {
         onSave={handleContentEdit}
         isHistoryEdit={location.pathname === '/history'}
       />
+      <Dialog
+        open={showRegenerateConfirm}
+        onClose={() => setShowRegenerateConfirm(false)}
+      >
+        <DialogTitle>Generate New Article?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Generating a new article will replace your current content. Would you like to proceed?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowRegenerateConfirm(false)}>Cancel</Button>
+          <Button 
+            onClick={async () => {
+              setShowRegenerateConfirm(false);
+              setPreviousContent(null);
+              setHasGeneratedContent(false);
+              await generateContent(formik.values);
+            }} 
+            autoFocus
+          >
+            Generate New
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
