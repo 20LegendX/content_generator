@@ -103,6 +103,97 @@ export const TEMPLATE_CONFIGS = {
       },
     ]
   },
+  'ss_article_template.html': {
+    id: 'ss_article_template.html',
+    name: 'SS Article',
+    icon: <ArticleIcon />,
+    description: 'Tailored article layout for SS content. Perfect for news, blogs, and editorial content.',
+    category: 'General',
+    tags: ['basic', 'article', 'blog', 'ss'],
+    access: {
+      type: 'restricted',
+      conditions: {
+        userId: [ADMIN_USER_ID],
+        planType: ['pro']
+      }
+    },
+    initialValues: {
+      article_type: 'general',
+      publisher_name: '',
+      topic: '',
+      keywords: '',
+      context: '',
+      supporting_data: '',
+      image_url: '',
+    },
+    fields: [
+      {
+        id: 'article_type',
+        type: 'select',
+        label: 'Article Type',
+        required: true,
+        options: [
+          { value: 'general', label: 'General' },
+          { value: 'tech', label: 'Technology' },
+          { value: 'travel', label: 'Travel' },
+          { value: 'sports', label: 'Sports' },
+          { value: 'business', label: 'Business' }
+        ],
+        validation: Yup.string().required('Article type is required')
+      },
+      {
+        id: 'publisher_name',
+        type: 'text',
+        label: 'Publisher Name',
+        required: true,
+        validation: Yup.string().required('Publisher name is required'),
+        helperText: 'Name of the publishing organization - will be used in meta tags'
+      },
+      {
+        id: 'topic',
+        type: 'text',
+        label: 'Topic',
+        required: true,
+        validation: Yup.string().required('Topic is required'),
+        helperText: 'The main subject of your article - this will guide the AI in focusing the content and maintaining relevance throughout'
+      },
+      {
+        id: 'keywords',
+        type: 'text',
+        label: 'Keywords',
+        required: true,
+        validation: Yup.string().max(150, 'Keywords must be 150 characters or less').required('Keywords are required'),
+        helperText: 'Comma-separated terms that the AI will naturally incorporate into the article to improve relevance and SEO - also used in meta tags'
+      },
+      {
+        id: 'context',
+        type: 'textarea',
+        label: 'Additional Context',
+        rows: 4,
+        required: true,
+        validation: Yup.string().required('Context is required'),
+        helperText: 'Background information that helps the AI understand the topic better. Include relevant history, current situation, and specific angles you want covered. The more context you provide, the less generic your article will be'
+      },
+      {
+        id: 'supporting_data',
+        type: 'textarea',
+        label: 'Supporting Data',
+        rows: 4,
+        required: true,
+        validation: Yup.string().required('Supporting data is required'),
+        helperText: `Include specific facts, figures, and quotes that should appear in the article. The AI will:
+• Weave these naturally into the narrative
+• Use them to support key points
+• Maintain factual accuracy
+• Create a more authoritative article`,
+        placeholder: `Example:
+• Market size: $5.2B in 2023
+• Growth rate: 12.3% YoY
+• Key player quote: "Innovation drives our industry forward"
+• Recent study: 67% of users prefer...`
+      }
+    ]
+  },
   'match_report_template.html': {
     id: 'match_report_template.html',
     name: 'Basic Match Report',

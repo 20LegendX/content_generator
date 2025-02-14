@@ -248,6 +248,7 @@ def generate_api():
             'ss_match_report_template.html',
             'download_template.html',
             'article_template.html',
+            'ss_article_template.html',
             'ss_player_scout_report_template.html'
         ]:
             template_name = 'article_template.html'
@@ -465,7 +466,7 @@ def create_prompt(user_input):
     """
 
     # **Template-Specific Prompts**
-    if template_name == 'article_template.html':
+    if template_name in ['article_template.html', 'ss_article_template.html']:
         prompt = f"""Write a structured article about {user_input['topic']}.
 
         {universal_prompt}
@@ -571,7 +572,7 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=16000, temperatur
         - **Ensure responses are formatted as structured JSON**.
         - **Write in a natural, engaging tone**—avoid robotic phrasing.
         - **Vary sentence structure**—mix short, punchy lines with longer, flowing sentences.
-        - **Use contractions** (e.g., "he’s" instead of "he is") for a more conversational feel.
+        - **Use contractions** (e.g., "he's" instead of "he is") for a more conversational feel.
         - **Avoid overly formal or passive phrases**—write like a human, not a report.
         - **Use real-world examples, context, and subtle emotion to enhance storytelling.**
         - **Ensure smooth transitions between ideas**—avoid abrupt sectioning.
@@ -992,14 +993,12 @@ def format_article_content(gpt_response, template_type):
             })
 
 
-        elif template_type == 'article_template.html':
-
+        elif template_type in ['article_template.html', 'ss_article_template.html']:
             html_content = []
             main_headline = response_data['template_data'].get('headline', '')
-
+            
             for section in response_data['article_content']:
-                # If section heading is the same as main_headline, skip it.
-                # Or skip if you just don't want any repeated top-level headings.
+                # If section heading is the same as main_headline, skip it
                 if section.get('heading') and section["heading"] == main_headline:
                     continue
 
@@ -1010,7 +1009,7 @@ def format_article_content(gpt_response, template_type):
                     clean_paragraph = paragraph.replace('<p>', '').replace('</p>', '').strip()
                     html_content.append(f'<p>{clean_paragraph}</p>')
 
-            # Create template_vars exactly like in download_article_api (no match stats)
+            # Rest of the template_vars update remains the same
             template_vars.update({
                 "headline": response_data['template_data'].get('headline', ''),
                 "article_title": response_data['template_data'].get('headline', ''),
@@ -1130,7 +1129,7 @@ def download_article():
         }
 
         # Add template-specific variables
-        if template_name == 'article_template.html':
+        if template_name in ['article_template.html', 'ss_article_template.html']:
             template_vars.update({
                 'article_title': content.get('headline', ''),
                 'short_title': content.get('short_title', ''),
