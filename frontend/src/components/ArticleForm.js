@@ -21,10 +21,19 @@ const ArticleForm = ({
   const { subscription } = useSubscription();
   const navigate = useNavigate();
   
-  // Get template config only once based on the selected template
+  // Guard: if subscription is not available, show a loading indicator.
+  if (!subscription) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Get template config based on the selected template.
   const templateConfig = TEMPLATE_CONFIGS[formik.values.template_name || 'article_template.html'];
 
-  // Single render of fields
+  // Render dynamic fields (handles groups and individual fields).
   const renderFields = (fields) => {
     return fields.map(field => {
       if (field.group) {
@@ -38,10 +47,10 @@ const ArticleForm = ({
         );
       }
       return (
-        <DynamicFormField 
-          key={field.id} 
-          field={field} 
-          formik={formik} 
+        <DynamicFormField
+          key={field.id}
+          field={field}
+          formik={formik}
         />
       );
     });
@@ -50,15 +59,15 @@ const ArticleForm = ({
   return (
     <div className="max-w-3xl mx-auto">
       <Typography variant="h4" sx={{ mb: 4 }}>Create New Article</Typography>
-      
-      {subscription?.plan_type !== 'pro' && (
+
+      {subscription.plan_type !== 'pro' && (
         <Box sx={{ mb: 3 }}>
-          <Alert 
+          <Alert
             severity={subscription.articles_remaining <= 1 ? "warning" : "info"}
             action={
-              <Button 
-                color="inherit" 
-                size="small" 
+              <Button
+                color="inherit"
+                size="small"
                 onClick={() => navigate('/subscription')}
               >
                 Upgrade to Pro
@@ -73,20 +82,20 @@ const ArticleForm = ({
           </Alert>
         </Box>
       )}
-      
+
       <form onSubmit={formik.handleSubmit} className="space-y-6">
         <ThemeSelector
           selectedTheme={formik.values.theme}
           onThemeSelect={(theme) => formik.setFieldValue('theme', theme)}
         />
-        
+
         <TemplateSelector
           selectedTemplate={formik.values.template_name || 'article_template.html'}
           onSelect={(templateId) => formik.setFieldValue('template_name', templateId)}
         />
-        
-        {/* Article Type field - always present */}
-        <DynamicFormField 
+
+        {/* Always present: Article Type field */}
+        <DynamicFormField
           key="article_type"
           field={{
             id: 'article_type',
@@ -103,8 +112,8 @@ const ArticleForm = ({
           }}
           formik={formik}
         />
-        
-        {/* Template-specific fields */}
+
+        {/* Render template-specific fields */}
         {templateConfig && (
           <div className="space-y-4">
             {renderFields(templateConfig.fields.filter(field => field.id !== 'article_type'))}
@@ -149,6 +158,6 @@ const ArticleForm = ({
       </form>
     </div>
   );
-}
+};
 
 export default ArticleForm;

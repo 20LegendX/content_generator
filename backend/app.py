@@ -375,6 +375,9 @@ def validate_image_url(url):
         return url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
 
 
+import json
+
+
 def create_prompt(user_input):
     """Generate a refined dynamic prompt for the article while preventing invented content."""
     template_name = user_input.get('template_name', 'article_template.html')
@@ -383,7 +386,7 @@ def create_prompt(user_input):
     # Define natural writing style personas
     style_guides = {
         'tech': """Write this article like an experienced tech journalist. 
-                   Make complex concepts feel effortless to understand, 
+                   Make complex concepts effortless to understand, 
                    like explaining to a smart but non-expert friend. 
                    Keep the tone confident yet engaging, avoiding dry or robotic phrasing.""",
 
@@ -392,18 +395,17 @@ def create_prompt(user_input):
                      Blend practical insights with immersive storytelling, 
                      making the reader feel like they're right there with you.""",
 
-        'sports': """Write this article like a passionate football journalist 
-                     who **lives and breathes** the game. 
-                     Capture the excitement, the drama, the tactical nuances. 
-                     Avoid dry reporting—bring the action to life with energy and personality.""",
+        'sports': """Write this article like a professional football journalist 
+                     with deep knowledge of tactics, player development, and match analysis.  
+                     Avoid over-the-top enthusiasm—focus on expert insight and factual precision.""",
 
         'business': """Write this article like a respected business analyst, 
-                       breaking down complex ideas into clear, insightful takeaways. 
+                       breaking down complex ideas into clear, actionable insights.  
                        Keep the tone authoritative yet engaging, avoiding corporate jargon.""",
 
         'general': """Write this article like an experienced feature writer, 
                       crafting engaging, informative content with a natural, 
-                      flowing rhythm that keeps the reader hooked."""
+                      flowing rhythm that keeps the reader engaged."""
     }
 
     style_guide = style_guides.get(article_type, style_guides['general'])
@@ -411,66 +413,78 @@ def create_prompt(user_input):
     # **Strictly prevent fabricated events**
     factual_constraint = """
     IMPORTANT: You must NOT invent or fabricate real-world events. 
-    - If an event is real, stick to the known facts.  
-    - If details are missing, **do NOT assume or make up additional information**.  
-    - Always write with journalistic integrity—accuracy over speculation.
+    - Stick to verifiable facts.  
+    - If details are missing, **do NOT assume or create additional information**.  
+    - Always prioritize journalistic integrity—accuracy over speculation.
     """
 
+    # **Natural tone guidelines**
     natural_tone_guidelines = """
-    To make this article sound **natural, engaging, and human-like**, follow these principles:
+    To ensure a **clear, factual, and professional tone**, follow these principles:
 
-    ✅ **Keep it grounded.**  
-       - No sweeping statements like **"pursuit of greatness"**, **"delicate balance"**, or **"profound implications for the industry."**  
-       - Instead, **focus on specific details and real-world context.**  
+    ✅ **Stick to the facts.**  
+       - Avoid words like **"unprecedented,"** **"transformational,"** **"game-changing,"** or **"remarkable success."**  
+       - Instead, describe the **actual impact in neutral terms.**  
 
-    ✅ **Skip the filler drama.**  
-       - ❌ "The situation remains uncertain, and only time will tell what happens next."  
-       - ✅ Instead, explain **why it matters** and **what's actually happening.**  
+    ✅ **Avoid dramatic or sweeping statements.**  
+       - ❌ "This marks a turning point in history."  
+       - ✅ "This change may influence how teams prepare for next season."  
 
-    ✅ **Talk like an expert, not a corporate press release.**  
-       - ❌ "This breakthrough presents an exciting opportunity for businesses worldwide."  
-       - ✅ Instead, **explain the impact in clear, real-world terms.**  
+    ✅ **Use precise descriptions.**  
+       - ❌ "This mind-blowing innovation is set to revolutionize everything."  
+       - ✅ "This update introduces new capabilities for users, improving efficiency."  
 
-    ✅ **Use concrete insights instead of broad emotional phrases.**  
-       - ❌ "This marks a turning point in the industry."  
-       - ✅ "This shift means smaller businesses will need to rethink their supply chains to stay competitive."  
+    ✅ **Avoid promotional language.**  
+       - ❌ "This incredible player is the best in the world right now!"  
+       - ✅ "This player has delivered consistently high performances this season."  
 
-    ✅ **Keep it punchy and specific.**  
-       - ❌ "The rise of AI in healthcare is fascinating."  
-       - ✅ "AI is already detecting diseases earlier than doctors in some cases—like Google's retinal scan technology for diabetes-related blindness."  
-
-    ✅ **Write like a person, not a bot.**  
-       - Use **contractions** (“it's” instead of “it is”).  
-       - Vary sentence length—**mix short, punchy lines with longer ones.**  
-       - **Avoid generic transitions** like "moreover" or "in addition"—use natural ones like "That said" or "Even so."  
+    ✅ **Stay focused on the provided topic and data.**  
+       - **Do NOT introduce unrelated details, assumptions, or personal opinions.**  
 
     **REMEMBER:**  
-    - This is **journalism and analysis**, not an AI-generated motivational essay.  
-    - Avoid words like **"destiny,"** **"revolutionizing,"** **"game-changer,"** or **"unparalleled innovation."**  
+    - **Journalism is about clarity and accuracy, not hype.**  
+    - Keep descriptions factual and let the **data tell the story.**
+    - Write in a natural, engaging way—let ideas flow rather than rigidly structuring sections.
+
     """
 
+    # **Universal Writing Guidelines** applied to all templates
+    universal_prompt = f"""
+    {style_guide}
+
+    {factual_constraint}
+
+    {natural_tone_guidelines}
+
+    ### Key Writing Guidelines:
+    - **Write a detailed article that fully explores the subject.**
+    - **Stay strictly focused on the topic '{user_input['topic']}'.**
+    - **Avoid dramatic language, sweeping statements, or exaggerated claims.**
+    - **Ensure a well-structured article with at least 3-4 paragraphs per major section.**
+    - **Use real-world examples and data to support arguments.**
+    """
+
+    # **Template-Specific Prompts**
     if template_name == 'article_template.html':
         prompt = f"""Write a structured article about {user_input['topic']}.
 
-        {style_guide}
-        
-        {factual_constraint}
-        
-        {natural_tone_guidelines}
+        {universal_prompt}
 
         ### Required Structure:
-        1. **Title**: Create an engaging, attention-grabbing title
-        2. **Headline**: Write a compelling one-sentence summary
+        1. **Title**: Create an engaging, attention-grabbing title.
+        2. **Headline**: Write a compelling one-sentence summary.
         3. **Meta Information**:
-           - Meta Description: A natural, SEO-friendly description (max 150 characters)
-           - Keywords: Naturally incorporate these terms: {user_input.get('keywords', '')}
-           - Article Category: {article_type.capitalize()}
-           - Featured Image Alt Text: A descriptive text for the featured image
+           - Meta Description: A natural, SEO-friendly description (max 150 characters).
+           - Keywords: Naturally incorporate these terms: {user_input.get('keywords', '')}.
+           - Article Category: {article_type.capitalize()}.
+           - Featured Image Alt Text: A descriptive text for the featured image.
 
         4. **Article Content:**  
-           Write a well-structured article that flows naturally between sections.  
-           Avoid AI-like rigid section breaks—**blend ideas smoothly**.
-        
+           - **Each major section must have at least 3-4 paragraphs.**
+           - **Expand on each point using supporting data and context.**
+           - **Use real-world examples where relevant.**
+           - **Ensure the article fully explores the subject.**
+
         Use this context and data to inform your writing:
         Context:
         {user_input.get('context', 'No context provided.')}
@@ -478,23 +492,16 @@ def create_prompt(user_input):
         Supporting Data:
         {user_input.get('supporting_data', 'No supporting data provided.')}
 
-        ### **Writing Guidelines:**
-        - **Write in a natural, engaging tone**—avoid robotic phrasing.
-        - **Use contractions** ("it's" instead of "it is") and **mix sentence lengths**.
-        - **Avoid formulaic transitions**—use conversational flow.
-        - **Integrate stats naturally** rather than dumping them in a list.
-        - **Format content using HTML `<p>` paragraph tags.**
-        - **Do NOT fabricate real-world events.**
+        ### **Final Reminder:**
+        - **Stay strictly focused on '{user_input['topic']}'.**
+        - **Do NOT assume or fabricate missing details.**
         """
 
-    elif template_name in ['ss_match_report_template.html','match_report_template.html']:
+    elif template_name in ['ss_match_report_template.html', 'match_report_template.html']:
         prompt = f"""
         Write a professional match report for {user_input['home_team']} vs {user_input['away_team']} using ONLY the provided information.
-        {style_guide}
-        
-        {factual_constraint}
-        
-        {natural_tone_guidelines}
+        {universal_prompt}
+
         ### Data Provided
         **Score**: {user_input['home_team']} {user_input['home_score']} - {user_input['away_score']} {user_input['away_team']}
         **Competition**: {user_input['competition']}
@@ -505,53 +512,26 @@ def create_prompt(user_input):
         - {user_input['home_team']}: {user_input.get('home_scorers', 'None')}
         - {user_input['away_team']}: {user_input.get('away_scorers', 'None')}
 
-        **Key Events (if provided)**:
-        {user_input.get('key_events', 'No explicit key events mentioned.')}
-
-        **Supporting Data**:
-        {user_input.get('supporting_data', 'None')}
-
-        **Match Context**:  
-        {user_input.get('context', 'No additional context provided.')}
-
-        **Match Statistics**:  
-        - Expected Goals (xG): {user_input['home_team']} {user_input.get('home_xg', 0)} vs {user_input.get('away_xg', 0)} {user_input['away_team']}
+        **Match Statistics**:
+        - xG: {user_input['home_team']} {user_input.get('home_xg', 0)} vs {user_input.get('away_xg', 0)} {user_input['away_team']}
         - Possession: {user_input.get('home_possession')}% vs {user_input.get('away_possession')}%
         - Shots: {user_input.get('home_shots')} ({user_input.get('home_shots_on_target')} on target) vs {user_input.get('away_shots')} ({user_input.get('away_shots_on_target')} on target)
-        - Cards: {user_input['home_team']} {user_input.get('home_yellow_cards', 0)}Y/{user_input.get('home_red_cards', 0)}R vs {user_input['away_team']} {user_input.get('away_yellow_cards', 0)}Y/{user_input.get('away_red_cards', 0)}R
 
-        ### Writing Instructions
-        1. **Structure**:
-           - Always include:
-             - **Match Overview** (introduction/context + final result)
-             - **Match Analysis** (using statistics to describe the performance)
-           - Include **Key Moments** ONLY IF there are specific notable events (e.g., goals, cards, missed penalties) mentioned in 'Key Events' or 'Supporting Data'.
+        ### Writing Instructions:
+        - **Match Overview** (introduction + final result).
+        - **Match Analysis** (statistics-driven breakdown).
+        - **Key Moments** (ONLY if explicit key events exist).
 
-        2. **Content Rules**:
-           - Use the match statistics in the "Match Analysis" section to support your observations.
-           - Reference any notable events (like a missed penalty or key goals) ONLY if they are explicitly provided.
-           - Do NOT invent or assume new events beyond the data.
-
-        3. **Style**:
-           - Write in concise, professional UK English.
-           - Avoid repetitive statements and speculative phrases.
-           - Keep the narrative strictly to the facts provided.
-           - Write in a natural, conversational tone while maintaining professionalism.
-           - Vary sentence structure and length for better readability.
-           - Use transitional phrases to connect ideas smoothly.
-           - Incorporate data and facts naturally into the narrative.
-
-        Now, write the match report based on this data and structure.
+        **Final Reminder:**
+        - **Stick to the provided data.**
+        - **Do NOT assume or fabricate missing details.**
         """
 
     elif template_name == 'ss_player_scout_report_template.html':
         prompt = f"""
         Write a professional scout report about {user_input.get('player_name', 'Unknown Player')}.
-        {style_guide}
-        
-        {factual_constraint}
-        
-        {natural_tone_guidelines}
+        {universal_prompt}
+
         ### Provided Data:
         - Position: {user_input.get('player_position', '')}
         - Age: {user_input.get('player_age', '')}
@@ -559,132 +539,142 @@ def create_prompt(user_input):
         - Favoured Foot: {user_input.get('favored_foot', '')}
         - Stats: {json.dumps(user_input.get('scout_stats', {}), indent=2)}
 
-        ### Additional Context:
-        {user_input.get('context', '')}
+        ### Writing Requirements:
+        - Expand on each attribute in full detail.
+        - Avoid brief, summary-like descriptions.
+        - Ensure stats and context are naturally woven into the narrative.
 
-        Supporting Data:
-        {user_input.get('supporting_data', '')}
-
-        ### Requirements:
-        - Write in a natural, conversational tone while maintaining professionalism.
-        - Vary sentence structure and length for better readability.
-        - Use transitional phrases to connect ideas smoothly.
-        - Incorporate data and facts naturally into the narrative.
-        - Write the scout report as a cohesive narrative rather than multiple separate sections.
-        - Combine related points into flowing, well-structured paragraphs.
-        - Avoid excessive section breaks unless there is a major topic shift.
-        - Ensure that stats and context are naturally woven into the narrative.
-        - Produce a single, engaging piece of writing that reads naturally and is enjoyable for readers.
-        - Create an engaging headline and meta description for SEO, plus a short summary.
+        **Final Reminder:**
+        - **Stay strictly focused on '{user_input['topic']}'.**
+        - **Do NOT assume or fabricate missing details.**
         """
 
     return prompt
 
+import json
 
-
-
-
-def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=12000, temperature=0.55, top_p=0.85):
+def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=16000, temperature=0.7, top_p=0.9):
     """Send prompt to GPT-4 and get structured response."""
     print("Using model:", model)  # Debug log
-    print("Sending prompt:", prompt[:500] + "...")  # Debug first 200 chars of prompt
-
-
+    print("Sending prompt:", prompt[:500] + "...")  # Debug first 500 chars of prompt
 
     try:
-        if template_name == 'match_report_template.html' or template_name == 'ss_match_report_template.html':
-            system_prompt = """You are an expert sports journalist. 
-            Return your response in valid JSON format with match report elements:
-            {
-                "template_data": {
+        # **Universal System Prompt** ensuring consistency across all templates
+        universal_system_prompt = """
+        You are a professional journalist and analyst. Your task is to generate a structured, well-written, and engaging response based on the provided input.
+
+        ### Writing Guidelines:
+        - **Keep responses detailed and informative**—each major section should contain **at least 3-4 paragraphs**.
+        - **Maintain strict focus on the provided topic**—avoid unrelated tangents.
+        - **Avoid dramatic language, exaggeration, or sweeping statements**.
+        - **Stick to real-world data**—do **not** assume or fabricate missing details.
+        - **Ensure responses are formatted as structured JSON**.
+        - **Write in a natural, engaging tone**—avoid robotic phrasing.
+        - **Vary sentence structure**—mix short, punchy lines with longer, flowing sentences.
+        - **Use contractions** (e.g., "he’s" instead of "he is") for a more conversational feel.
+        - **Avoid overly formal or passive phrases**—write like a human, not a report.
+        - **Use real-world examples, context, and subtle emotion to enhance storytelling.**
+        - **Ensure smooth transitions between ideas**—avoid abrupt sectioning.
+        - **Strictly follow the provided topic and data**—do NOT introduce unrelated details.
+        
+
+        Your response **must be well-structured and follow the format outlined below**.
+        """
+
+        # **Template-Specific Prompts**
+        if template_name in ['match_report_template.html', 'ss_match_report_template.html']:
+            system_prompt = f"""{universal_system_prompt}
+
+            You are an expert sports journalist specializing in match reports. Your job is to **write a structured, professional match report** using only the provided data.
+
+            Return your response in the following JSON format:
+            {{
+                "template_data": {{
                     "headline": string,  // Engaging match headline
                     "match_summary": string,  // Brief overview of the match
                     "featured_image_alt": string
-                },
-                "meta_data": {
+                }},
+                "meta_data": {{
                     "meta_description": string,
                     "keywords": array of strings,
                     "og_title": string,
                     "og_description": string,
                     "twitter_title": string,
                     "twitter_description": string
-                },
+                }},
                 "match_report": [
-                    {
+                    {{
                         "type": string,  
                         "heading": string,
                         "content": array of strings (paragraphs)
-                    }
+                    }}
                 ],
-                "match_stats": {
-                    "possession": object,  // e.g., {"home": 60, "away": 40}
+                "match_stats": {{
+                    "possession": object,  // e.g., {{"home": 60, "away": 40}}
                     "shots_on_target": object,
                     "corners": object,
-                    "key_events": array of objects  // e.g., [{"time": "23'", "event": "Goal", "team": "home"}]
-                }
-            }
+                    "key_events": array of objects  // e.g., [{{"time": "23'", "event": "Goal", "team": "home"}}]
+                }}
+            }}
 
-            Ensure the report:
-            - Has an engaging headline
-            - Maintains journalistic style
-            - Uses appropriate sports terminology
+            ### Report Guidelines:
+            - **Ensure that all analysis is backed by provided statistics**.
+            - **Avoid subjective opinions or speculative statements**.
+            - **Write in a natural, journalistic tone**—concise, informative, and engaging.
+            - **Use appropriate football terminology** (e.g., "high press," "deep block," "clinical finishing").
             """
+
         elif template_name == 'ss_player_scout_report_template.html':
-            system_prompt = """You are a professional sports analyst specialising in writing cohesive and detailed player scout reports.
-            Write a flowing narrative for the scout report, avoiding excessive section breaks and maintaining engaging content. 
-            Return your response in valid JSON format:
-            {
-                "template_data": {
+            system_prompt = f"""{universal_system_prompt}
+
+            You are a professional football analyst specializing in writing scout reports. Your task is to provide an **in-depth, structured scouting analysis** of a player based on the provided data.
+
+            Return your response in the following JSON format:
+            {{
+                "template_data": {{
                     "headline": string,  // Engaging report title
                     "summary": string,  // Brief summary of the report
                     "featured_image_alt": string
-                },
-                "meta_data": {
+                }},
+                "meta_data": {{
                     "meta_description": string,
                     "keywords": array of strings,
                     "og_title": string,
                     "og_description": string,
                     "twitter_title": string,
                     "twitter_description": string
-                },
+                }},
                 "scout_report": [
-                    {
+                    {{
                         "type": "section",
                         "heading": string,  // Section heading
                         "content": array of strings (single paragraph or cohesive blocks)
-                    }
+                    }}
                 ]
-            }
+            }}
 
-            Ensure the scout report:
-            - Combines related points into cohesive paragraphs for better readability.
-            - Incorporates stats naturally into the narrative.
-            - Avoids rigid sectioning unless there's a clear topic shift.
-            - Follows a professional and analytical tone throughout.
+            ### Scouting Report Guidelines:
+            - **Ensure each section contains detailed analysis** (minimum **3-4 paragraphs per section**).
+            - **Avoid over-reliance on statistics**—explain how the numbers translate into performance.
+            - **Discuss technical ability, tactical understanding, physical attributes, and mentality**.
+            - **Maintain an objective, data-driven perspective**—do not overhype or make speculative claims.
             """
 
-        else:
-            system_prompt = """You are a skilled journalist known for your **engaging, human-like writing style**.
-            Write this article with a **natural, conversational tone**—avoiding robotic, predictable phrases. 
-            Return your response in valid JSON format with enhanced SEO elements:
-            
-                **Must-Have Writing Style:**
-            - **Tell a story**, don't just list facts.
-            - **Use contractions** (e.g., "he's" instead of "he is").
-            - **Ditch robotic phrases** like "presents an opportunity" or "remains uncertain."
-            - **Mix sentence structures**—short, impactful sentences should balance longer ones.
-            - **Use strong verbs**—no weak passive phrases like "Tel is considered a top talent." 
-            - Instead, say: **"Tel is turning heads across Europe."**
-            
-            {
-                "template_data": {
+        else:  # General articles
+            system_prompt = f"""{universal_system_prompt}
+
+            You are an experienced journalist with expertise in writing structured, well-researched articles. Your task is to produce a **cohesive, insightful article** on the given topic.
+
+            Return your response in the following JSON format:
+            {{
+                "template_data": {{
                     "headline": string,  // Engaging article title
                     "short_title": string,  // One-sentence summary
                     "featured_image_alt": string,  // SEO-optimized alt text for the featured image
                     "article_category": string,
                     "slug": string  // URL-friendly version of title
-                },
-                "meta_data": {
+                }},
+                "meta_data": {{
                     "meta_description": string (150-160 characters, compelling and keyword-rich),
                     "keywords": array of strings (primary and secondary keywords),
                     "publish_date": string (YYYY-MM-DD),
@@ -695,32 +685,26 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=12000, temperatur
                     "twitter_description": string,  // Optimized for Twitter
                     "schema_type": string,  // e.g., "Article", "NewsArticle", "BlogPosting"
                     "focus_keyword": string  // Primary keyword for the article
-                    "publisher": {
-                        "name": string,  // From user input
-                        "url": string,   // From user input
-                    }
-                },
+                }},
                 "article_content": [
-                    {
+                    {{
                         "type": "section",
                         "heading": string,
                         "content": array of strings 
-                    }
+                    }}
                 ]
-            }
+            }}
 
-            Ensure content follows SEO best practices:
-            - Use semantic HTML structure
-            - Include primary keyword in first paragraph
-            - Use LSI keywords throughout
-            - Create engaging meta descriptions
-            - Optimize headings hierarchy
-            - Write SEO-optimized alt text for the featured image
-            - Keep the total number of sections **at or below 3** to ensure the article remains cohesive and doesn't get fragmented with short sections.
-            
-            Write a well-structured article that flows naturally between sections...
+            ### Article Writing Guidelines:
+            - **Each major section must have at least 3-4 paragraphs**.
+            - **Use real-world examples, data, and analysis to support claims**.
+            - **Maintain an engaging, yet neutral tone**—no hyperbole or exaggerated statements.
+            - **Ensure a smooth narrative flow between sections**—avoid robotic, list-based structures.
+            - **Write as if you're recounting a memorable story to a friend—let your language flow naturally.
+            - **Add subtle personal touches and natural expressions, but keep it factual and precise.
             """
 
+        # **Call OpenAI API with structured input**
         completion = client.chat.completions.create(
             model=model,
             messages=[
@@ -733,6 +717,7 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=12000, temperatur
             response_format={"type": "json_object"}
         )
 
+        # **Retrieve and return the response**
         response = completion.choices[0].message.content.strip()
         print("Got OpenAI response:", response[:200] + "...")  # Debug first 200 chars of response
         return response
@@ -740,6 +725,7 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=12000, temperatur
     except Exception as e:
         print(f"OpenAI error details: {str(e)}")  # Debug log
         return None
+
 
 
 def format_article_content(gpt_response, template_type):
