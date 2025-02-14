@@ -111,7 +111,11 @@ export const TEMPLATE_CONFIGS = {
     category: 'Sports',
     tags: ['football', 'match report', 'analysis'],
     access: {
-      type: 'all'  // This makes it available to all users
+      type: 'restricted',
+      conditions: {
+        userId: [ADMIN_USER_ID],
+        planType: ['pro']
+      }
     },
     initialValues: {
       article_type: 'sports',
