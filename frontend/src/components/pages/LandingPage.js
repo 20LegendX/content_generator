@@ -9,6 +9,7 @@ import ClockIcon from '@mui/icons-material/AccessTime';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { supabase } from '../../lib/supabase';
+import { motion } from 'framer-motion';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -176,53 +177,131 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50">
-      {/* Enhanced Hero Section with more keyword targeting */}
-      <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h1 className="text-6xl sm:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 text-transparent bg-clip-text mb-6 leading-tight">
-          AI Content Generator & <br />Automated Article Writer
-        </h1>
-        <h2 className="text-3xl text-gray-800 mb-4 font-bold">
-          Create SEO-Optimized Content in Minutes with AI Technology
-        </h2>
-        <p className="max-w-3xl mx-auto text-lg text-gray-600 mb-8">
-          Transform your content creation workflow with our AI writing assistant. Generate blog posts, articles, and web content that ranks on Google. Perfect for digital marketers, content creators, and businesses.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-          <Button
-            onClick={() => navigate('/generate')}
-            variant="contained"
-            color="primary"
-            size="large"
-            className="px-8 py-3 text-lg"
-          >
-            Try AI Content Generator Free
-          </Button>
-          <Button
-            onClick={() => navigate('/login')}
-            variant="outlined"
-            color="primary"
-            size="large"
-            className="px-8 py-3 text-lg"
-          >
-            See How It Works
-          </Button>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
+      {/* Enhanced Hero Section */}
+      <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-0 left-1/4 w-72 h-72 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div className="absolute top-0 right-1/4 w-72 h-72 bg-cyan-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-1/3 w-72 h-72 bg-pink-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
         </div>
-        <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto text-center">
-          <div className="p-4">
-            <p className="font-bold text-blue-600">100% Original</p>
-            <p className="text-sm text-gray-600">Plagiarism-Free Content</p>
-          </div>
-          <div className="p-4">
-            <p className="font-bold text-blue-600">SEO Ready</p>
-            <p className="text-sm text-gray-600">Optimized for Search</p>
-          </div>
-          <div className="p-4">
-            <p className="font-bold text-blue-600">5-Min Setup</p>
-            <p className="text-sm text-gray-600">Quick & Easy to Use</p>
-          </div>
+
+        <div className="relative z-10">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-6xl sm:text-7xl font-extrabold tracking-tight mb-6 leading-tight"
+          >
+            <span className="inline-block bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 text-transparent bg-clip-text">
+              AI Content Generator & <br />Automated Article Writer
+            </span>
+          </motion.h1>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <h2 className="text-3xl text-gray-800 mb-4 font-bold">
+              Create SEO-Optimized Content in Minutes
+            </h2>
+            <p className="max-w-3xl mx-auto text-lg text-gray-600 mb-8">
+              Transform your content creation workflow with our AI writing assistant. 
+              Generate blog posts, articles, and web content that ranks on Google.
+            </p>
+
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+              <Button
+                onClick={() => navigate('/generate')}
+                variant="contained"
+                size="large"
+                className="group relative px-8 py-3 text-lg"
+                sx={{
+                  background: 'linear-gradient(45deg, #1976d2, #64b5f6)',
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 6px rgba(25, 118, 210, 0.12)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0, #42a5f5)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 6px 8px rgba(25, 118, 210, 0.2)',
+                  },
+                }}
+              >
+                Try AI Content Generator Free
+                <motion.span
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                  animate={{ x: [0, 4, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                >
+                  →
+                </motion.span>
+              </Button>
+
+              <Button
+                onClick={() => navigate('/login')}
+                variant="outlined"
+                size="large"
+                className="px-8 py-3 text-lg"
+                sx={{
+                  borderRadius: '12px',
+                  borderWidth: '2px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  '&:hover': {
+                    borderWidth: '2px',
+                    background: 'rgba(25, 118, 210, 0.04)',
+                  },
+                }}
+              >
+                See How It Works
+              </Button>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+              {[
+                { title: '100% Original', subtitle: 'Plagiarism-Free Content' },
+                { title: 'SEO Ready', subtitle: 'Optimized for Search' },
+                { title: '5-Min Setup', subtitle: 'Quick & Easy to Use' }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 + (index * 0.1) }}
+                  className="p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-blue-100"
+                >
+                  <p className="font-bold text-blue-600">{item.title}</p>
+                  <p className="text-sm text-gray-600">{item.subtitle}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </header>
+
+      {/* Add to your tailwind.config.js */}
+      <style jsx>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
 
       {/* New Use Cases Section */}
       <section className="py-16 bg-white">
@@ -346,70 +425,133 @@ const LandingPage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-gray-800 mb-16">
-            Choose Your Plan
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Free Plan Card */}
-            <div className="relative bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-300 p-8 border border-gray-100">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                Free Plan
-              </h3>
-              <p className="text-4xl font-bold text-gray-800 mb-6">
-                £0
-              </p>
-              <ul className="space-y-4 mb-8 text-left text-gray-600">
-                <li className="flex items-center">
-                  <CheckIcon className="text-blue-500 mr-3" />
-                  <span>3 Articles per month</span>
-                </li>
-                <li className="flex items-center">
-                  <CheckIcon className="text-blue-500 mr-3" />
-                  <span>Basic templates</span>
-                </li>
-                <li className="flex items-center">
-                  <CheckIcon className="text-blue-500 mr-3" />
-                  <span>Standard support</span>
-                </li>
-              </ul>
-              {renderFreePlanButton()}
-            </div>
+      <section className="py-24 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-1/4 right-0 w-96 h-96 bg-blue-50 rounded-full mix-blend-multiply filter blur-xl opacity-75 animate-blob"></div>
+          <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-cyan-50 rounded-full mix-blend-multiply filter blur-xl opacity-75 animate-blob animation-delay-2000"></div>
+        </div>
 
-            {/* Pro Plan Card */}
-            <div className="relative bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-300 p-8 border-2 border-blue-500">
-              {/* "Popular" Badge */}
-              <div className="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 rounded-bl-lg text-sm">
-                Popular
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                Pro Plan
-              </h3>
-              <p className="text-4xl font-bold text-gray-800 mb-6">
-                £19<span className="text-lg text-gray-500 font-medium">/mo</span>
-              </p>
-              <ul className="space-y-4 mb-8 text-left text-gray-600">
-                <li className="flex items-center">
-                  <CheckIcon className="text-blue-500 mr-3" />
-                  <span>50 Articles per month</span>
-                </li>
-                <li className="flex items-center">
-                  <CheckIcon className="text-blue-500 mr-3" />
-                  <span>All Premium Templates</span>
-                </li>
-                <li className="flex items-center">
-                  <CheckIcon className="text-blue-500 mr-3" />
-                  <span>Priority Support</span>
-                </li>
-                <li className="flex items-center">
-                  <CheckIcon className="text-blue-500 mr-3" />
-                  <span>Advanced Features</span>
-                </li>
-              </ul>
-              {renderProPlanButton()}
+        <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-16">
+              Choose Your Plan
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-8 items-stretch">
+              {/* Free Plan Card */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative group"
+              >
+                <div className="relative bg-white rounded-2xl p-8 shadow-lg transition-all duration-300 hover:shadow-xl border border-gray-100 h-full flex flex-col">
+                  <div className="flex-grow">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                      Free Plan
+                    </h3>
+                    <div className="mb-6">
+                      <span className="text-5xl font-bold text-gray-900">£0</span>
+                    </div>
+                    <ul className="space-y-4 mb-8 text-left">
+                      {['3 Articles per month', 'Basic templates', 'Standard support'].map((feature, index) => (
+                        <li key={index} className="flex items-center text-gray-600">
+                          <CheckIcon className="text-blue-500 mr-3 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/generate')}
+                    variant="contained"
+                    fullWidth
+                    size="large"
+                    sx={{
+                      py: 2,
+                      borderRadius: '12px',
+                      textTransform: 'none',
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      background: 'linear-gradient(45deg, #1976d2, #64b5f6)',
+                      boxShadow: '0 4px 6px rgba(25, 118, 210, 0.12)',
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #1565c0, #42a5f5)',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 6px 8px rgba(25, 118, 210, 0.2)',
+                      },
+                    }}
+                  >
+                    Get Started
+                  </Button>
+                </div>
+              </motion.div>
+
+              {/* Pro Plan Card */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="relative group"
+              >
+                <div className="absolute -inset-[2px] bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl opacity-75 blur-sm group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative bg-white rounded-2xl p-8 h-full flex flex-col">
+                  <div className="flex-grow">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                      Pro Plan
+                    </h3>
+                    <div className="mb-6">
+                      <span className="text-5xl font-bold text-gray-900">£19</span>
+                      <span className="text-xl text-gray-500 font-medium">/mo</span>
+                    </div>
+                    <ul className="space-y-4 mb-8 text-left">
+                      {[
+                        '50 Articles per month',
+                        'All Premium Templates',
+                        'Priority Support',
+                        'Advanced Features'
+                      ].map((feature, index) => (
+                        <li key={index} className="flex items-center text-gray-600">
+                          <CheckIcon className="text-blue-500 mr-3 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <Button
+                    onClick={handleUpgrade}
+                    variant="contained"
+                    fullWidth
+                    size="large"
+                    sx={{
+                      py: 2,
+                      borderRadius: '12px',
+                      textTransform: 'none',
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      background: 'linear-gradient(45deg, #1976d2, #64b5f6)',
+                      boxShadow: '0 4px 6px rgba(25, 118, 210, 0.12)',
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #1565c0, #42a5f5)',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 6px 8px rgba(25, 118, 210, 0.2)',
+                      },
+                    }}
+                  >
+                    Get Pro Access
+                  </Button>
+                </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </div>

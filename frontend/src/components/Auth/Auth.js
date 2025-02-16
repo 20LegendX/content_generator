@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, Container, Typography, Paper } from '@mui/material';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { Google as GoogleIcon } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import ArticleIcon from '@mui/icons-material/Article';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -30,13 +33,12 @@ export default function Auth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/auth/callback'
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       });
       if (error) throw error;
     } catch (error) {
-      // Generic error message for production
-      console.error('Authentication failed');
+      console.error('Error signing in with Google:', error.message);
     }
   };
 
@@ -103,30 +105,103 @@ export default function Auth() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-[80vh] flex items-center justify-center px-4"
+    >
+      <Paper 
+        elevation={3}
+        className="w-full max-w-md p-8 rounded-2xl"
         sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
         }}
       >
-        <Typography component="h1" variant="h5">
-          Sign in
-        </Typography>
+        <Box className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <ArticleIcon 
+              sx={{ 
+                fontSize: 48, 
+                color: 'primary.main',
+                filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+              }} 
+            />
+          </div>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            className="mb-2 font-bold"
+            sx={{ 
+              background: 'linear-gradient(90deg, #1976d2, #64b5f6)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            Welcome to PageCrafter
+          </Typography>
+          <Typography 
+            variant="body1" 
+            color="text.secondary"
+            className="mb-6"
+          >
+            Sign in to start creating amazing content
+          </Typography>
+        </Box>
+
         <Button
-          fullWidth
           variant="contained"
-          sx={{ mt: 3, mb: 2 }}
-          onClick={() => {
-            console.log('Button clicked'); // Debug log
-            handleGoogleLogin();
+          fullWidth
+          size="large"
+          onClick={handleGoogleLogin}
+          startIcon={<GoogleIcon />}
+          sx={{
+            py: 2,
+            borderRadius: '12px',
+            textTransform: 'none',
+            fontSize: '1.1rem',
+            background: 'linear-gradient(45deg, #4285f4, #34a853)',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.12)',
+            '&:hover': {
+              background: 'linear-gradient(45deg, #3367d6, #2d9144)',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 6px 8px rgba(0, 0, 0, 0.15)',
+            },
+            transition: 'all 0.2s ease-in-out',
           }}
         >
-          Sign In with Google
+          Continue with Google
         </Button>
-      </Box>
-    </Container>
+
+        <Box className="mt-8 text-center">
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            className="mb-2"
+          >
+            By signing in, you agree to our
+          </Typography>
+          <Box className="flex justify-center gap-2 text-sm">
+            <a 
+              href="/terms-and-conditions" 
+              className="text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              Terms of Service
+            </a>
+            <span className="text-gray-400">•</span>
+            <a 
+              href="/privacy-policy" 
+              className="text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              Privacy Policy
+            </a>
+          </Box>
+        </Box>
+      </Paper>
+    </motion.div>
   );
 }

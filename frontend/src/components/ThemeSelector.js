@@ -1,85 +1,51 @@
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { themes } from '../config/themes';
 
 const ThemeSelector = ({ selectedTheme, onThemeSelect }) => {
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" gutterBottom>
-        Select Theme
-      </Typography>
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        {themes.map((theme) => (
-          <Paper
-            key={theme.id}
+    <Box sx={{ 
+      display: 'flex', 
+      gap: 2, 
+      mb: 4,
+      borderRadius: '12px',
+      p: 2,
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      backdropFilter: 'blur(8px)',
+    }}>
+      {themes.map((theme) => (
+        <Tooltip key={theme.id} title={theme.name} arrow>
+          <Box
             onClick={() => onThemeSelect(theme)}
             sx={{
               cursor: 'pointer',
-              p: 2,
-              width: 200,
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              position: 'relative',
+              background: `linear-gradient(135deg, ${theme.colors.background} 50%, ${theme.colors.accent} 50%)`,
               border: theme.id === selectedTheme?.id ? '2px solid #1976d2' : '2px solid transparent',
-              transition: 'transform 0.2s ease-in-out',
+              transition: 'all 0.2s ease-in-out',
               '&:hover': {
-                transform: 'translateY(-4px)'
-              }
+                transform: 'scale(1.1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            {/* Theme Preview */}
-            <Box sx={{ mb: 2 }}>
-              <Box
-                sx={{
-                  height: 100,
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                {/* Header */}
-                <Box sx={{
-                  height: '30%',
-                  bgcolor: theme.colors.headerBg,
-                  display: 'flex',
-                  alignItems: 'center',
-                  px: 1
-                }}>
-                  <Box sx={{
-                    width: '40%',
-                    height: 8,
-                    bgcolor: theme.colors.accent,
-                    borderRadius: 1
-                  }} />
-                </Box>
-                {/* Content */}
-                <Box sx={{
-                  flex: 1,
-                  bgcolor: theme.colors.background,
-                  p: 1
-                }}>
-                  <Box sx={{
-                    width: '80%',
-                    height: 6,
-                    bgcolor: theme.colors.text,
-                    borderRadius: 1,
-                    mb: 1
-                  }} />
-                  <Box sx={{
-                    width: '60%',
-                    height: 6,
-                    bgcolor: theme.colors.text,
-                    opacity: 0.7,
-                    borderRadius: 1
-                  }} />
-                </Box>
-              </Box>
-            </Box>
-            {/* Theme Name */}
-            <Typography variant="subtitle1" align="center">
-              {theme.name}
-            </Typography>
-          </Paper>
-        ))}
-      </Box>
+            {theme.id === selectedTheme?.id && (
+              <CheckCircleIcon sx={{ 
+                color: '#fff',
+                fontSize: 20,
+                filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))'
+              }} />
+            )}
+          </Box>
+        </Tooltip>
+      ))}
     </Box>
   );
 };
