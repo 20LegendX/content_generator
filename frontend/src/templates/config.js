@@ -336,14 +336,22 @@ export const TEMPLATE_CONFIGS = {
             type: 'number',
             label: 'Home Score',
             required: true,
-            validation: Yup.number().required('Home score is required').min(0, 'Score cannot be negative').integer('Score must be a whole number')
+            validation: Yup.number()
+              .required('Home score is required')
+              .min(0, 'Score must be 0 or greater')
+              .integer('Score must be a whole number')
+              .default(0)
           },
           {
             id: 'away_score',
             type: 'number',
             label: 'Away Score',
             required: true,
-            validation: Yup.number().required('Away score is required').min(0, 'Score cannot be negative').integer('Score must be a whole number')
+            validation: Yup.number()
+              .required('Away score is required')
+              .min(0, 'Score must be 0 or greater')
+              .integer('Score must be a whole number')
+              .default(0)
           },
           {
             id: 'home_scorers',
@@ -377,126 +385,198 @@ export const TEMPLATE_CONFIGS = {
             type: 'number',
             label: 'Home Possession %',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').max(100, 'Cannot exceed 100%')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Possession must be between 0 and 100')
+              .max(100, 'Possession must be between 0 and 100')
+              .default(50)
           },
           {
             id: 'away_possession',
             type: 'number',
             label: 'Away Possession %',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').max(100, 'Cannot exceed 100%')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Possession must be between 0 and 100')
+              .max(100, 'Possession must be between 0 and 100')
+              .default(50)
           },
           {
             id: 'home_shots',
             type: 'number',
             label: 'Home Shots',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_shots',
             type: 'number',
             label: 'Away Shots',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_shots_on_target',
             type: 'number',
             label: 'Home Shots on Target',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_shots_on_target',
             type: 'number',
             label: 'Away Shots on Target',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_xg',
             type: 'number',
             label: 'Home xG',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .transform((value) => (isNaN(value) ? undefined : value))
+              .default(0)
           },
           {
             id: 'away_xg',
             type: 'number',
             label: 'Away xG',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .transform((value) => (isNaN(value) ? undefined : value))
+              .default(0)
           },
           {
             id: 'home_corners',
             type: 'number',
             label: 'Home Corners',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_corners',
             type: 'number',
             label: 'Away Corners',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_fouls',
             type: 'number',
             label: 'Home Fouls',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_fouls',
             type: 'number',
             label: 'Away Fouls',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_yellow_cards',
             type: 'number',
             label: 'Home Yellow Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_yellow_cards',
             type: 'number',
             label: 'Away Yellow Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_red_cards',
             type: 'number',
             label: 'Home Red Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_red_cards',
             type: 'number',
             label: 'Away Red Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_offsides',
             type: 'number',
             label: 'Home Offsides',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_offsides',
             type: 'number',
             label: 'Away Offsides',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           }
         ]
       },
@@ -540,6 +620,40 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
         validation: Yup.string().url('Invalid image URL').nullable(),
         helperText: 'Enter the URL of the featured image',
         placeholder: 'https://example.com/image.jpg'
+      },
+      {
+        group: 'lineups',
+        label: 'Team Lineups',
+        fields: [
+          {
+            id: 'home_lineup',
+            type: 'textarea',
+            label: 'Home Team Lineup',
+            required: true,
+            rows: 11,
+            validation: Yup.string().required('Home lineup is required'),
+            helperText: 'Enter one player per line in format: (1) G. Kobel',
+            placeholder: `(1) G. Kobel
+(2) Y. Couto
+(26) J. Ryerson
+(49) Y. Lührs
+(42) A. Kabar`
+          },
+          {
+            id: 'away_lineup',
+            type: 'textarea',
+            label: 'Away Team Lineup',
+            required: true,
+            rows: 11,
+            validation: Yup.string().required('Away lineup is required'),
+            helperText: 'Enter one player per line in format: (1) G. Kobel',
+            placeholder: `(1) Goalkeeper
+(2) Defender
+(3) Defender
+(4) Defender
+(5) Defender`
+          }
+        ]
       }
     ]
   },
@@ -685,14 +799,22 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
             type: 'number',
             label: 'Home Score',
             required: true,
-            validation: Yup.number().required('Home score is required').min(0, 'Score cannot be negative').integer('Score must be a whole number')
+            validation: Yup.number()
+              .required('Home score is required')
+              .min(0, 'Score must be 0 or greater')
+              .integer('Score must be a whole number')
+              .default(0)
           },
           {
             id: 'away_score',
             type: 'number',
             label: 'Away Score',
             required: true,
-            validation: Yup.number().required('Away score is required').min(0, 'Score cannot be negative').integer('Score must be a whole number')
+            validation: Yup.number()
+              .required('Away score is required')
+              .min(0, 'Score must be 0 or greater')
+              .integer('Score must be a whole number')
+              .default(0)
           },
           {
             id: 'home_scorers',
@@ -726,126 +848,198 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
             type: 'number',
             label: 'Home Possession %',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').max(100, 'Cannot exceed 100%')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Possession must be between 0 and 100')
+              .max(100, 'Possession must be between 0 and 100')
+              .default(50)
           },
           {
             id: 'away_possession',
             type: 'number',
             label: 'Away Possession %',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').max(100, 'Cannot exceed 100%')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Possession must be between 0 and 100')
+              .max(100, 'Possession must be between 0 and 100')
+              .default(50)
           },
           {
             id: 'home_shots',
             type: 'number',
             label: 'Home Shots',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_shots',
             type: 'number',
             label: 'Away Shots',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_shots_on_target',
             type: 'number',
             label: 'Home Shots on Target',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_shots_on_target',
             type: 'number',
             label: 'Away Shots on Target',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_xg',
             type: 'number',
             label: 'Home xG',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .transform((value) => (isNaN(value) ? undefined : value))
+              .default(0)
           },
           {
             id: 'away_xg',
             type: 'number',
             label: 'Away xG',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .transform((value) => (isNaN(value) ? undefined : value))
+              .default(0)
           },
           {
             id: 'home_corners',
             type: 'number',
             label: 'Home Corners',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_corners',
             type: 'number',
             label: 'Away Corners',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_fouls',
             type: 'number',
             label: 'Home Fouls',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_fouls',
             type: 'number',
             label: 'Away Fouls',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_yellow_cards',
             type: 'number',
             label: 'Home Yellow Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_yellow_cards',
             type: 'number',
             label: 'Away Yellow Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_red_cards',
             type: 'number',
             label: 'Home Red Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_red_cards',
             type: 'number',
             label: 'Away Red Cards',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'home_offsides',
             type: 'number',
             label: 'Home Offsides',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           },
           {
             id: 'away_offsides',
             type: 'number',
             label: 'Away Offsides',
             required: true,
-            validation: Yup.number().required('Required').min(0, 'Cannot be negative').integer('Must be a whole number')
+            validation: Yup.number()
+              .required('Required')
+              .min(0, 'Must be 0 or greater')
+              .integer('Must be a whole number')
+              .default(0)
           }
         ]
       },
@@ -889,6 +1083,40 @@ Key absences: Shaw (United, injured), Van Dijk (Liverpool, suspended)`
         validation: Yup.string().url('Invalid image URL').nullable(),
         helperText: 'Enter the URL of the featured image',
         placeholder: 'https://example.com/image.jpg'
+      },
+      {
+        group: 'lineups',
+        label: 'Team Lineups',
+        fields: [
+          {
+            id: 'home_lineup',
+            type: 'textarea',
+            label: 'Home Team Lineup',
+            required: true,
+            rows: 11,
+            validation: Yup.string().required('Home lineup is required'),
+            helperText: 'Enter one player per line in format: (1) G. Kobel',
+            placeholder: `(1) G. Kobel
+(2) Y. Couto
+(26) J. Ryerson
+(49) Y. Lührs
+(42) A. Kabar`
+          },
+          {
+            id: 'away_lineup',
+            type: 'textarea',
+            label: 'Away Team Lineup',
+            required: true,
+            rows: 11,
+            validation: Yup.string().required('Away lineup is required'),
+            helperText: 'Enter one player per line in format: (1) G. Kobel',
+            placeholder: `(1) Goalkeeper
+(2) Defender
+(3) Defender
+(4) Defender
+(5) Defender`
+          }
+        ]
       }
     ]
   },

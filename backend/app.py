@@ -91,6 +91,16 @@ def log_request_info():
     app.logger.debug('Body: %s', request.get_data())
     app.logger.debug('Path: %s', request.path)
 
+@app.route('/PageCrafter.svg')
+def serve_svg():
+    file_path = os.path.join('../frontend/public', 'PageCrafter.svg')
+    print(f"Looking for SVG at: {os.path.abspath(file_path)}")
+    if os.path.exists(file_path):
+        print("SVG file found!")
+    else:
+        print("SVG file not found!")
+    return send_from_directory('../frontend/public', 'PageCrafter.svg', mimetype='image/svg+xml')
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
@@ -503,7 +513,13 @@ def create_prompt(user_input):
         Write a professional match report for {user_input['home_team']} vs {user_input['away_team']} using ONLY the provided information.
         {universal_prompt}
 
-        ### Data Provided
+        ### Match Context
+        {user_input.get('context', 'No context provided.')}
+
+        ### Supporting Data & Background
+        {user_input.get('supporting_data', 'No supporting data provided.')}
+
+        ### Match Details
         **Score**: {user_input['home_team']} {user_input['home_score']} - {user_input['away_score']} {user_input['away_team']}
         **Competition**: {user_input['competition']}
         **Venue**: {user_input['venue']}
@@ -517,15 +533,40 @@ def create_prompt(user_input):
         - xG: {user_input['home_team']} {user_input.get('home_xg', 0)} vs {user_input.get('away_xg', 0)} {user_input['away_team']}
         - Possession: {user_input.get('home_possession')}% vs {user_input.get('away_possession')}%
         - Shots: {user_input.get('home_shots')} ({user_input.get('home_shots_on_target')} on target) vs {user_input.get('away_shots')} ({user_input.get('away_shots_on_target')} on target)
+        - Corners: {user_input.get('home_corners')} vs {user_input.get('away_corners')}
+        - Fouls: {user_input.get('home_fouls')} vs {user_input.get('away_fouls')}
+        - Yellow Cards: {user_input.get('home_yellow_cards')} vs {user_input.get('away_yellow_cards')}
+        - Red Cards: {user_input.get('home_red_cards')} vs {user_input.get('away_red_cards')}
 
         ### Writing Instructions:
-        - **Match Overview** (introduction + final result).
-        - **Match Analysis** (statistics-driven breakdown).
-        - **Key Moments** (ONLY if explicit key events exist).
+        1. **Match Context & Build-up** (Use the provided context and supporting data)
+           - Set the scene using the background information
+           - Discuss the significance of the match
+           - Include relevant team form and statistics
 
-        **Final Reminder:**
-        - **Stick to the provided data.**
-        - **Do NOT assume or fabricate missing details.**
+        2. **Match Overview** 
+           - Comprehensive introduction
+           - Final result and its implications
+           - Key tactical observations
+
+        3. **Detailed Analysis** (Use match statistics to support your analysis)
+           - Analyze possession control
+           - Evaluate attacking effectiveness (shots, xG)
+
+        4. **Key Moments** (ONLY if explicit key events exist)
+           - Goals
+           - Disciplinary incidents
+
+        5. **Match Impact & Context** (Connect to broader context)
+           - Impact on league/competition standing
+           - Historical context (if provided)
+           - Team form implications
+
+        **Final Reminders:**
+        - Integrate the supporting data and context throughout the report
+        - Use statistics to support your analysis
+        - Maintain a professional, analytical tone
+        - Stick to the provided data - NO speculation
         """
 
     elif template_name == 'ss_player_scout_report_template.html':
@@ -552,7 +593,9 @@ def create_prompt(user_input):
 
     return prompt
 
+
 import json
+
 
 def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=16000, temperature=0.7, top_p=0.9):
     """Send prompt to GPT-4 and get structured response."""
@@ -577,7 +620,7 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=16000, temperatur
         - **Use real-world examples, context, and subtle emotion to enhance storytelling.**
         - **Ensure smooth transitions between ideas**—avoid abrupt sectioning.
         - **Strictly follow the provided topic and data**—do NOT introduce unrelated details.
-        
+
 
         Your response **must be well-structured and follow the format outlined below**.
         """
@@ -586,7 +629,7 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=16000, temperatur
         if template_name in ['match_report_template.html', 'ss_match_report_template.html']:
             system_prompt = f"""{universal_system_prompt}
 
-            You are an expert sports journalist specializing in match reports. Your job is to **write a structured, professional match report** using only the provided data.
+            You are an expert sports journalist specializing in match reports. Your job is to **write a structured, professional match report**
 
             Return your response in the following JSON format:
             {{
@@ -620,8 +663,6 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=16000, temperatur
 
             ### Report Guidelines:
             - **Ensure that all analysis is backed by provided statistics**.
-            - **Avoid subjective opinions or speculative statements**.
-            - **Write in a natural, journalistic tone**—concise, informative, and engaging.
             - **Use appropriate football terminology** (e.g., "high press," "deep block," "clinical finishing").
             """
 
@@ -726,9 +767,6 @@ def run_gpt4(prompt, template_name, model="gpt-4o", max_tokens=16000, temperatur
     except Exception as e:
         print(f"OpenAI error details: {str(e)}")  # Debug log
         return None
-
-
-
 def format_article_content(gpt_response, template_type):
     """
     Convert GPT JSON response into template-ready HTML content based on template type
@@ -789,6 +827,8 @@ def format_article_content(gpt_response, template_type):
                 'away_team': request.json.get('away_team', ''),
                 'home_score': request.json.get('home_score', ''),
                 'away_score': request.json.get('away_score', ''),
+                'home_lineup': request.json.get('home_lineup', ''),
+                'away_lineup': request.json.get('away_lineup', ''),
                 'competition': request.json.get('competition', ''),
                 'match_date': request.json.get('match_date', ''),
                 'venue': request.json.get('venue', ''),
@@ -884,6 +924,8 @@ def format_article_content(gpt_response, template_type):
                     'away_team': request.json.get('away_team', ''),
                     'home_score': request.json.get('home_score', ''),
                     'away_score': request.json.get('away_score', ''),
+                    'home_lineup': request.json.get('home_lineup', ''),
+                    'away_lineup': request.json.get('away_lineup', ''),
                     'competition': request.json.get('competition', ''),
                     'match_date': request.json.get('match_date', ''),
                     'venue': request.json.get('venue', ''),
@@ -989,7 +1031,7 @@ def format_article_content(gpt_response, template_type):
                 'recent_matches': recent_matches,  # Add the parsed matches data
                 'hero_image_position': request.json.get('hero_image_position', 'center center'),
                 'theme': request.json.get('theme', {}),
-                'hero_image_position': request.json.get('hero_image_position', 'center center')
+                'hero_image_position': request.json.get('hero_image_position', 'center center'),
             })
 
 
@@ -1065,7 +1107,7 @@ def format_article_content(gpt_response, template_type):
                 'publisher_name': request.json.get('publisher_name', ''),
                 'hero_image_position': request.json.get('hero_image_position', 'center center'),
                 'theme': request.json.get('theme', {}),
-                'hero_image_position': request.json.get('hero_image_position', 'center center')
+                'hero_image_position': request.json.get('hero_image_position', 'center center'),
             })
 
         return template_vars

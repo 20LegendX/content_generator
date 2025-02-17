@@ -131,6 +131,12 @@ const DynamicFormField = ({ field, formik }) => {
             <TextField 
               {...commonProps} 
               type="number"
+              inputProps={{
+                min: 0,  // Prevent negative values
+                step: field.id.includes('xg') ? '0.1' : '1', // Allow decimals for xG
+              }}
+              // Handle the zero value properly
+              value={formik.values[field.id] === 0 ? '0' : formik.values[field.id] || ''}
               error={Boolean(errorMessage)}
               helperText={errorMessage}
               sx={commonSx}
