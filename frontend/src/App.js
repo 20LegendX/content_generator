@@ -693,8 +693,10 @@ function AppContent() {
                 className="flex items-center space-x-3 cursor-pointer"
                 onClick={() => navigate('/')}
               >
-                <ArticleIcon 
-                  className="h-6 w-6 text-blue-600 dark:text-blue-500" 
+                <img 
+                  src="/PageCrafter.svg"
+                  alt="PageCrafter AI Logo"
+                  className="h-8 w-8"
                 />
                 <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent text-xl font-bold">
                   PageCrafter AI

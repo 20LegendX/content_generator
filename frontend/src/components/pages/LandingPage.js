@@ -194,9 +194,6 @@ const LandingPage = () => {
             transition={{ duration: 0.5 }}
             className="text-6xl sm:text-7xl font-extrabold tracking-tight mb-6 leading-tight"
           >
-            <span className="inline-block bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 text-transparent bg-clip-text">
-              AI Content Generator & <br />Automated Article Writer
-            </span>
           </motion.h1>
 
           <motion.div
