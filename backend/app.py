@@ -431,32 +431,36 @@ def create_prompt(user_input):
 
     # **Natural tone guidelines**
     natural_tone_guidelines = """
-    To ensure a **clear, factual, and professional tone**, follow these principles:
+    To ensure a **clear, factual, and engaging tone**, follow these principles:
 
-    ✅ **Stick to the facts.**  
-       - Avoid words like **"unprecedented,"** **"transformational,"** **"game-changing,"** or **"remarkable success."**  
-       - Instead, describe the **actual impact in neutral terms.**  
+    ✅ **Write naturally and vary your structure**  
+       - Mix content formats naturally:
+         • Use paragraphs for main narrative
+         • Add bullet points for key takeaways or lists
+         • Use blockquotes for important quotes or statistics
+       - Let the content guide the format - don't force any particular structure
+       - Transition smoothly between different formats
 
-    ✅ **Avoid dramatic or sweeping statements.**  
-       - ❌ "This marks a turning point in history."  
-       - ✅ "This change may influence how teams prepare for next season."  
+    ✅ **Stick to the facts**  
+       - Avoid words like "unprecedented," "transformational," "game-changing"
+       - Instead, describe actual impact in neutral terms
+       - Use precise descriptions and data points
 
-    ✅ **Use precise descriptions.**  
-       - ❌ "This mind-blowing innovation is set to revolutionize everything."  
-       - ✅ "This update introduces new capabilities for users, improving efficiency."  
+    ✅ **Keep descriptions factual and engaging**  
+       - ❌ "This mind-blowing innovation is set to revolutionize everything"
+       - ✅ "This update introduces new capabilities for users, improving efficiency"
+       - Use bullet points when listing features, benefits, or key points
+       - Break up dense information into digestible formats
 
-    ✅ **Avoid promotional language.**  
-       - ❌ "This incredible player is the best in the world right now!"  
-       - ✅ "This player has delivered consistently high performances this season."  
-
-    ✅ **Stay focused on the provided topic and data.**  
-       - **Do NOT introduce unrelated details, assumptions, or personal opinions.**  
+    ✅ **Stay focused on the provided topic and data**  
+       - Do NOT introduce unrelated details or assumptions
+       - Use supporting data to strengthen your points
+       - Organize information in the most reader-friendly format
 
     **REMEMBER:**  
-    - **Journalism is about clarity and accuracy, not hype.**  
-    - Keep descriptions factual and let the **data tell the story.**
-    - Write in a natural, engaging way—let ideas flow rather than rigidly structuring sections.
-
+    - Journalism is about clarity and accuracy, not hype
+    - Let the data tell the story
+    - Choose the most appropriate format for each piece of information
     """
 
     # **Universal Writing Guidelines** applied to all templates
@@ -468,11 +472,14 @@ def create_prompt(user_input):
     {natural_tone_guidelines}
 
     ### Key Writing Guidelines:
-    - **Write a detailed article that fully explores the subject.**
-    - **Stay strictly focused on the topic '{user_input['topic']}'.**
-    - **Avoid dramatic language, sweeping statements, or exaggerated claims.**
-    - **Ensure a well-structured article with at least 3-4 paragraphs per major section.**
-    - **Use real-world examples and data to support arguments.**
+    - Write a detailed article that fully explores the subject
+    - Stay strictly focused on the topic '{user_input['topic']}'
+    - Use varied formats where they enhance understanding:
+      • Paragraphs for main narrative
+      • Bullet points for lists or key points
+      • Blockquotes for significant quotes or data
+    - Ensure smooth transitions between different formats
+    - Use real-world examples and data to support arguments
     """
 
     # **Template-Specific Prompts**
@@ -1040,16 +1047,40 @@ def format_article_content(gpt_response, template_type):
             main_headline = response_data['template_data'].get('headline', '')
             
             for section in response_data['article_content']:
-                # If section heading is the same as main_headline, skip it
                 if section.get('heading') and section["heading"] == main_headline:
                     continue
 
                 if 'heading' in section:
                     html_content.append(f'<h2>{section["heading"]}</h2>')
 
-                for paragraph in section['content']:
-                    clean_paragraph = paragraph.replace('<p>', '').replace('</p>', '').strip()
-                    html_content.append(f'<p>{clean_paragraph}</p>')
+                for content in section['content']:
+                    # Check if content is a string (paragraph) or a list (bullet points)
+                    if isinstance(content, str):
+                        # Regular paragraph
+                        clean_paragraph = content.replace('<p>', '').replace('</p>', '').strip()
+                        html_content.append(f'<p>{clean_paragraph}</p>')
+                    elif isinstance(content, dict):
+                        # Handle different content types
+                        content_type = content.get('type', 'paragraph')
+                        content_text = content.get('text', '')
+
+                        if content_type == 'bullet_list':
+                            # Handle bullet points
+                            points = content.get('points', [])
+                            html_content.append('<ul>')
+                            for point in points:
+                                html_content.append(f'<li>{point}</li>')
+                            html_content.append('</ul>')
+                        elif content_type == 'numbered_list':
+                            # Handle numbered lists
+                            items = content.get('items', [])
+                            html_content.append('<ol>')
+                            for item in items:
+                                html_content.append(f'<li>{item}</li>')
+                            html_content.append('</ol>')
+                        elif content_type == 'blockquote':
+                            # Handle blockquotes
+                            html_content.append(f'<blockquote>{content_text}</blockquote>')
 
             # Rest of the template_vars update remains the same
             template_vars.update({

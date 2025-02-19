@@ -156,13 +156,48 @@
     }
 
     /* Lists */
-    .article-container ul {
-      list-style-type: disc;
-      padding-left: 20px;
-      margin-bottom: 1.5em;
+    .article-container ul,
+    .article-container ol {
+      margin: 1.5em 0;
+      padding-left: 2em;
+      color: {{ theme.colors.text }};
     }
-    .article-container ul li {
+
+    .article-container ul li,
+    .article-container ol li {
       margin-bottom: 0.5em;
+      line-height: 1.6;
+    }
+
+    /* Bullet point customization */
+    .article-container ul {
+      list-style: none;
+    }
+
+    .article-container ul li::before {
+      content: "•";
+      color: {{ theme.colors.accent }};
+      font-weight: bold;
+      display: inline-block;
+      width: 1em;
+      margin-left: -1em;
+    }
+
+    /* Numbered list styling */
+    .article-container ol {
+      counter-reset: item;
+      list-style: none;
+    }
+
+    .article-container ol li {
+      counter-increment: item;
+    }
+
+    .article-container ol li::before {
+      content: counter(item) ".";
+      color: {{ theme.colors.accent }};
+      font-weight: bold;
+      margin-right: 0.5em;
     }
 
     /* Images Inside Article Body */

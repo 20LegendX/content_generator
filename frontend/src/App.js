@@ -140,22 +140,22 @@ function AppContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [authError, setAuthError] = useState(null);
-  
+
   // Modify to only store generated content, not form values
   const [previousContent, setPreviousContent] = useState(null);
-  
+
   // Add the missing state variables
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [hasGeneratedContent, setHasGeneratedContent] = useState(false);
-  
+
   const [isInitializing, setIsInitializing] = useState(true);
-  
+
   const [error, setError] = useState(null);
-  
+
   const theme = useMemo(() => getTheme(darkMode ? 'dark' : 'light'), [darkMode]);
-  const { 
-    subscription, 
-    canGenerateArticle, 
+  const {
+    subscription,
+    canGenerateArticle,
     decrementArticleCount,
     refreshSubscription
   } = useSubscription();
@@ -242,7 +242,7 @@ function AppContent() {
   const handleTemplateChange = (event) => {
     const newTemplate = event.target.value;
     setTemplateName(newTemplate);
-    
+
     // Reset form with new template's initial values
     formik.resetForm({
       values: {
@@ -270,7 +270,7 @@ function AppContent() {
         ...generatedContent.raw_content,
         template_name: formik.values.template_name,
         hero_image_position: formik.values.hero_image_position,
-        theme: formik.values.theme
+        theme: generatedContent.raw_content.theme
       };
 
       // Add match stats only for match report template
@@ -351,13 +351,16 @@ function AppContent() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          id: updatedContent.id, // Pass the ID
-          template_name: formik.values.template_name,
+          id: updatedContent.id,
+          // Use the template from the existing content instead of formik values
+          template_name: updatedContent.raw_content.template_name || formik.values.template_name,
           content: {
             ...updatedContent.raw_content,
-            theme: formik.values.theme
+            // Use the theme from the existing content
+            theme: updatedContent.raw_content.theme || formik.values.theme
           },
-          theme: formik.values.theme
+          // Use the theme from the existing content
+          theme: updatedContent.raw_content.theme || formik.values.theme
         }),
       });
 
@@ -366,11 +369,16 @@ function AppContent() {
       }
 
       const data = await response.json();
-      
+
       setGeneratedContent({
-        id: updatedContent.id, // Preserve the ID
+        id: updatedContent.id,
         ...generatedContent,
-        raw_content: updatedContent.raw_content,
+        raw_content: {
+          ...updatedContent.raw_content,
+          // Ensure we preserve the template and theme
+          template_name: updatedContent.raw_content.template_name,
+          theme: updatedContent.raw_content.theme
+        },
         preview_html: data.preview_html
       });
       setEditModalOpen(false);
@@ -383,7 +391,7 @@ function AppContent() {
   const generateContent = async (values) => {
     setLoading(true);
     setErrorMessage(null);
-    
+
     if (!canGenerateArticle()) {
       setErrorMessage('You have reached your article limit. Please upgrade to Pro to continue.');
       setLoading(false);
@@ -393,7 +401,7 @@ function AppContent() {
     try {
       console.log('Session:', session);  // Debug session
       console.log('Content Data:', values);  // Debug request data
-      
+
       if (!session) {
         throw new Error('No active session');
       }
@@ -463,7 +471,7 @@ function AppContent() {
       console.log('Response status:', response.status);  // Debug response
       const data = await response.json();
       console.log('Response data:', data);  // Debug response data
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to generate article');
@@ -474,10 +482,10 @@ function AppContent() {
         template_name: values.template_name
       });
       setHasGeneratedContent(true);
-      
+
       // Decrement the article count for both free and pro users
       await decrementArticleCount();
-      
+
       // Refresh subscription to update article count
       await refreshSubscription();
 
@@ -572,7 +580,7 @@ function AppContent() {
         });
 
         const data = await response.json();
-        
+
         if (!response.ok) {
           throw new Error(data.error || 'Failed to generate content');
         }
@@ -608,7 +616,7 @@ function AppContent() {
       <>
         {previousContent && (
           <Box sx={{ mb: 4 }}>
-            <Alert 
+            <Alert
               severity="info"
               action={
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -658,23 +666,23 @@ function AppContent() {
     try {
       // First clear any local storage items
       localStorage.clear();  // Clear all local storage
-      
+
       // Clear the session from Supabase
       await supabase.auth.clearSession();
-      
+
       // Then attempt to sign out
       const { error } = await supabase.auth.signOut({
         scope: 'local'  // Only clear local session, don't try to hit the server
       });
-      
+
       if (error) {
         console.warn('Sign out error:', error);
         // Continue with redirect even if there's an error
       }
-      
+
       // Force a navigation to clear the state
       window.location.href = '/';
-      
+
     } catch (error) {
       console.error('Error signing out:', error);
       // Still redirect even if there's an error
@@ -689,11 +697,11 @@ function AppContent() {
           <div className="flex justify-between h-16">
             {/* Logo and Brand */}
             <div className="flex items-center">
-              <div 
+              <div
                 className="flex items-center space-x-3 cursor-pointer"
                 onClick={() => navigate('/')}
               >
-                <img 
+                <img
                   src="/PageCrafter.svg"
                   alt="PageCrafter AI Logo"
                   className="h-8 w-8"
@@ -716,7 +724,7 @@ function AppContent() {
                         navigate('/generate');
                       }
                     }}
-                    className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 
+                    className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600
                              hover:bg-blue-700 rounded-lg transition-colors duration-200"
                   >
                     <ArticleIcon className="w-4 h-4 mr-2" />
@@ -725,8 +733,8 @@ function AppContent() {
 
                   <button
                     onClick={() => navigate('/history')}
-                    className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-gray-700 
-                             dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg 
+                    className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-gray-700
+                             dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg
                              transition-colors duration-200"
                   >
                     <HistoryIcon className="w-4 h-4 mr-2" />
@@ -739,8 +747,8 @@ function AppContent() {
 
                   <Button
                     onClick={handleSignOut}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 
-                             hover:text-gray-900 dark:hover:text-white rounded-lg 
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300
+                             hover:text-gray-900 dark:hover:text-white rounded-lg
                              hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
                   >
                     Sign Out
@@ -749,7 +757,7 @@ function AppContent() {
               ) : (
                 <button
                   onClick={() => navigate('/login')}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600
                            hover:bg-blue-700 rounded-lg transition-colors duration-200"
                 >
                   Sign In
@@ -759,7 +767,7 @@ function AppContent() {
               {/* Dark Mode Toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className="p-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white 
+                className="p-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white
                          rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
                 aria-label="Toggle dark mode"
               >
@@ -782,7 +790,7 @@ function AppContent() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-                <Route 
+                <Route
                   path="/generate"
                   element={
                     <RouteGuard>
@@ -801,10 +809,10 @@ function AppContent() {
                           exit={{ opacity: 0 }}
                         >
                           <Box sx={{ mb: 3 }}>
-                            {subscription?.plan_type !== 'pro' && 
+                            {subscription?.plan_type !== 'pro' &&
                              subscription?.articles_remaining === 0 && (
-                              <Alert 
-                                severity="warning" 
+                              <Alert
+                                severity="warning"
                                 sx={{ mb: 2 }}
                                 action={
                                   <Button
@@ -855,9 +863,9 @@ function AppContent() {
                                 </Button>
                               </Box>
                             </Box>
-                            <div 
+                            <div
                               dangerouslySetInnerHTML={{ __html: generatedContent.preview_html }}
-                              style={{ 
+                              style={{
                                 width: '100%',
                                 maxWidth: '100%',
                               }}
@@ -871,21 +879,21 @@ function AppContent() {
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/login" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route 
-                  path="/subscription" 
+                <Route
+                  path="/subscription"
                   element={
                     <ProtectedRoute>
                       <SubscriptionManager />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
                 <Route path="/subscription/success" element={<SubscriptionSuccess />} />
                 <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-                <Route 
-                  path="/history" 
+                <Route
+                  path="/history"
                   element={
                     <RouteGuard>
-                      <ArticleHistory 
+                      <ArticleHistory
                         onPreview={(article) => {
                           console.log('Article being previewed:', article); // Debug
                           setGeneratedContent({
@@ -905,10 +913,10 @@ function AppContent() {
                         }}
                       />
                     </RouteGuard>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/preview" 
+                <Route
+                  path="/preview"
                   element={
                     <RouteGuard>
                       <Box sx={{ mb: 3 }}>
@@ -948,9 +956,9 @@ function AppContent() {
                             </Button>
                           </Box>
                         </Box>
-                        <div 
+                        <div
                           dangerouslySetInnerHTML={{ __html: generatedContent?.preview_html }}
-                          style={{ 
+                          style={{
                             width: '100%',
                             maxWidth: '100%',
                           }}
@@ -987,13 +995,13 @@ function AppContent() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowRegenerateConfirm(false)}>Cancel</Button>
-          <Button 
+          <Button
             onClick={async () => {
               setShowRegenerateConfirm(false);
               setPreviousContent(null);
               setHasGeneratedContent(false);
               await generateContent(formik.values);
-            }} 
+            }}
             autoFocus
           >
             Generate New
